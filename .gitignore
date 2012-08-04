@@ -1,3 +1,12 @@
+# Target files
+out/*
+
+# Backup files
+*~
+
+# GYP checkout
+build/gyp/*
+
 # Compiled Object files
 *.slo
 *.lo

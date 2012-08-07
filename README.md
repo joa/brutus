@@ -7,7 +7,7 @@
 
 Linux
 -------------
-`make dependencies && make`
+`make dependencies && make x64.debug`
 
 Windows
 -------------

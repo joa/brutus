@@ -1,6 +1,8 @@
 # V8 inspired Makefile
 
-CXX ?= clang++
+CC := clang++
+CXX := clang++
+
 LINK ?= clang++
 OUTDIR ?= out
 TESTJOBS ?=
@@ -26,7 +28,7 @@ $(MODES): $(addsuffix .$$@,$(DEFAULT_ARCHES))
 
 $(ARCHES): $(addprefix $$@.,$(MODES))
 
-# Defines how to build a particular target (e.g. ia32.release).
+# Defines how to build a particular target (e.g. x64.release).
 $(BUILDS): $(OUTDIR)/Makefile.$$(basename $$@)
 	@$(MAKE) -C "$(OUTDIR)" -f Makefile.$(basename $@) \
 	         CXX="$(CXX)" LINK="$(LINK)" \
@@ -38,6 +40,14 @@ native: $(OUTDIR)/Makefile.native
 	@$(MAKE) -C "$(OUTDIR)" -f Makefile.native \
 	         CXX="$(CXX)" LINK="$(LINK)" BUILDTYPE=Release \
 	         builddir="$(shell pwd)/$(OUTDIR)/$@"
+
+# Clean
+
+$(addsuffix .clean, $(ARCHES) $(ANDROID_ARCHES)):
+	rm -f $(OUTDIR)/Makefile.$(basename $@)
+	rm -rf $(OUTDIR)/$(basename $@).release
+	rm -rf $(OUTDIR)/$(basename $@).debug
+	find $(OUTDIR) -regex '.*\(host\|target\).$(basename $@)\.mk' -delete
 
 native.clean:
 	rm -f $(OUTDIR)/Makefile.native

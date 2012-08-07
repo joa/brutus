@@ -1,5 +1,7 @@
 #include <iostream>
 
 int main(int argc, char** argv) {
-  std::cout << "Hello World." << std::endl;
+  (void)argc;
+  (void)argv;
+  std::cout << u8"Hello World." << std::endl;
 }

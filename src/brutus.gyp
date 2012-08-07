@@ -1,4 +1,5 @@
 {
+  'includes': ['../build/common.gypi'],
   'targets': [
     {
       'target_name': 'brutus',

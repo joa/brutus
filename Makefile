@@ -1,9 +1,9 @@
 # V8 inspired Makefile
 
-CC := clang++
-CXX := clang++
+CC := g++
+CXX := g++
 
-LINK ?= clang++
+LINK ?= g++
 OUTDIR ?= out
 TESTJOBS ?=
 GYPFLAGS ?=

@@ -12,6 +12,9 @@
       'include_dirs': [],
       'sources': [
        'brutus.cc',
+       'lexer.cc',
+       'streams.cc',
+       'stopwatch.cc',
       ],
       'conditions': [
         ['OS=="linux"', {

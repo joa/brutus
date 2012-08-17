@@ -13,7 +13,7 @@
   'conditions': [
     ['OS=="linux"', {
       'target_defaults': {
-        'cflags': ['-std=c++11', '-Wall', '<(werror)', '-W', '-fno-rtti', '-fno-exceptions', '-pthread', '-pedantic'],
+        'cflags': ['-std=c++0x', '-Wall', '<(werror)', '-W', '-fno-rtti', '-fno-exceptions', '-pthread', '-pedantic'],
         'ldflags': ['-pthread'],
       },
     }], #'OS=="linux"'

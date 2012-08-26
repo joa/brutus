@@ -3,24 +3,24 @@
 #include <iostream>
 #include <functional>
 
-const int numIterations = 100000000;
-const int numTrials = 3;
+const auto numIterations = 100000000;
+const auto numTrials = 3;
 
-void perf_test(std::function< int()> f) {  
+auto perf_test(std::function<int()> f) -> void {
   brutus::Stopwatch stopwatch;    
 
-  for(int trail = 0; trail < numTrials; ++trail) {
+  for(auto trail = 0; trail < numTrials; ++trail) {
     stopwatch.start();
-    std::cout << "Result: " << f() << std::endl;   
+    std::cout << u8"Result: " << f() << std::endl;   
     stopwatch.stopAndLog();
   }
 }
 
-int main(int argc, char** argv) {
+auto main(int argc, char** argv) -> int {
   (void)argc;
   (void)argv;
 
-  auto fp = fopen("tokens.txt", "r");
+  auto fp = fopen(u8"tokens.txt", u8"r");
 
   if(!fp) {
     return 1;
@@ -30,28 +30,28 @@ int main(int argc, char** argv) {
   auto lexer = new brutus::Lexer(stream); 
 
   brutus::tok::Token t;
-  int numT = 0;
+  auto numT = 0;
 
   while((t = lexer->nextToken()) != brutus::tok::_EOF) {
     ++numT;
-    printf("%s\n", brutus::tok::toString(t));
+    std::cout << brutus::tok::toString(t) << std::endl;
   }
 
-  printf("tokens: %d\n", numT);
+  std::cout << u8"tokens: " << numT << std::endl;
 
   fclose(fp);
 
   return 0;
 }
 
-int unused(int argc, char** argv) {
+auto main2(int argc, char** argv) -> int {
   (void)argc;
   (void)argv;
   
   auto test0 = [&]() -> int {
-    int sum = 0;
+    auto sum = 0;
    
-    for(int i = 0; i < numIterations; ++i) {
+    for(auto i = 0; i < numIterations; ++i) {
       sum += i;
     }
 
@@ -59,8 +59,8 @@ int unused(int argc, char** argv) {
   };
 
   auto test1 = [&]() -> int {
-    int sum = 0;
-    int i = 0;
+    auto sum = 0;
+    auto i = 0;
 
     auto add = [&]() {
       sum += i;

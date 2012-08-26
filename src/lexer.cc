@@ -2,7 +2,7 @@
 
 namespace brutus {
 namespace tok {
-const char* toString(Token token) {
+auto toString(Token token) -> const char* {
   #define TOKEN_TO_STRING_CASE(T, S) case T: return S
   switch(token) {
     TOKEN_TO_STRING_CASE(_EOF, u8"EOF");
@@ -39,12 +39,12 @@ const char* toString(Token token) {
 }
 }
 
-tok::Token Lexer::resulting(
+auto Lexer::resulting(
     std::function<bool(const char)> condition,
     std::function<void(const char)> f,
-    tok::Token result) {
+    tok::Token result) -> tok::Token {
   while(canAdvance()) {
-    const char nextChar = advance();
+    const auto nextChar = advance();
 
     if(!condition(nextChar)) {
       rewind();
@@ -57,7 +57,7 @@ tok::Token Lexer::resulting(
   return result;
 }
 
-tok::Token Lexer::nextToken() {
+auto Lexer::nextToken() -> tok::Token {
   while(canAdvance()) {
     auto currentChar = advance();
 
@@ -76,23 +76,11 @@ tok::Token Lexer::nextToken() {
         tok::NEWLINE
       );
     } else if(isNumberStart(currentChar)) {
-      //reset buffer
-      //add currentChar to buffer
-      
-      return resulting(
-        [&](const char c) { return isNumberPart(c); },
-        [&](const char) { /* add char to buffer */ },
-        tok::NUMBER_LITERAL
-      );
+      return continueWithNumberStart(currentChar);
     } else if(isIdentifierStart(currentChar)) {
-      // reset buffer
-      // add currentChar to buffer
-
-      return resulting(
-        [&](const char c) { return isIdentifierPart(c); },
-        [&](const char) { /* add char to buffer */ },
-        tok::IDENTIFIER
-      );
+      return continueWithIdentifierStart(currentChar);
+    } else if('/' == currentChar) {
+      return continueWithSlash(currentChar);
     } else {
       switch(currentChar) {
         case ';': return tok::SEMICOLON;
@@ -109,20 +97,6 @@ tok::Token Lexer::nextToken() {
         case '+': return tok::PLUS;
         case '-': return tok::MINUS;
         case '*': return tok::ASTERISK;
-        case '/': {
-          const char nextChar = advance(); 
-
-          if(nextChar == '/') {
-            // single line comment
-            return tok::ERROR;
-          } else if(nextChar == '*') {
-            // multi line comment (do not forget nesting)
-            return tok::ERROR;
-          } else {
-            rewind();
-            return tok::SLASH;
-          }
-        }
         case '%': return tok::PERCENT;
 
         default:
@@ -133,26 +107,25 @@ tok::Token Lexer::nextToken() {
 
   return tok::_EOF;
 }
-
-const char* Lexer::value() {
+auto Lexer::value() -> const char* {
   return u8"";
 }
 
-int Lexer::posLine() {
+auto Lexer::posLine() -> int {
   return m_line;
 }
 
-int Lexer::posColumn() {
+auto Lexer::posColumn() -> int {
   return m_column;
 }
 
-bool Lexer::canAdvance() {
+auto Lexer::canAdvance() -> bool {
   return m_advanceWithLastChar || m_stream->hasNext();
 }
 
-char Lexer::advance() {
+auto Lexer::advance() -> char {
   if(m_advanceWithLastChar) {
-    m_advanceWithLastChar = false;
+    m_advanceWithLastChar = NO;
   } else {
     m_currentChar = m_stream->next();
   }
@@ -162,47 +135,143 @@ char Lexer::advance() {
   return m_currentChar;
 }
 
-void Lexer::rewind() {
+auto Lexer::rewind() -> void {
 #ifdef DEBUG
   if(m_advanceWithLastChar) {
     std::cout << u8"Error: Called Lexer::rewind() twice in a row." << std::endl;
   }
 #endif
 
-  m_advanceWithLastChar = true;
+  m_advanceWithLastChar = YES;
   --m_column;
 }
 
-bool Lexer::isWhitespace(const char c) {
+auto Lexer::isWhitespace(const char c) -> bool {
   // Note that we explicitly forbid \t in Brutus
   // source code so only space characters are treated
   // as whitespace.
   return c == ' ';
 }
 
-bool Lexer::isNewLine(const char c) {
+auto Lexer::isNewLine(const char c) -> bool {
   // Note that we explicitly forbid \r in Brutus
   // source code so only \n is allowed as a line
   // terminator.
   return c == '\n';
 }
 
-bool Lexer::isIdentifierStart(const char c) {
+auto Lexer::isNumberStart(const char c) -> bool {
+  return c >= '0' && c <= '9';
+}
+
+auto Lexer::isIdentifierStart(const char c) -> bool {
   return (c >= 'a' && c <= 'z')
       || (c >= 'A' && c <= 'Z')
       || (c == '_');
 }
 
-bool Lexer::isIdentifierPart(const char c) {
+auto Lexer::isIdentifierPart(const char c) -> bool {
   return isIdentifierStart(c)
       || (c >= '0' && c <= '9');
 }
 
-bool Lexer::isNumberStart(const char c) {
+auto Lexer::isDigit(const char c) -> bool {
   return (c >= '0' && c <= '9');
 }
 
-bool Lexer::isNumberPart(const char c) {
-  return isNumberStart(c);
+//
+
+auto Lexer::continueWithNumberStart(const char currentChar) -> tok::Token {
+  //reset buffer
+  //add currentChar to buffer
+  (void)currentChar;  
+
+  // We allow only 0xffffff not 0XFFFFFF, not 0xFFFFFF
+  const auto secondChar = advance();
+
+  if(secondChar == 'x') {
+    // Parse hexadecimal literal
+    while(canAdvance()) {
+      const auto hexChar = advance();
+
+      if(isDigit(hexChar) || (hexChar >= 'a' && hexChar <= 'f')) {
+
+      } else {
+        rewind();
+        break;
+      }
+    }
+  } else if(isDigit(secondChar) || secondChar == 'e' || secondChar == '.') {
+    // Parse a digit of one of the following forms:
+    //
+    // 12 ...
+    // 1e ...
+    // 1. ...
+  }
+
+  // We can also do something like this to 
+  // check for a long value.
+  //
+  // if(advance() == 'L') {
+  //
+  // }
+
+  return tok::NUMBER_LITERAL;
+}
+
+auto Lexer::continueWithIdentifierStart(const char currentChar) -> tok::Token {
+  // reset buffer
+  // add currentChar to buffer
+  (void)currentChar;
+
+  return resulting(
+    [&](const char c) { return isIdentifierPart(c); },
+    [&](const char) { /* add char to buffer */ },
+    tok::IDENTIFIER
+  );
+}
+
+auto Lexer::continueWithSlash(const char currentChar) -> tok::Token {
+  (void)currentChar;
+
+  const auto nextChar = advance(); 
+
+  if(nextChar == '/') {
+    while(canAdvance()) {
+      if(isNewLine(advance())) {
+        break;
+      }
+    }
+
+    return tok::COMMENT_SINGLE;
+  } else if(nextChar == '*') {
+    auto openComments = 1;
+    
+    while(openComments > 0 && canAdvance()) {
+      const auto commentChar = advance();
+      if(commentChar == '/') {
+
+      } else if(commentChar == '*') {
+        if(advance() == '/') {
+          --openComments;
+        } else {
+          rewind();
+        }
+      }
+    }
+
+    if(openComments > 0) {
+      // Reached premature EOF.
+      // We can ignore this if we do not want to be
+      // too pedantic.
+
+      return tok::ERROR;
+    }
+
+    return tok::COMMENT_MULTI;
+  } else {
+    rewind();
+    return tok::SLASH;
+  }
 }
 }

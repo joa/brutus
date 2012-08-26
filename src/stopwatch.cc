@@ -1,15 +1,15 @@
 #include "brutus.h"
 
 namespace brutus {
-void Stopwatch::start() {
+auto Stopwatch::start() -> void {
   m_start = std::chrono::high_resolution_clock::now();  
 }
 
-void Stopwatch::stop() {
+auto Stopwatch::stop() -> void {
   m_end = std::chrono::high_resolution_clock::now();
 }
 
-void Stopwatch::log() {
+auto Stopwatch::log() -> void {
   auto deltaTicks = 
     std::chrono::duration<
       double,
@@ -35,7 +35,7 @@ void Stopwatch::log() {
     << std::endl;
 }
 
-void Stopwatch::stopAndLog() {
+auto Stopwatch::stopAndLog() -> void {
   stop();
   log();
 }

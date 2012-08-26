@@ -11,58 +11,63 @@
 // and assignment operator.
 #define DISALLOW_COPY_AND_ASSIGN(T) \
   T& operator=(const T&) = delete; \
-  T(const T&) = delete
+  T&& operator=(const T&&) = delete; \
+  T(const T&) = delete; \
+  T(const T&&) = delete
+
+#define YES true
+#define NO false
 
 namespace brutus {
   // Util
 
   class Stopwatch {
-    public:
+  public:
     explicit Stopwatch() {}
-    void start();
-    void stop();
-    void log();
-    void stopAndLog();
+    auto start() -> void;
+    auto stop() -> void;
+    auto log() -> void;
+    auto stopAndLog() -> void;
 
-    private:
+  private:
     DISALLOW_COPY_AND_ASSIGN(Stopwatch);
     std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
     std::chrono::time_point<std::chrono::high_resolution_clock> m_end;
-  };
+  }; // class Stopwatch
 
   // CharStream
 
   class CharStream {
-    public:
+  public:
     explicit CharStream() {}
     virtual ~CharStream() {}
-    virtual bool hasNext() = 0;
-    virtual char next() = 0;
-    virtual void foreach(std::function<void(char)> f) = 0;
+    virtual auto hasNext() -> bool = 0;
+    virtual auto next() -> char = 0;
+    virtual auto foreach(std::function<void(char)> f) -> void = 0;
 
-    private:
+  private:
     DISALLOW_COPY_AND_ASSIGN(CharStream);
-  };
+  }; // class CharStream
 
   class FileCharStream : public CharStream {
-    public:
+  public:
     explicit FileCharStream(FILE* file) : 
       m_file(file),
       m_bufferIndex(0),
       m_bufferLength(0) {}
-    bool hasNext();
-    char next();
+    auto hasNext() -> bool;
+    auto next() -> char;
     void foreach(std::function<void(char)> f);
 
-    private:
+  private:
     DISALLOW_COPY_AND_ASSIGN(FileCharStream);
-    void updateBuffer();
+    auto updateBuffer() -> void;
 
     const FILE* m_file;
     char m_buffer[0x100];
     size_t m_bufferIndex;
     size_t m_bufferLength;
-  };
+  }; // class FileCharStream
 
   // Lexer
 
@@ -78,6 +83,9 @@ namespace brutus {
     NUMBER_LITERAL,
     BOOLEAN_LITERAL,
     STRING_LITERAL,
+
+    COMMENT_SINGLE,
+    COMMENT_MULTI,
 
     SEMICOLON,
     COMMA,
@@ -95,13 +103,13 @@ namespace brutus {
     ASTERISK,
     SLASH,
     PERCENT
-  }; 
+  }; // enum Token
 
-  const char* toString(Token token);
+  auto toString(Token token) -> const char*;
   } // namespace tok
 
   class Lexer {
-    public:
+  public:
     explicit Lexer(CharStream* charStream) : 
       m_stream(charStream),
       m_line(0),
@@ -109,36 +117,39 @@ namespace brutus {
       m_currentChar('\0'),
       m_advanceWithLastChar(false) {}
 
-    tok::Token nextToken();
-    const char* value();
-    int posLine();
-    int posColumn();
+    auto nextToken() -> tok::Token;
+    auto value() -> const char*;
+    auto posLine() -> int;
+    auto posColumn() -> int;
 
-    private:
+  private:
     DISALLOW_COPY_AND_ASSIGN(Lexer);
     CharStream* const m_stream;
     int m_line, m_column;
     char m_currentChar;
     bool m_advanceWithLastChar;
 
-    bool canAdvance();
-    char advance();
-    void rewind();
+    auto canAdvance() -> bool;
+    auto advance() -> char;
+    auto rewind() -> void;
 
-    bool isWhitespace(const char c);
-    bool isNewLine(const char c);
+    auto isWhitespace(const char c) -> bool;
+    auto isNewLine(const char c) -> bool;
+    auto isNumberStart(const char c) -> bool;
+    auto isDigit(const char c) -> bool;
 
-    bool isIdentifierStart(const char c);
-    bool isIdentifierPart(const char c);
+    auto isIdentifierStart(const char c) -> bool;
+    auto isIdentifierPart(const char c) -> bool;
 
-    bool isNumberStart(const char c);
-    bool isNumberPart(const char c);
+    auto continueWithNumberStart(const char currentChar) -> tok::Token;
+    auto continueWithIdentifierStart(const char currentChar) -> tok::Token;
+    auto continueWithSlash(const char currentChar) -> tok::Token;
 
-    tok::Token resulting(
+    auto resulting(
       std::function<bool(const char)> condition,
       std::function<void(const char)> f,
-      tok::Token result);
-  };
-}
+      tok::Token result) -> tok::Token;
+  }; // class Lexer
+} // namespace brutus
 
 #endif

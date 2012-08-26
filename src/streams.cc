@@ -1,16 +1,16 @@
 #include "brutus.h"
 
 namespace brutus {
-bool FileCharStream::hasNext() {
+auto FileCharStream::hasNext() -> bool {
   if(m_bufferIndex < m_bufferLength) {
-    return true;
+    return YES;
   } else {
     updateBuffer();
     return m_bufferLength > 0;
   }
 }
 
-char FileCharStream::next() {
+auto FileCharStream::next() -> char {
   if(m_bufferIndex >= m_bufferLength) {
     updateBuffer();
   }
@@ -21,7 +21,7 @@ char FileCharStream::next() {
   return result;
 }
 
-void FileCharStream::updateBuffer() {
+auto FileCharStream::updateBuffer() -> void {
   auto numCharsRead =
     fread(
       &m_buffer,
@@ -33,7 +33,7 @@ void FileCharStream::updateBuffer() {
   m_bufferLength = numCharsRead;
 }
 
-void FileCharStream::foreach(std::function<void(char)> f) {
+auto FileCharStream::foreach(std::function<void(char)> f) -> void {
   while(hasNext()) {
     f(next());
   }

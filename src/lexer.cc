@@ -41,7 +41,7 @@ auto toString(Token token) -> const char* {
 
 auto Lexer::resulting(
     std::function<bool(const char)> condition,
-    std::function<void(const char)> f,
+    std::function<bool(const char)> sideEffect,
     tok::Token result) -> tok::Token {
   while(canAdvance()) {
     const auto nextChar = advance();
@@ -50,7 +50,9 @@ auto Lexer::resulting(
       rewind();
       break;
     } else {
-      f(nextChar);
+      if(!sideEffect(nextChar)) {
+        return tok::ERROR;
+      }
     }
   }
 
@@ -64,7 +66,7 @@ auto Lexer::nextToken() -> tok::Token {
     if(isWhitespace(currentChar)) {
       return resulting(
         [&](const char c) { return isWhitespace(c); },
-        [&](const char) { /* empty */ },
+        [&](const char) { return YES; },
         tok::WHITESPACE
       );
     } else if(isNewLine(currentChar)) {
@@ -72,7 +74,7 @@ auto Lexer::nextToken() -> tok::Token {
 
       return resulting(
         [&](const char c) { return isNewLine(c); },
-        [&](const char) { ++m_line; },
+        [&](const char) -> bool { ++m_line; return YES; },
         tok::NEWLINE
       );
     } else if(isNumberStart(currentChar)) {
@@ -107,8 +109,13 @@ auto Lexer::nextToken() -> tok::Token {
 
   return tok::_EOF;
 }
+
 auto Lexer::value() -> const char* {
-  return u8"";
+  return m_buffer;
+}
+
+auto Lexer::valueLength() -> size_t {
+  return m_bufferIndex;
 }
 
 auto Lexer::posLine() -> int {
@@ -182,9 +189,7 @@ auto Lexer::isDigit(const char c) -> bool {
 //
 
 auto Lexer::continueWithNumberStart(const char currentChar) -> tok::Token {
-  //reset buffer
-  //add currentChar to buffer
-  (void)currentChar;  
+  beginBuffer(currentChar);
 
   // We allow only 0xffffff not 0XFFFFFF, not 0xFFFFFF
   const auto secondChar = advance();
@@ -220,36 +225,44 @@ auto Lexer::continueWithNumberStart(const char currentChar) -> tok::Token {
 }
 
 auto Lexer::continueWithIdentifierStart(const char currentChar) -> tok::Token {
-  // reset buffer
-  // add currentChar to buffer
-  (void)currentChar;
+  beginBuffer(currentChar);
 
   return resulting(
     [&](const char c) { return isIdentifierPart(c); },
-    [&](const char) { /* add char to buffer */ },
+    [&](const char c) { return continueBuffer(c); },
     tok::IDENTIFIER
   );
 }
 
 auto Lexer::continueWithSlash(const char currentChar) -> tok::Token {
-  (void)currentChar;
+  beginBuffer(currentChar);
 
   const auto nextChar = advance(); 
 
   if(nextChar == '/') {
+    continueBuffer(nextChar);
+
     while(canAdvance()) {
-      if(isNewLine(advance())) {
+      char singleLineChar = advance();
+
+      if(isNewLine(singleLineChar)) {
         break;
       }
+
+      continueBuffer(singleLineChar);
     }
 
     return tok::COMMENT_SINGLE;
   } else if(nextChar == '*') {
+    continueBuffer(nextChar);
+
     auto openComments = 1;
     
     while(openComments > 0 && canAdvance()) {
       const auto commentChar = advance();
+
       if(commentChar == '/') {
+        //TODO(joa): check for opening comment.
 
       } else if(commentChar == '*') {
         if(advance() == '/') {
@@ -257,6 +270,8 @@ auto Lexer::continueWithSlash(const char currentChar) -> tok::Token {
         } else {
           rewind();
         }
+      } else {
+        continueBuffer(commentChar);
       }
     }
 
@@ -273,5 +288,29 @@ auto Lexer::continueWithSlash(const char currentChar) -> tok::Token {
     rewind();
     return tok::SLASH;
   }
+}
+
+//
+
+auto Lexer::resetBuffer() -> void {
+  std::memset(m_buffer, 0, sizeof(m_buffer));
+}
+
+auto Lexer::beginBuffer(const char c) -> void {
+  resetBuffer();
+  
+  m_buffer[0] = c;
+  m_bufferIndex = 1;
+}
+
+auto Lexer::continueBuffer(const char c) -> bool {
+  if(m_bufferIndex == BUFFER_SIZE) {
+    return NO;
+  }
+
+  m_buffer[m_bufferIndex] = c;
+  ++m_bufferIndex;
+
+  return YES;
 }
 }

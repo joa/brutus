@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <cstring>
 #include <functional>
 
 // Macro to disallow the invocation of copy constructor
@@ -119,15 +120,25 @@ namespace brutus {
 
     auto nextToken() -> tok::Token;
     auto value() -> const char*;
+    auto valueLength() -> size_t;
     auto posLine() -> int;
     auto posColumn() -> int;
 
   private:
+    static const size_t BUFFER_SIZE = 0x100;
+
     DISALLOW_COPY_AND_ASSIGN(Lexer);
     CharStream* const m_stream;
     int m_line, m_column;
     char m_currentChar;
     bool m_advanceWithLastChar;
+
+    char m_buffer[BUFFER_SIZE];
+    size_t m_bufferIndex;
+
+    auto resetBuffer() -> void;
+    auto beginBuffer(const char c) -> void;
+    auto continueBuffer(const char c) -> bool;
 
     auto canAdvance() -> bool;
     auto advance() -> char;
@@ -147,7 +158,7 @@ namespace brutus {
 
     auto resulting(
       std::function<bool(const char)> condition,
-      std::function<void(const char)> f,
+      std::function<bool(const char)> sideEffect,
       tok::Token result) -> tok::Token;
   }; // class Lexer
 } // namespace brutus

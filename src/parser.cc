@@ -62,7 +62,7 @@ ast::Node* Parser::parseBlock() {
     } while(!peek(tok::RBRACE));
 
     EXPECT(tok::RBRACE);
-	  return block;
+    return block;
   } else {
     return parseExpression();
   }

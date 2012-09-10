@@ -49,7 +49,7 @@ auto hasValue(const Token& token) -> bool {
       return NO;
   }
 }
-}
+} //namespace tok
 
 auto Lexer::resulting(
     std::function<bool(const char)> condition,
@@ -325,4 +325,4 @@ auto Lexer::continueBuffer(const char c) -> bool {
 
   return YES;
 }
-}
+} //namespace brutus

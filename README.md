@@ -4,6 +4,7 @@
 | __ -|    -|  |  | | | |  |  |__   |
 |_____|__|__|_____| |_| |_____|_____|
 </pre>
+locaiton transparent vm for shared-nothing actors.
 
 Linux
 -------------

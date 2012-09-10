@@ -183,15 +183,18 @@ bool Lexer::isNumberStart(const char c) {
   return c >= '0' && c <= '9';
 }
 
+//TODO(joa): fix unicode handling and accept correct chars.
 bool Lexer::isIdentifierStart(const char c) {
   return (c >= 'a' && c <= 'z')
       || (c >= 'A' && c <= 'Z')
-      || (c == '_');
+      || (c == '_')
+      || ((unsigned char)c >= 0xC0);
 }
 
 bool Lexer::isIdentifierPart(const char c) {
   return isIdentifierStart(c)
-      || (c >= '0' && c <= '9');
+      || (c >= '0' && c <= '9')
+      || ((unsigned char)c >= 0x80);
 }
 
 bool Lexer::isDigit(const char c) {

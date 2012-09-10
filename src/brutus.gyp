@@ -13,6 +13,7 @@
       'sources': [
        'brutus.cc',
        'lexer.cc',
+       'parser.cc',
        'streams.cc',
        'stopwatch.cc',
       ],

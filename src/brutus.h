@@ -106,7 +106,8 @@ namespace brutus {
     PERCENT
   }; // enum Token
 
-  auto toString(Token token) -> const char*;
+  auto toString(const Token& token) -> const char*;
+  auto hasValue(const Token& token) -> bool;
   } // namespace tok
 
   class Lexer {

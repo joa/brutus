@@ -2,7 +2,7 @@
 
 namespace brutus {
 namespace tok {
-auto toString(Token token) -> const char* {
+auto toString(const Token& token) -> const char* {
   #define TOKEN_TO_STRING_CASE(T, S) case T: return S
   switch(token) {
     TOKEN_TO_STRING_CASE(_EOF, u8"EOF");
@@ -36,6 +36,18 @@ auto toString(Token token) -> const char* {
     default: return u8"UNKNOWN";
   }
   #undef TOKEN_TO_STRING_CASE
+}
+
+auto hasValue(const Token& token) -> bool {
+  switch(token) {
+    case IDENTIFIER:
+    case NUMBER_LITERAL:
+    case BOOLEAN_LITERAL:
+    case STRING_LITERAL:
+      return YES;
+    default:
+      return NO;
+  }
 }
 }
 

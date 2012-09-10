@@ -35,7 +35,10 @@ auto main(int argc, char** argv) -> int {
   while((t = lexer->nextToken()) != brutus::tok::_EOF) {
     ++numT;
     std::cout << brutus::tok::toString(t) << std::endl;
-    std::cout << lexer->value() << std::endl;
+    
+    if(brutus::tok::hasValue(t)) {
+      std::cout << lexer->value() << std::endl;
+    }
   }
 
   std::cout << u8"tokens: " << numT << std::endl;

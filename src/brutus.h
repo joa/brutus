@@ -25,10 +25,10 @@ namespace brutus {
   class Stopwatch {
   public:
     explicit Stopwatch() {}
-    auto start() -> void;
-    auto stop() -> void;
-    auto log() -> void;
-    auto stopAndLog() -> void;
+    void start();
+    void stop();
+    void log();
+    void stopAndLog();
 
   private:
     DISALLOW_COPY_AND_ASSIGN(Stopwatch);
@@ -42,9 +42,9 @@ namespace brutus {
   public:
     explicit CharStream() {}
     virtual ~CharStream() {}
-    virtual auto hasNext() -> bool = 0;
-    virtual auto next() -> char = 0;
-    virtual auto foreach(std::function<void(char)> f) -> void = 0;
+    virtual bool hasNext() = 0;
+    virtual char next() = 0;
+    virtual void foreach(std::function<void(char)> f) = 0;
 
   private:
     DISALLOW_COPY_AND_ASSIGN(CharStream);
@@ -56,13 +56,13 @@ namespace brutus {
       m_file(file),
       m_bufferIndex(0),
       m_bufferLength(0) {}
-    auto hasNext() -> bool;
-    auto next() -> char;
+    bool hasNext();
+    char next();
     void foreach(std::function<void(char)> f);
 
   private:
     DISALLOW_COPY_AND_ASSIGN(FileCharStream);
-    auto updateBuffer() -> void;
+    void updateBuffer();
 
     const FILE* m_file;
     char m_buffer[0x100];
@@ -106,8 +106,8 @@ namespace brutus {
     PERCENT
   }; // enum Token
 
-  auto toString(const Token& token) -> const char*;
-  auto hasValue(const Token& token) -> bool;
+  const char* toString(const Token& token);
+  bool hasValue(const Token& token);
   } // namespace tok
 
   class Lexer {
@@ -119,49 +119,54 @@ namespace brutus {
       m_currentChar('\0'),
       m_advanceWithLastChar(false) {}
 
-    auto nextToken() -> tok::Token;
-    auto value() -> const char*;
-    auto valueLength() -> size_t;
-    auto posLine() -> int;
-    auto posColumn() -> int;
+    tok::Token nextToken();
+    const char* value();
+    size_t valueLength();
+    unsigned int posLine();
+    unsigned int posColumn();
 
   private:
+    DISALLOW_COPY_AND_ASSIGN(Lexer);
+
     static const size_t BUFFER_SIZE = 0x100;
 
-    DISALLOW_COPY_AND_ASSIGN(Lexer);
     CharStream* const m_stream;
-    int m_line, m_column;
+    unsigned int m_line, m_column;
     char m_currentChar;
     bool m_advanceWithLastChar;
 
     char m_buffer[BUFFER_SIZE];
     size_t m_bufferIndex;
 
-    auto resetBuffer() -> void;
-    auto beginBuffer(const char c) -> void;
-    auto continueBuffer(const char c) -> bool;
+    void resetBuffer();
+    void beginBuffer(const char c);
+    bool continueBuffer(const char c);
 
-    auto canAdvance() -> bool;
-    auto advance() -> char;
-    auto rewind() -> void;
+    bool canAdvance();
+    char advance();
+    void rewind();
 
-    auto isWhitespace(const char c) -> bool;
-    auto isNewLine(const char c) -> bool;
-    auto isNumberStart(const char c) -> bool;
-    auto isDigit(const char c) -> bool;
+    bool isWhitespace(const char c);
+    bool isNewLine(const char c);
+    bool isNumberStart(const char c);
+    bool isDigit(const char c);
 
-    auto isIdentifierStart(const char c) -> bool;
-    auto isIdentifierPart(const char c) -> bool;
+    bool isIdentifierStart(const char c);
+    bool isIdentifierPart(const char c);
 
-    auto continueWithNumberStart(const char currentChar) -> tok::Token;
-    auto continueWithIdentifierStart(const char currentChar) -> tok::Token;
-    auto continueWithSlash(const char currentChar) -> tok::Token;
+    tok::Token continueWithNumberStart(const char currentChar);
+    tok::Token continueWithIdentifierStart(const char currentChar);
+    tok::Token continueWithSlash(const char currentChar);
 
-    auto resulting(
+    tok::Token resulting(
       std::function<bool(const char)> condition,
       std::function<bool(const char)> sideEffect,
-      tok::Token result) -> tok::Token;
+      tok::Token result);
   }; // class Lexer
+
+  class Parser {
+
+  }; // class Parser
 } // namespace brutus
 
 #endif

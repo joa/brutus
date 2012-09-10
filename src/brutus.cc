@@ -1,12 +1,9 @@
 #include "brutus.h"
 
-#include <iostream>
-#include <functional>
-
 const auto numIterations = 100000000;
 const auto numTrials = 3;
 
-auto perf_test(std::function<int()> f) -> void {
+void perf_test(std::function<int()> f) {
   brutus::Stopwatch stopwatch;    
 
   for(auto trail = 0; trail < numTrials; ++trail) {
@@ -16,7 +13,7 @@ auto perf_test(std::function<int()> f) -> void {
   }
 }
 
-auto main(int argc, char** argv) -> int {
+int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
 
@@ -35,7 +32,7 @@ auto main(int argc, char** argv) -> int {
   while((t = lexer->nextToken()) != brutus::tok::_EOF) {
     ++numT;
     std::cout << brutus::tok::toString(t) << std::endl;
-    
+
     if(brutus::tok::hasValue(t)) {
       std::cout << lexer->value() << std::endl;
     }
@@ -48,7 +45,7 @@ auto main(int argc, char** argv) -> int {
   return 0;
 }
 
-auto main2(int argc, char** argv) -> int {
+int main2(int argc, char** argv) {
   (void)argc;
   (void)argv;
   

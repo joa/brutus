@@ -2,7 +2,7 @@
 
 namespace brutus {
 namespace tok {
-auto toString(const Token& token) -> const char* {
+const char* toString(const Token& token) {
   #define TOKEN_TO_STRING_CASE(T, S) case T: return S
   switch(token) {
     TOKEN_TO_STRING_CASE(_EOF, u8"EOF");
@@ -38,7 +38,7 @@ auto toString(const Token& token) -> const char* {
   #undef TOKEN_TO_STRING_CASE
 }
 
-auto hasValue(const Token& token) -> bool {
+bool hasValue(const Token& token) {
   switch(token) {
     case IDENTIFIER:
     case NUMBER_LITERAL:
@@ -51,10 +51,10 @@ auto hasValue(const Token& token) -> bool {
 }
 } //namespace tok
 
-auto Lexer::resulting(
+tok::Token Lexer::resulting(
     std::function<bool(const char)> condition,
     std::function<bool(const char)> sideEffect,
-    tok::Token result) -> tok::Token {
+    tok::Token result) {
   while(canAdvance()) {
     const auto nextChar = advance();
 
@@ -71,7 +71,7 @@ auto Lexer::resulting(
   return result;
 }
 
-auto Lexer::nextToken() -> tok::Token {
+tok::Token Lexer::nextToken() {
   while(canAdvance()) {
     auto currentChar = advance();
 
@@ -122,27 +122,27 @@ auto Lexer::nextToken() -> tok::Token {
   return tok::_EOF;
 }
 
-auto Lexer::value() -> const char* {
+const char* Lexer::value() {
   return m_buffer;
 }
 
-auto Lexer::valueLength() -> size_t {
+size_t Lexer::valueLength() {
   return m_bufferIndex;
 }
 
-auto Lexer::posLine() -> int {
+unsigned int Lexer::posLine() {
   return m_line;
 }
 
-auto Lexer::posColumn() -> int {
+unsigned int Lexer::posColumn() {
   return m_column;
 }
 
-auto Lexer::canAdvance() -> bool {
+bool Lexer::canAdvance() {
   return m_advanceWithLastChar || m_stream->hasNext();
 }
 
-auto Lexer::advance() -> char {
+char Lexer::advance() {
   if(m_advanceWithLastChar) {
     m_advanceWithLastChar = NO;
   } else {
@@ -154,7 +154,7 @@ auto Lexer::advance() -> char {
   return m_currentChar;
 }
 
-auto Lexer::rewind() -> void {
+void Lexer::rewind() {
 #ifdef DEBUG
   if(m_advanceWithLastChar) {
     std::cout << u8"Error: Called Lexer::rewind() twice in a row." << std::endl;
@@ -165,42 +165,42 @@ auto Lexer::rewind() -> void {
   --m_column;
 }
 
-auto Lexer::isWhitespace(const char c) -> bool {
+bool Lexer::isWhitespace(const char c) {
   // Note that we explicitly forbid \t in Brutus
   // source code so only space characters are treated
   // as whitespace.
   return c == ' ';
 }
 
-auto Lexer::isNewLine(const char c) -> bool {
+bool Lexer::isNewLine(const char c) {
   // Note that we explicitly forbid \r in Brutus
   // source code so only \n is allowed as a line
   // terminator.
   return c == '\n';
 }
 
-auto Lexer::isNumberStart(const char c) -> bool {
+bool Lexer::isNumberStart(const char c) {
   return c >= '0' && c <= '9';
 }
 
-auto Lexer::isIdentifierStart(const char c) -> bool {
+bool Lexer::isIdentifierStart(const char c) {
   return (c >= 'a' && c <= 'z')
       || (c >= 'A' && c <= 'Z')
       || (c == '_');
 }
 
-auto Lexer::isIdentifierPart(const char c) -> bool {
+bool Lexer::isIdentifierPart(const char c) {
   return isIdentifierStart(c)
       || (c >= '0' && c <= '9');
 }
 
-auto Lexer::isDigit(const char c) -> bool {
+bool Lexer::isDigit(const char c) {
   return (c >= '0' && c <= '9');
 }
 
 //
 
-auto Lexer::continueWithNumberStart(const char currentChar) -> tok::Token {
+tok::Token Lexer::continueWithNumberStart(const char currentChar) {
   beginBuffer(currentChar);
 
   // We allow only 0xffffff not 0XFFFFFF, not 0xFFFFFF
@@ -236,7 +236,7 @@ auto Lexer::continueWithNumberStart(const char currentChar) -> tok::Token {
   return tok::NUMBER_LITERAL;
 }
 
-auto Lexer::continueWithIdentifierStart(const char currentChar) -> tok::Token {
+tok::Token Lexer::continueWithIdentifierStart(const char currentChar) {
   beginBuffer(currentChar);
 
   return resulting(
@@ -246,7 +246,7 @@ auto Lexer::continueWithIdentifierStart(const char currentChar) -> tok::Token {
   );
 }
 
-auto Lexer::continueWithSlash(const char currentChar) -> tok::Token {
+tok::Token Lexer::continueWithSlash(const char currentChar) {
   beginBuffer(currentChar);
 
   const auto nextChar = advance(); 
@@ -304,18 +304,18 @@ auto Lexer::continueWithSlash(const char currentChar) -> tok::Token {
 
 //
 
-auto Lexer::resetBuffer() -> void {
+void Lexer::resetBuffer() {
   std::memset(m_buffer, 0, sizeof(m_buffer));
 }
 
-auto Lexer::beginBuffer(const char c) -> void {
+void Lexer::beginBuffer(const char c) {
   resetBuffer();
   
   m_buffer[0] = c;
   m_bufferIndex = 1;
 }
 
-auto Lexer::continueBuffer(const char c) -> bool {
+bool Lexer::continueBuffer(const char c) {
   if(m_bufferIndex == BUFFER_SIZE) {
     return NO;
   }

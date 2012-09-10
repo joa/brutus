@@ -34,7 +34,7 @@ namespace brutus {
 
 //
 // Program
-// 	: Block NEWLINE
+//  : Block NEWLINE
 //
 ast::Node* Parser::parseProgram() {
   advance();
@@ -47,7 +47,7 @@ ast::Node* Parser::parseProgram() {
 
 //
 // Block 
-//	: '{' NEWLINE (Expression NEWLINE)+ '}'
+//  : '{' NEWLINE (Expression NEWLINE)+ '}'
 //  | Expression
 // 
 ast::Node* Parser::parseBlock() {
@@ -70,18 +70,18 @@ ast::Node* Parser::parseBlock() {
 
 //
 // ActorPath
-//	: 'deploy' Type ('@' Path)?
-//	| Type '@' Path
+//  : 'deploy' Type ('@' Path)?
+//  | Type '@' Path
 //
 
 //
 // ActorName
-//	: Identifier
+//  : Identifier
 //
 
 //
 // Path
-//  : '.' ('/' Path)?
+//   : '.' ('/' Path)?
 //  | '..' ('/' Path)?
 //  | '/' Path
 //  | ActorName ('/' Path)?
@@ -89,8 +89,8 @@ ast::Node* Parser::parseBlock() {
 
 //
 // Expression
-//	: Call
-//	| ActorPath
+//  : Call
+//  | ActorPath
 //
 ast::Node* Parser::parseExpression() {
   return parseIdentifier();
@@ -98,7 +98,7 @@ ast::Node* Parser::parseExpression() {
 
 //
 // Type
-//	: Identifier ('[' Type ']')?
+//  : Identifier ('[' Type ']')?
 //
 ast::Node* Parser::parseType() {
   //TODO(joa): wrap in type, add attrib
@@ -107,7 +107,7 @@ ast::Node* Parser::parseType() {
 
 //
 // Identifier
-//	: IDENTIFIER
+//  : IDENTIFIER
 //
 ast::Node* Parser::parseIdentifier() {
   return consume(tok::IDENTIFIER, [&]() { return createWithValue<ast::Identifier>(); });

@@ -113,6 +113,9 @@ ast::Node* Parser::parseIdentifier() {
   return consume(tok::IDENTIFIER, [&]() { return createWithValue<ast::Identifier>(); });
 }
 
+// Utility methods for the parser
+//
+
 template<class T>
 T* Parser::create() {
   //TODO(joa): alloc in arena

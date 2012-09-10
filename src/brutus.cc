@@ -25,7 +25,14 @@ int main(int argc, char** argv) {
 
   auto stream = new brutus::FileCharStream(fp);
   auto lexer = new brutus::Lexer(stream); 
+  auto parser = new brutus::Parser(lexer);
+  auto ast = parser->parseProgram();
+  
+  ast->print(std::cout);
 
+  std::cout << std::endl;
+
+  /*
   brutus::tok::Token t;
   auto numT = 0;
 
@@ -39,6 +46,7 @@ int main(int argc, char** argv) {
   }
 
   std::cout << u8"tokens: " << numT << std::endl;
+  */
 
   fclose(fp);
 

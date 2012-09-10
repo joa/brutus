@@ -83,7 +83,8 @@ tok::Token Lexer::nextToken() {
       );
     } else if(isNewLine(currentChar)) {
       ++m_line;
-
+      m_column = 0;
+      
       return resulting(
         [&](const char c) { return isNewLine(c); },
         [&](const char) -> bool { ++m_line; return YES; },
@@ -184,6 +185,7 @@ bool Lexer::isNumberStart(const char c) {
 }
 
 //TODO(joa): fix unicode handling and accept correct chars.
+
 bool Lexer::isIdentifierStart(const char c) {
   return (c >= 'a' && c <= 'z')
       || (c >= 'A' && c <= 'Z')

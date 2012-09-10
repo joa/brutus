@@ -19,6 +19,9 @@
 #define YES true
 #define NO false
 
+// Preconditions for compiling Brutus
+static_assert(sizeof(char) == 1, "sizeof(char) must be one.");
+
 namespace brutus {
   // Util
 
@@ -164,8 +167,43 @@ namespace brutus {
       tok::Token result);
   }; // class Lexer
 
-  class Parser {
+  class Arena {
+  public:
+    explicit Arena() {}
+  private:
+    DISALLOW_COPY_AND_ASSIGN(Arena);
+  }; // class Arena
 
+  namespace ast {
+    #include "ast.h"
+  } //namespace ast
+
+  class Parser {
+  public:
+    explicit Parser(Lexer* lexer) : m_lexer(lexer), m_arena() {}
+
+    ast::Node* parseProgram();
+    ast::Node* parseBlock();
+    ast::Node* parseExpression();
+    ast::Node* parseType();
+    ast::Node* parseIdentifier();
+  private:
+    DISALLOW_COPY_AND_ASSIGN(Parser);
+
+    Lexer* const m_lexer;
+    Arena m_arena;
+    tok::Token m_currentToken;
+
+    void advance();
+    bool isIgnored(const tok::Token& token);
+    bool peek(const tok::Token& token);
+    bool accept(const tok::Token& token);
+    ast::Node* consume(const tok::Token& token, std::function<ast::Node*()> f);
+
+    template<class T> T* create();
+    template<class T> T* createWithValue();
+
+    ast::Node* error(const char* value);
   }; // class Parser
 } // namespace brutus
 

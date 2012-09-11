@@ -30,7 +30,7 @@ namespace brutus {
 
 // Macro to expect a certain token type. If no such token is found
 // the ast::Error token is returned.
-#define EXPECT(t) if(!accept(t)) { return error(u8"Invalid syntax. Expected " #t "."); }
+#define EXPECT(t) if(!poll(t)) { return error(u8"Invalid syntax. Expected " #t "."); }
 
 //
 // Program
@@ -51,7 +51,7 @@ ast::Node* Parser::parseProgram() {
 //  | Expression
 // 
 ast::Node* Parser::parseBlock() {
-  if(accept(tok::LBRACE)) {
+  if(poll(tok::LBRACE)) {
     EXPECT(tok::NEWLINE);
 
     auto block = create<ast::Block>();
@@ -93,10 +93,41 @@ ast::Node* Parser::parseBlock() {
 //  | ActorPath
 //
 ast::Node* Parser::parseExpression() {
-  return parseIdentifier();
+  return parsePrimaryExpression();
 }
 
+
 //
+// PrimaryExpression
+//  : '(' Expression ')'
+//  | Identifier
+//  | NumberLiteral
+//  | StringLiteral
+//  | BooleanLiteral
+//  | 'this'
+//
+ast::Node* Parser::parsePrimaryExpression() {
+  if(poll(tok::LPAREN)) {
+    // '(' Expression ')'
+    auto result = parseExpression();
+    EXPECT(tok::RPAREN);
+
+    return result;
+  } else if(peek(tok::IDENTIFIER)) {
+    return parseIdentifier();
+  } else if(peek(tok::NUMBER_LITERAL)) {
+    return nullptr; //TODO(joa): parseNumberLiteral
+  } else if(peek(tok::BOOLEAN_LITERAL)) {
+    return nullptr; //TODO(joa): parseBooleanLiteral
+  } else if(peek(tok::STRING_LITERAL)) {
+    return nullptr; //TODO(joa): parseStringLiteral
+  } else if(poll(tok::THIS)) {
+    return create<ast::This>();
+  }
+
+  return error(u8"Expected primary expression.");
+}
+
 // Type
 //  : Identifier ('[' Type ']')?
 //
@@ -139,7 +170,7 @@ bool Parser::peek(const tok::Token& token) {
   return m_currentToken == token;
 }
 
-bool Parser::accept(const tok::Token& token) {
+bool Parser::poll(const tok::Token& token) {
   if(peek(token)) {
     advance();
     return YES;

@@ -19,6 +19,11 @@
 #define YES true
 #define NO false
 
+template<typename T, size_t sizeOfArray>
+constexpr size_t NumberOfElements(T (&)[sizeOfArray]) {
+    return sizeOfArray;
+}
+
 // Preconditions for compiling Brutus
 static_assert(sizeof(char) == 1, "sizeof(char) must be one.");
 
@@ -91,6 +96,7 @@ namespace brutus {
     COMMENT_SINGLE,
     COMMENT_MULTI,
 
+    // Control characters:
     SEMICOLON,
     COMMA,
     LPAREN,
@@ -102,11 +108,15 @@ namespace brutus {
     DOT,
     COLON,
 
+    // Operators: (soon to be gone!)
     PLUS,
     MINUS,
     ASTERISK,
     SLASH,
-    PERCENT
+    PERCENT,
+
+    // Keywords:
+    THIS
   }; // enum Token
 
   const char* toString(const Token& token);
@@ -185,6 +195,7 @@ namespace brutus {
     ast::Node* parseProgram();
     ast::Node* parseBlock();
     ast::Node* parseExpression();
+    ast::Node* parsePrimaryExpression();
     ast::Node* parseType();
     ast::Node* parseIdentifier();
   private:
@@ -197,7 +208,7 @@ namespace brutus {
     void advance();
     bool isIgnored(const tok::Token& token);
     bool peek(const tok::Token& token);
-    bool accept(const tok::Token& token);
+    bool poll(const tok::Token& token);
     ast::Node* consume(const tok::Token& token, std::function<ast::Node*()> f);
 
     template<class T> T* create();

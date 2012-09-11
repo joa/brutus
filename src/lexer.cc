@@ -2,6 +2,16 @@
 
 namespace brutus {
 namespace tok {
+static const char* KeywordChars[] = {
+  u8"this"
+};
+
+static const Token KeywordTokens[] = {
+  THIS
+};
+
+static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
+
 const char* toString(const Token& token) {
   #define TOKEN_TO_STRING_CASE(T, S) case T: return S
   switch(token) {
@@ -244,11 +254,23 @@ tok::Token Lexer::continueWithNumberStart(const char currentChar) {
 tok::Token Lexer::continueWithIdentifierStart(const char currentChar) {
   beginBuffer(currentChar);
 
-  return resulting(
+  auto ident = resulting(
     [&](const char c) { return isIdentifierPart(c); },
     [&](const char c) { return continueBuffer(c); },
     tok::IDENTIFIER
   );
+
+  if(ident == tok::IDENTIFIER) {
+    // If we really got an identifier we will check for a keyword.
+
+    for(size_t i = 0; i < tok::NUM_KEYWORDS; ++i) {
+      if(0 == std::strcmp(tok::KeywordChars[i], m_buffer)) {
+        return tok::KeywordTokens[i];
+      }
+    }
+  }
+
+  return ident;
 }
 
 tok::Token Lexer::continueWithSlash(const char currentChar) {

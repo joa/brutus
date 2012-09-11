@@ -4,7 +4,8 @@
 enum Type {
   ERROR,
   BLOCK,
-  IDENTIFIER
+  IDENTIFIER,
+  THIS
 }; //enum Type
 
 class Node {
@@ -68,11 +69,19 @@ private:
 class Identifier : public NodeWithValue {
 public:
   explicit Identifier() {}
-
   void print(std::ostream& out) const { out << u8"Identifier(" << m_value << u8")"; }
   Type type() const { return IDENTIFIER; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Identifier);
+};
+
+class This : public Node {
+public:
+  explicit This() {}
+  void print(std::ostream& out) const { out << u8"This"; }
+  Type type() const { return THIS; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(This);
 };
 
 class Block : public Node {
@@ -109,12 +118,24 @@ public:
 
     if(m_nodesIndex > 0) {
       auto ptr = m_nodes;
+      auto n = *ptr++;
 
-      (*ptr++)->print(out);
+      if(nullptr == n) {
+        out << u8"null";
+      } else {
+        n->print(out);
+      }
 
       for(size_t i = 1; i < m_nodesIndex; ++i) {
         out << ',' << std::endl;
-        (*ptr++)->print(out);
+
+        n = *ptr++;
+
+        if(nullptr == n) {
+          out << u8"null";
+        } else {
+          n->print(out);
+        }
       }
     }
 

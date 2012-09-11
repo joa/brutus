@@ -91,6 +91,7 @@ ast::Node* Parser::parseBlock() {
 // Expression
 //  : Call
 //  | ActorPath
+//  | PrimaryExpression
 //
 ast::Node* Parser::parseExpression() {
   return parsePrimaryExpression();
@@ -111,7 +112,6 @@ ast::Node* Parser::parsePrimaryExpression() {
     // '(' Expression ')'
     auto result = parseExpression();
     EXPECT(tok::RPAREN);
-
     return result;
   } else if(peek(tok::IDENTIFIER)) {
     return parseIdentifier();

@@ -2,12 +2,35 @@
 
 namespace brutus {
 namespace tok {
+
 static const char* KeywordChars[] = {
-  u8"this"
+  "this",
+  "val",
+  "var",
+  "if",
+  "else",
+  "for",
+  "while",
+  "yield",
+  "true",
+  "false",
+  "yes",
+  "no"
 };
 
 static const Token KeywordTokens[] = {
-  THIS
+  THIS,
+  VAL,
+  VAR,
+  IF,
+  ELSE,
+  FOR,
+  WHILE,
+  YIELD,
+  TRUE_,
+  FALSE_,
+  YES_,
+  NO_
 };
 
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
@@ -15,35 +38,49 @@ static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
 const char* toString(const Token& token) {
   #define TOKEN_TO_STRING_CASE(T, S) case T: return S
   switch(token) {
-    TOKEN_TO_STRING_CASE(_EOF, u8"EOF");
-    TOKEN_TO_STRING_CASE(ERROR, u8"ERROR");
-    TOKEN_TO_STRING_CASE(NEWLINE, u8"NEWLINE");
-    TOKEN_TO_STRING_CASE(WHITESPACE, u8"WHITESPACE");
+    TOKEN_TO_STRING_CASE(_EOF, "EOF");
+    TOKEN_TO_STRING_CASE(ERROR, "ERROR");
+    TOKEN_TO_STRING_CASE(NEWLINE, "NEWLINE");
+    TOKEN_TO_STRING_CASE(WHITESPACE, "WHITESPACE");
 
-    TOKEN_TO_STRING_CASE(IDENTIFIER, u8"IDENTIFIER");
+    TOKEN_TO_STRING_CASE(IDENTIFIER, "IDENTIFIER");
 
-    TOKEN_TO_STRING_CASE(NUMBER_LITERAL, u8"NUMBER_LITERAL");
-    TOKEN_TO_STRING_CASE(BOOLEAN_LITERAL, u8"BOOLEAN_LITERAL");
-    TOKEN_TO_STRING_CASE(STRING_LITERAL, u8"STRING_LITERAL");
+    TOKEN_TO_STRING_CASE(NUMBER_LITERAL, "NUMBER_LITERAL");
+    TOKEN_TO_STRING_CASE(STRING_LITERAL, "STRING_LITERAL");
 
-    TOKEN_TO_STRING_CASE(SEMICOLON, u8"SEMICOLON");
-    TOKEN_TO_STRING_CASE(COMMA, u8"COMMA");
-    TOKEN_TO_STRING_CASE(LPAREN, u8"LPAREN");
-    TOKEN_TO_STRING_CASE(RPAREN, u8"RPAREN");
-    TOKEN_TO_STRING_CASE(LBRAC, u8"LBRAC");
-    TOKEN_TO_STRING_CASE(RBRAC, u8"RBRAC");
-    TOKEN_TO_STRING_CASE(LBRACE, u8"LBRACE");
-    TOKEN_TO_STRING_CASE(RBRACE, u8"RBRACE");
-    TOKEN_TO_STRING_CASE(DOT, u8"DOT");
-    TOKEN_TO_STRING_CASE(COLON, u8"COLON");
+    TOKEN_TO_STRING_CASE(SEMICOLON, "SEMICOLON");
+    TOKEN_TO_STRING_CASE(COMMA, "COMMA");
+    TOKEN_TO_STRING_CASE(LPAREN, "LPAREN");
+    TOKEN_TO_STRING_CASE(RPAREN, "RPAREN");
+    TOKEN_TO_STRING_CASE(LBRAC, "LBRAC");
+    TOKEN_TO_STRING_CASE(RBRAC, "RBRAC");
+    TOKEN_TO_STRING_CASE(LBRACE, "LBRACE");
+    TOKEN_TO_STRING_CASE(RBRACE, "RBRACE");
+    TOKEN_TO_STRING_CASE(DOT, "DOT");
+    TOKEN_TO_STRING_CASE(COLON, "COLON");
+    TOKEN_TO_STRING_CASE(ASSIGN, "ASSIGN");
+    TOKEN_TO_STRING_CASE(EQUALS, "EQUALS");
 
-    TOKEN_TO_STRING_CASE(PLUS, u8"PLUS");
-    TOKEN_TO_STRING_CASE(MINUS, u8"MINUS");
-    TOKEN_TO_STRING_CASE(ASTERISK, u8"ASTERISK");
-    TOKEN_TO_STRING_CASE(SLASH, u8"SLASH");
-    TOKEN_TO_STRING_CASE(PERCENT, u8"PERCENT");
+    TOKEN_TO_STRING_CASE(PLUS, "PLUS");
+    TOKEN_TO_STRING_CASE(MINUS, "MINUS");
+    TOKEN_TO_STRING_CASE(ASTERISK, "ASTERISK");
+    TOKEN_TO_STRING_CASE(SLASH, "SLASH");
+    TOKEN_TO_STRING_CASE(PERCENT, "PERCENT");
 
-    default: return u8"UNKNOWN";
+    TOKEN_TO_STRING_CASE(THIS, "THIS");
+    TOKEN_TO_STRING_CASE(VAL, "VAL");
+    TOKEN_TO_STRING_CASE(VAR, "VAR");
+    TOKEN_TO_STRING_CASE(IF, "IF");
+    TOKEN_TO_STRING_CASE(ELSE, "ELSE");
+    TOKEN_TO_STRING_CASE(FOR, "FOR");
+    TOKEN_TO_STRING_CASE(WHILE, "WHILE");
+    TOKEN_TO_STRING_CASE(YIELD, "YIELD");
+    TOKEN_TO_STRING_CASE(TRUE_, "TRUE");
+    TOKEN_TO_STRING_CASE(FALSE_, "FALSE");
+    TOKEN_TO_STRING_CASE(YES_, "YES");
+    TOKEN_TO_STRING_CASE(NO_, "NO");
+
+    default: return "UNKNOWN";
   }
   #undef TOKEN_TO_STRING_CASE
 }
@@ -52,7 +89,6 @@ bool hasValue(const Token& token) {
   switch(token) {
     case IDENTIFIER:
     case NUMBER_LITERAL:
-    case BOOLEAN_LITERAL:
     case STRING_LITERAL:
       return YES;
     default:
@@ -123,6 +159,14 @@ tok::Token Lexer::nextToken() {
         case '-': return tok::MINUS;
         case '*': return tok::ASTERISK;
         case '%': return tok::PERCENT;
+
+        case '=': 
+          if(advance() == '=') {
+            return tok::EQUALS;
+          } else {
+            rewind();
+            return tok::ASSIGN;
+          }
 
         default:
           return tok::ERROR;

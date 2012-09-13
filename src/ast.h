@@ -1,20 +1,23 @@
 #ifndef _AST_H_
 #define _AST_H_
 
-enum Type {
+enum Kind {
   ERROR,
   BLOCK,
   IDENTIFIER,
-  THIS
-}; //enum Type
+  THIS,
+  IF,
+  VARIABLE,
+  TRUE_,
+  FALSE_
+}; //enum Kind
 
 class Node {
 public:
   explicit Node() {}
   virtual ~Node() {}
-
   virtual void print(std::ostream& out) const = 0;    
-  virtual Type type() const = 0;
+  virtual Kind kind() const = 0;
 private:
   DISALLOW_COPY_AND_ASSIGN(Node);
 };
@@ -55,10 +58,10 @@ public:
   }
 
   void print(std::ostream& out) const {
-    out << u8"Error(" << m_value << u8" (line " << m_line << u8", col " << m_column << u8"))";
+    out << "Error(" << m_value << " (line " << m_line << ", col " << m_column << "))";
   }
 
-  Type type() const { return ERROR; }
+  Kind kind() const { return ERROR; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Error);
   const char* m_value;
@@ -69,8 +72,8 @@ private:
 class Identifier : public NodeWithValue {
 public:
   explicit Identifier() {}
-  void print(std::ostream& out) const { out << u8"Identifier(" << m_value << u8")"; }
-  Type type() const { return IDENTIFIER; }
+  void print(std::ostream& out) const { out << "Identifier(" << m_value << ')'; }
+  Kind kind() const { return IDENTIFIER; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Identifier);
 };
@@ -78,8 +81,8 @@ private:
 class This : public Node {
 public:
   explicit This() {}
-  void print(std::ostream& out) const { out << u8"This"; }
-  Type type() const { return THIS; }
+  void print(std::ostream& out) const { out << "This"; }
+  Kind kind() const { return THIS; }
 private:
   DISALLOW_COPY_AND_ASSIGN(This);
 };
@@ -114,14 +117,14 @@ public:
   }
 
   void print(std::ostream& out) const {
-    out << u8"Block(";
+    out << "Block(";
 
     if(m_nodesIndex > 0) {
       auto ptr = m_nodes;
       auto n = *ptr++;
 
       if(nullptr == n) {
-        out << u8"null";
+        out << "null";
       } else {
         n->print(out);
       }
@@ -132,21 +135,105 @@ public:
         n = *ptr++;
 
         if(nullptr == n) {
-          out << u8"null";
+          out << "null";
         } else {
           n->print(out);
         }
       }
     }
 
-    out << u8")";
+    out << ')';
   }
 
-  Type type() const { return BLOCK; }
+  Kind kind() const { return BLOCK; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Block);
   Node** m_nodes;
   size_t m_nodesSize, m_nodesIndex;
+};
+
+class If : public Node {
+public:
+  explicit If() : m_condition(nullptr), m_trueCase(nullptr), m_falseCase(nullptr) {}
+  void init(Node* condition, Node* trueCase, Node* falseCase) {
+    m_condition = condition;
+    m_trueCase = trueCase;
+    m_falseCase = falseCase;
+  }
+  void print(std::ostream& out) const {
+    out << "If(";
+    m_condition->print(out);
+    out << ',';
+    m_trueCase->print(out);
+
+    if(nullptr != m_falseCase) {
+      out << ',';
+      m_falseCase->print(out);
+    }
+
+    out << ')';
+  }
+  Kind kind() const { return IF; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(If);
+  Node* m_condition;
+  Node* m_trueCase;
+  Node* m_falseCase;
+};
+
+class Variable : public Node {
+public:
+  explicit Variable() {}
+  void init(bool isModifiable, Node* name, Node* type, Node* init) {
+    m_isModifiable = isModifiable;
+    m_name = name;
+    m_type = type;
+    m_init = init;
+  }
+  void print(std::ostream& out) const {
+    out << "Variable(" << (m_isModifiable ? "VAR" : "VAL") << ',';
+    m_name->print(out);
+    out << ',';
+    
+    if(nullptr != m_type) {
+      m_type->print(out);
+      out << ',';
+    } else {
+      out << "NO TYPE,";
+    }
+
+    if(nullptr != m_init) {
+      m_init->print(out);
+      out << ')';
+    } else {
+      out << "NO INIT)";
+    }
+  }
+  Kind kind() const { return VARIABLE; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(Variable);
+  bool m_isModifiable;
+  Node* m_name;
+  Node* m_type;
+  Node* m_init;
+};
+
+class True : public Node {
+public:
+  explicit True() {}
+  void print(std::ostream& out) const { out << "True"; }
+  Kind kind() const { return TRUE_; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(True);
+};
+
+class False : public Node {
+public:
+  explicit False() {}
+  void print(std::ostream& out) const { out << "False"; }
+  Kind kind() const { return FALSE_; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(False);
 };
 
 #endif

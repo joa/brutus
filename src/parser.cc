@@ -7,11 +7,12 @@ namespace brutus {
 //
 //   *     = 0 to n repitions
 //   +     = 1 to n repititions
+//   |     = disjunction
 //   ()    = Sequence
 //   ?     = Optional
-//   UPPER = Token type
+//   UPPER = Token
 //   Lower = Production rule
-//   '{'   = Shorthand for token type LBRACE for instance
+//   '{'   = Shorthand for token LBRACE for instance
 //
 // Example:
 //
@@ -30,7 +31,11 @@ namespace brutus {
 
 // Macro to expect a certain token type. If no such token is found
 // the ast::Error token is returned.
-#define EXPECT(t) if(!poll(t)) { return error(u8"Invalid syntax. Expected " #t "."); }
+#define EXPECT(t) if(!poll(t)) { \
+  auto buf = new char[0x100]; \
+  sprintf(buf, "Invalid syntax. Expected %s, got %s.", tok::toString(t), tok::toString(m_currentToken)); \
+  return error(buf); \
+}
 
 //
 // Program
@@ -53,11 +58,10 @@ ast::Node* Parser::parseProgram() {
 ast::Node* Parser::parseBlock() {
   if(poll(tok::LBRACE)) {
     EXPECT(tok::NEWLINE);
-
     auto block = create<ast::Block>();
 
     do {
-      block->add(parseExpression());
+      block->add(parseBlock());
       EXPECT(tok::NEWLINE);
     } while(!peek(tok::RBRACE));
 
@@ -75,57 +79,131 @@ ast::Node* Parser::parseBlock() {
 //
 
 //
-// ActorName
-//  : Identifier
-//
-
-//
 // Path
 //   : '.' ('/' Path)?
 //  | '..' ('/' Path)?
 //  | '/' Path
-//  | ActorName ('/' Path)?
+//  | Identifier ('/' Path)?
 //
 
 //
 // Expression
-//  : Call
-//  | ActorPath
-//  | PrimaryExpression
+//  : NEWLINE* '(' Expression ')'
+//  | NEWLINE* Identifier
+//  | NEWLINE* VariableExpression
+//  | NEWLINE* IfExpression
+//  | NEWLINE* NumberLiteral
+//  | NEWLINE* BooleanLiteral
+//  | NEWLINE* StringLiteral
+//  | NEWLINE* 'this'
 //
 ast::Node* Parser::parseExpression() {
-  return parsePrimaryExpression();
-}
+  pollAll(tok::NEWLINE);
 
-
-//
-// PrimaryExpression
-//  : '(' Expression ')'
-//  | Identifier
-//  | NumberLiteral
-//  | StringLiteral
-//  | BooleanLiteral
-//  | 'this'
-//
-ast::Node* Parser::parsePrimaryExpression() {
   if(poll(tok::LPAREN)) {
     // '(' Expression ')'
     auto result = parseExpression();
     EXPECT(tok::RPAREN);
     return result;
   } else if(peek(tok::IDENTIFIER)) {
+    // Identifier
     return parseIdentifier();
+  } else if(peek(tok::IF)) {
+    // IfExpression
+    return parseIfExpression();
+  } else if(peek(tok::VAL) || peek(tok::VAR)) {
+    return parseVariableExpression();
   } else if(peek(tok::NUMBER_LITERAL)) {
+    // NumberLiteral
     return nullptr; //TODO(joa): parseNumberLiteral
-  } else if(peek(tok::BOOLEAN_LITERAL)) {
-    return nullptr; //TODO(joa): parseBooleanLiteral
+  } else if(peek(tok::TRUE_) || peek(tok::YES_) || peek(tok::FALSE_) || peek(tok::NO_)) {
+    // BooleanLiteral
+    return parseBooleanLiteral();
   } else if(peek(tok::STRING_LITERAL)) {
+    // StringLiteral
     return nullptr; //TODO(joa): parseStringLiteral
   } else if(poll(tok::THIS)) {
+    // This
     return create<ast::This>();
+  } 
+
+  return error("Expected expression.");
+}
+
+//
+// BooleanLiteral
+//  : 'yes'
+//  | 'no'
+//  | 'true'
+//  | 'false'
+//
+ast::Node* Parser::parseBooleanLiteral() {
+  if(poll(tok::TRUE_) || poll(tok::YES_)) {
+    return create<ast::True>();
+  } else if(poll(tok::FALSE_) || poll(tok::NO_)) {
+    return create<ast::False>();
+  } else {
+    return error("Expected boolean literal.");
+  }
+}
+
+//
+// IfExpression
+//  : 'if' '(' Expression ')' Block ('else' Block)?
+//
+ast::Node* Parser::parseIfExpression() {
+  EXPECT(tok::IF);
+  EXPECT(tok::LPAREN);
+  auto condition = parseExpression();
+  EXPECT(tok::RPAREN);
+  
+  auto trueCase = parseBlock();
+  auto falseCase = poll(tok::ELSE) ? parseBlock() : nullptr;
+  auto result = create<ast::If>();
+
+  result->init(condition, trueCase, falseCase);
+
+  return result;
+}
+
+//
+// VariableExpression
+//  : ('val' | 'var') Identifier (((':' Type)? '=' Expression) | ':' Type)
+//
+ast::Node* Parser::parseVariableExpression() {
+  bool modifiable = NO;
+
+  if(poll(tok::VAR)) {
+    modifiable = YES;
+  } else if(poll(tok::VAL)) {
+    modifiable = NO;
+  } else {
+    return error("Expected \"var\" or \"val\".");
   }
 
-  return error(u8"Expected primary expression.");
+  auto name = parseIdentifier();
+  ast::Node* type = nullptr;
+
+  if(poll(tok::COLON)) {
+    // Optional type is present.
+    type = parseType();
+  }
+
+  ast::Node* init = nullptr;
+
+  if(poll(tok::ASSIGN)) {
+    init = parseExpression();
+  }
+
+  if(nullptr == init && nullptr == type) {
+    return error("Either a type or initializer must be given.");
+  }
+
+  auto result = create<ast::Variable>();
+  
+  result->init(modifiable, name, type, init);
+
+  return result;
 }
 
 // Type
@@ -179,6 +257,10 @@ bool Parser::poll(const tok::Token& token) {
   return NO;
 }
 
+void Parser::pollAll(const tok::Token& token) {
+  while(poll(token));
+}
+
 ast::Node* Parser::consume(const tok::Token& token, std::function<ast::Node*()> f) {
   if(peek(token)) {
     auto result = f();
@@ -189,7 +271,7 @@ ast::Node* Parser::consume(const tok::Token& token, std::function<ast::Node*()> 
   //TODO(joa): build more meaningful error message.
   advance();
 
-  return error(u8"Error: Unexpected token.");
+  return error("Error: Unexpected token.");
 }
 
 void Parser::advance() {

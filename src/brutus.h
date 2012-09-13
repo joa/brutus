@@ -90,7 +90,6 @@ namespace brutus {
     IDENTIFIER,
 
     NUMBER_LITERAL,
-    BOOLEAN_LITERAL,
     STRING_LITERAL,
 
     COMMENT_SINGLE,
@@ -107,8 +106,10 @@ namespace brutus {
     RBRACE,
     DOT,
     COLON,
+    ASSIGN,
+    EQUALS,
 
-    // Operators: (soon to be gone!)
+    // Operators: (soon to be gone?)
     PLUS,
     MINUS,
     ASTERISK,
@@ -116,7 +117,18 @@ namespace brutus {
     PERCENT,
 
     // Keywords:
-    THIS
+    THIS,
+    VAL,
+    VAR,
+    IF,
+    ELSE,
+    FOR,
+    WHILE,
+    YIELD,
+    TRUE_,
+    FALSE_,
+    YES_,
+    NO_
   }; // enum Token
 
   const char* toString(const Token& token);
@@ -195,7 +207,9 @@ namespace brutus {
     ast::Node* parseProgram();
     ast::Node* parseBlock();
     ast::Node* parseExpression();
-    ast::Node* parsePrimaryExpression();
+    ast::Node* parseBooleanLiteral();
+    ast::Node* parseIfExpression();
+    ast::Node* parseVariableExpression();
     ast::Node* parseType();
     ast::Node* parseIdentifier();
   private:
@@ -209,6 +223,7 @@ namespace brutus {
     bool isIgnored(const tok::Token& token);
     bool peek(const tok::Token& token);
     bool poll(const tok::Token& token);
+    void pollAll(const tok::Token& token);
     ast::Node* consume(const tok::Token& token, std::function<ast::Node*()> f);
 
     template<class T> T* create();

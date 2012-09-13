@@ -13,42 +13,53 @@ void perf_test(std::function<int()> f) {
   }
 }
 
+void withTokenFile(std::function<void(FILE*)> f) {
+  auto fp = fopen(u8"tokens.txt", u8"r");
+
+  if(!fp) {
+    return;
+  }
+
+  f(fp);
+
+  fclose(fp);
+}
+
 int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
 
-  auto fp = fopen(u8"tokens.txt", u8"r");
+  withTokenFile([&](FILE* fp) {
+    auto stream = new brutus::FileCharStream(fp);
+    auto lexer = new brutus::Lexer(stream); 
+    auto parser = new brutus::Parser(lexer);
+    auto ast = parser->parseProgram();
+    
+    ast->print(std::cout);
 
-  if(!fp) {
-    return 1;
-  }
+    std::cout << std::endl;
+  });
 
-  auto stream = new brutus::FileCharStream(fp);
-  auto lexer = new brutus::Lexer(stream); 
-  auto parser = new brutus::Parser(lexer);
-  auto ast = parser->parseProgram();
-  
-  ast->print(std::cout);
+#if 0
+  withTokenFile([&](FILE* fp) {
+    auto stream = new brutus::FileCharStream(fp);
+    auto lexer = new brutus::Lexer(stream);
 
-  std::cout << std::endl;
+    brutus::tok::Token t;
+    auto numT = 0;
 
-  /*
-  brutus::tok::Token t;
-  auto numT = 0;
+    while((t = lexer->nextToken()) != brutus::tok::_EOF) {
+      ++numT;
+      std::cout << '(' << lexer->posLine() << ':' << lexer->posColumn() << ')' << ' ' << brutus::tok::toString(t) << std::endl;
 
-  while((t = lexer->nextToken()) != brutus::tok::_EOF) {
-    ++numT;
-    std::cout << brutus::tok::toString(t) << std::endl;
-
-    if(brutus::tok::hasValue(t)) {
-      std::cout << lexer->value() << std::endl;
+      if(brutus::tok::hasValue(t)) {
+        std::cout << lexer->value() << std::endl;
+      }
     }
-  }
 
-  std::cout << u8"tokens: " << numT << std::endl;
-  */
-
-  fclose(fp);
+    std::cout << u8"tokens: " << numT << std::endl;
+  });
+#endif
 
   return 0;
 }

@@ -9,7 +9,7 @@ void Stopwatch::stop() {
   m_end = std::chrono::high_resolution_clock::now();
 }
 
-void Stopwatch::log() {
+void Stopwatch::log() const {
   auto deltaTicks = 
     std::chrono::duration<
       double,

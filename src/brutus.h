@@ -19,9 +19,31 @@
 #define YES true
 #define NO false
 
+#ifndef ALWAYS_INLINE
+  #ifdef __GNUC__
+    #define ALWAYS_INLINE __attribute__((always_inline))
+  #else
+    #define ALWAYS_INLINE inline
+  #endif
+#endif
+
 template<typename T, size_t sizeOfArray>
 constexpr size_t NumberOfElements(T (&)[sizeOfArray]) {
     return sizeOfArray;
+}
+
+template<typename T>
+ALWAYS_INLINE T* NewArray(const size_t& size) {
+  auto result = new T[size];
+  if(result == nullptr) {
+    std::cerr << "Error: Could not allocate array.";
+  }
+  return result;
+}
+
+template<typename T>
+ALWAYS_INLINE void DeleteArray(T* value) {
+  delete[] value;
 }
 
 // Preconditions for compiling Brutus
@@ -29,13 +51,12 @@ static_assert(sizeof(char) == 1, "sizeof(char) must be one.");
 
 namespace brutus {
   // Util
-
   class Stopwatch {
   public:
     explicit Stopwatch() {}
     void start();
     void stop();
-    void log();
+    void log() const;
     void stopAndLog();
 
   private:
@@ -108,6 +129,8 @@ namespace brutus {
     COLON,
     ASSIGN,
     EQUALS,
+    LARROW,
+    RARROW,
 
     // Operators: (soon to be gone?)
     PLUS,
@@ -207,7 +230,14 @@ namespace brutus {
     ast::Node* parseProgram();
     ast::Node* parseBlock();
     ast::Node* parseExpression();
+    ast::Node* continueWithExpression(ast::Node* expression);
+    ast::Node* parseSelect(ast::Node* object);
+    ast::Node* parseCall(ast::Node* callee);
+    void parseArgumentList(ast::NodeList* list);
+    ast::Node* parseArgument();
     ast::Node* parseBooleanLiteral();
+    ast::Node* parseNumberLiteral();
+    ast::Node* parseStringLiteral();
     ast::Node* parseIfExpression();
     ast::Node* parseVariableExpression();
     ast::Node* parseType();
@@ -226,8 +256,8 @@ namespace brutus {
     void pollAll(const tok::Token& token);
     ast::Node* consume(const tok::Token& token, std::function<ast::Node*()> f);
 
-    template<class T> T* create();
-    template<class T> T* createWithValue();
+    template<class T> T* alloc();
+    template<class T> T* allocWithValue();
 
     ast::Node* error(const char* value);
   }; // class Parser

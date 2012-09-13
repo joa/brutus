@@ -15,7 +15,11 @@ static const char* KeywordChars[] = {
   "true",
   "false",
   "yes",
-  "no"
+  "no",
+  "<-",
+  u8"←",
+  "->",
+  u8"→"
 };
 
 static const Token KeywordTokens[] = {
@@ -30,7 +34,11 @@ static const Token KeywordTokens[] = {
   TRUE_,
   FALSE_,
   YES_,
-  NO_
+  NO_,
+  LARROW,
+  LARROW,
+  RARROW,
+  RARROW
 };
 
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
@@ -283,6 +291,9 @@ tok::Token Lexer::continueWithNumberStart(const char currentChar) {
     // 12 ...
     // 1e ...
     // 1. ...
+  } else {
+    // This was only a single digit.
+    rewind();
   }
 
   // We can also do something like this to 

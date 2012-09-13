@@ -31,9 +31,11 @@ namespace brutus {
 
 // Macro to expect a certain token type. If no such token is found
 // the ast::Error token is returned.
+
+//TODO(joa): arena
 #define EXPECT(t) if(!poll(t)) { \
-  auto buf = new char[0x100]; \
-  sprintf(buf, "Invalid syntax. Expected %s, got %s.", tok::toString(t), tok::toString(m_currentToken)); \
+  auto buf = NewArray<char>(0x100); \
+  sprintf(buf, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, __LINE__,tok::toString(t), tok::toString(m_currentToken)); \
   return error(buf); \
 }
 
@@ -58,7 +60,7 @@ ast::Node* Parser::parseProgram() {
 ast::Node* Parser::parseBlock() {
   if(poll(tok::LBRACE)) {
     EXPECT(tok::NEWLINE);
-    auto block = create<ast::Block>();
+    auto block = alloc<ast::Block>();
 
     do {
       block->add(parseBlock());
@@ -96,38 +98,132 @@ ast::Node* Parser::parseBlock() {
 //  | NEWLINE* BooleanLiteral
 //  | NEWLINE* StringLiteral
 //  | NEWLINE* 'this'
+//  | NEWLINE* Select
+//  | NEWLINE* Call
 //
 ast::Node* Parser::parseExpression() {
   pollAll(tok::NEWLINE);
 
+  ast::Node* expression = nullptr;
+
   if(poll(tok::LPAREN)) {
-    // '(' Expression ')'
-    auto result = parseExpression();
+    expression = parseExpression();
     EXPECT(tok::RPAREN);
-    return result;
   } else if(peek(tok::IDENTIFIER)) {
-    // Identifier
-    return parseIdentifier();
+    expression = parseIdentifier();
   } else if(peek(tok::IF)) {
-    // IfExpression
-    return parseIfExpression();
+    expression =  parseIfExpression();
   } else if(peek(tok::VAL) || peek(tok::VAR)) {
-    return parseVariableExpression();
+    expression =  parseVariableExpression();
   } else if(peek(tok::NUMBER_LITERAL)) {
-    // NumberLiteral
-    return nullptr; //TODO(joa): parseNumberLiteral
+    expression =  parseNumberLiteral();
   } else if(peek(tok::TRUE_) || peek(tok::YES_) || peek(tok::FALSE_) || peek(tok::NO_)) {
-    // BooleanLiteral
-    return parseBooleanLiteral();
+    expression =  parseBooleanLiteral();
   } else if(peek(tok::STRING_LITERAL)) {
-    // StringLiteral
-    return nullptr; //TODO(joa): parseStringLiteral
+    expression =  parseStringLiteral();
   } else if(poll(tok::THIS)) {
-    // This
-    return create<ast::This>();
+    expression =  alloc<ast::This>();
   } 
 
-  return error("Expected expression.");
+  return continueWithExpression(expression);
+}
+
+ast::Node* Parser::continueWithExpression(ast::Node* expression) {
+  if(nullptr == expression) {
+    return error("Expected expression.");
+  } else {
+    while(true) {
+      if(peek(tok::DOT)) {
+        auto select = parseSelect(expression);
+        expression = select;
+      } else if(peek(tok::LPAREN) || peek(tok::IDENTIFIER)) {
+        auto call = parseCall(expression);
+        expression = call;
+      } else {
+        break;
+      }
+    }
+
+    return expression;
+  }
+}
+
+//
+// Select
+//  : Expression '.' Identifier
+//
+ast::Node* Parser::parseSelect(ast::Node* object) {
+  EXPECT(tok::DOT);
+
+  auto qualifier = parseIdentifier();
+  auto result = alloc<ast::Select>();
+  
+  result->init(object, qualifier);
+
+  return result;
+}
+
+//
+// Call
+//  : Expression '(' Arguments ')'
+//  | Expression Identifier Argument
+//
+ast::Node* Parser::parseCall(ast::Node* callee) {
+  auto result = alloc<ast::Call>();
+
+  if(poll(tok::LPAREN)) {
+    if(!peek(tok::RPAREN)) {
+      parseArgumentList(result->arguments());
+    }
+    EXPECT(tok::RPAREN);
+    result->init(callee);
+  } else if(peek(tok::IDENTIFIER)) {
+    auto name = parseIdentifier();
+    auto select = alloc<ast::Select>();
+
+    select->init(callee, name);
+    result->init(select);
+
+    result->arguments()->add(parseArgument());
+  } else {
+    return error("Expected call.");
+  }
+
+  return result;
+}
+
+//
+// ArgumentList
+//  : Argument (',' Argument)*
+//
+void Parser::parseArgumentList(ast::NodeList* list) {
+  do {
+    list->add(parseArgument());
+  } while(poll(tok::COMMA));
+}
+
+//
+// Argument
+//  : Expression
+//  | Identifier '=' Expression
+//
+ast::Node* Parser::parseArgument() {
+  auto result = alloc<ast::Argument>();
+
+  if(peek(tok::IDENTIFIER)) {
+    auto ident = parseIdentifier();
+
+    if(poll(tok::ASSIGN)) {
+      auto value = parseExpression();
+      result->init(ident, value);
+    } else {
+      result->init(nullptr, continueWithExpression(ident));
+    }
+  } else {
+    result->init(nullptr, parseExpression());
+  }
+
+  return result;
 }
 
 //
@@ -139,12 +235,28 @@ ast::Node* Parser::parseExpression() {
 //
 ast::Node* Parser::parseBooleanLiteral() {
   if(poll(tok::TRUE_) || poll(tok::YES_)) {
-    return create<ast::True>();
+    return alloc<ast::True>();
   } else if(poll(tok::FALSE_) || poll(tok::NO_)) {
-    return create<ast::False>();
+    return alloc<ast::False>();
   } else {
     return error("Expected boolean literal.");
   }
+}
+
+//
+// NumberLiteral
+//  : NUMBER_LITERAL
+//
+ast::Node* Parser::parseNumberLiteral() {
+  return consume(tok::NUMBER_LITERAL, [&]() { return allocWithValue<ast::Number>(); });
+}
+
+//
+// StringLiteral
+//  : STRING_LITERAL
+//
+ast::Node* Parser::parseStringLiteral() {
+  return consume(tok::STRING_LITERAL, [&]() { return allocWithValue<ast::String>(); });
 }
 
 //
@@ -159,7 +271,7 @@ ast::Node* Parser::parseIfExpression() {
   
   auto trueCase = parseBlock();
   auto falseCase = poll(tok::ELSE) ? parseBlock() : nullptr;
-  auto result = create<ast::If>();
+  auto result = alloc<ast::If>();
 
   result->init(condition, trueCase, falseCase);
 
@@ -199,7 +311,7 @@ ast::Node* Parser::parseVariableExpression() {
     return error("Either a type or initializer must be given.");
   }
 
-  auto result = create<ast::Variable>();
+  auto result = alloc<ast::Variable>();
   
   result->init(modifiable, name, type, init);
 
@@ -219,27 +331,27 @@ ast::Node* Parser::parseType() {
 //  : IDENTIFIER
 //
 ast::Node* Parser::parseIdentifier() {
-  return consume(tok::IDENTIFIER, [&]() { return createWithValue<ast::Identifier>(); });
+  return consume(tok::IDENTIFIER, [&]() { return allocWithValue<ast::Identifier>(); });
 }
 
 // Utility methods for the parser
 //
 
 template<class T>
-T* Parser::create() {
+T* Parser::alloc() {
   //TODO(joa): alloc in arena
   return new T();
 }
 
 template<class T>
-T* Parser::createWithValue() {
-  auto result = create<T>();
+T* Parser::allocWithValue() {
+  auto result = alloc<T>();
   result->copyValue(m_lexer);
   return result;
 }
 
 ast::Node* Parser::error(const char* value) {
-  auto result = create<ast::Error>();
+  auto result = alloc<ast::Error>();
   result->init(value, m_lexer->posLine(), m_lexer->posColumn());
   return result;
 }

@@ -5,11 +5,16 @@ enum Kind {
   ERROR,
   BLOCK,
   IDENTIFIER,
+  NUMBER,
+  STRING,
   THIS,
   IF,
   VARIABLE,
   TRUE_,
-  FALSE_
+  FALSE_,
+  SELECT,
+  CALL,
+  ARGUMENT
 }; //enum Kind
 
 class Node {
@@ -32,7 +37,7 @@ public:
     // character.
 
     m_length = lexer->valueLength();
-    m_value = new char[m_length + 1];
+    m_value = NewArray<char>(m_length + 1); //TODO(joa): arena
     m_value[m_length] = '\0';
 
     std::memcpy(m_value, lexer->value(), sizeof(char) * m_length);
@@ -45,6 +50,79 @@ private:
 protected:
   char* m_value;
   size_t m_length;
+};
+
+class NodeList {
+public:
+  explicit NodeList() {
+    m_nodesIndex = 0;
+    m_nodesSize = 8;
+    m_nodes = NewArray<Node*>(m_nodesSize); //TODO(joa): arena
+  }
+
+  void add(ast::Node* node) {
+    if(m_nodesIndex == m_nodesSize) {
+      auto newSize = m_nodesSize << 1;
+      auto newNodes = NewArray<Node*>(newSize); //TODO(joa): arena
+
+      std::memcpy(newNodes, m_nodes, sizeof(ast::Node*) * m_nodesSize);
+
+      DeleteArray(m_nodes); //TODO(joa): arena
+
+      m_nodes = newNodes;
+      m_nodesSize = newSize;
+    }
+
+    m_nodes[m_nodesIndex] = node;
+    ++m_nodesIndex;
+  }
+
+  void print(std::ostream& out, bool newLine) const { 
+    out << '['; 
+    if(m_nodesIndex > 0) {
+      auto ptr = m_nodes;
+      auto n = *ptr++;
+
+      if(nullptr == n) {
+        out << "null";
+      } else {
+        n->print(out);
+      }
+
+      for(size_t i = 1; i < m_nodesIndex; ++i) {
+        out << ',';
+
+        if(newLine) {
+          out << std::endl;
+        }
+
+        n = *ptr++;
+
+        if(nullptr == n) {
+          out << "null";
+        } else {
+          n->print(out);
+        }
+      }
+    }
+    out << ']';
+  }
+
+  size_t size() const { 
+    return m_nodesIndex;
+  }
+
+  Node** nodes() const {
+    return m_nodes;
+  }
+
+  bool nonEmpty() const {
+    return m_nodesIndex > 0;
+  }
+private:
+  DISALLOW_COPY_AND_ASSIGN(NodeList);
+  Node** m_nodes;
+  size_t m_nodesSize, m_nodesIndex;
 };
 
 class Error : public Node {
@@ -78,6 +156,24 @@ private:
   DISALLOW_COPY_AND_ASSIGN(Identifier);
 };
 
+class Number : public NodeWithValue {
+public:
+  explicit Number() {}
+  void print(std::ostream& out) const { out << "Number(" << m_value << ')'; }
+  Kind kind() const { return NUMBER; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(Number);
+};
+
+class String : public NodeWithValue {
+public:
+  explicit String() {}
+  void print(std::ostream& out) const { out << "String(" << m_value << ')'; }
+  Kind kind() const { return STRING; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(String);
+};
+
 class This : public Node {
 public:
   explicit This() {}
@@ -89,67 +185,26 @@ private:
 
 class Block : public Node {
 public:
-  explicit Block() {
-    m_nodesIndex = 0;
-    m_nodesSize = 8;
-    m_nodes = new Node*[m_nodesSize]; //TODO(joa): arena
+  explicit Block() {}
+
+  size_t size() const { 
+    return m_list.size();
   }
 
   void add(ast::Node* node) {
-    if(m_nodesIndex == m_nodesSize) {
-      auto newSize = m_nodesSize << 1;
-      auto newNodes = new Node*[newSize]; //TODO(joa): arena;
-
-      std::memcpy(newNodes, m_nodes, sizeof(ast::Node*) * m_nodesSize);
-
-      delete[] m_nodes;
-
-      m_nodes = newNodes;
-      m_nodesSize = newSize;
-    }
-
-    m_nodes[m_nodesIndex] = node;
-    ++m_nodesIndex;
-  }
-
-  size_t size() const { 
-    return m_nodesIndex;
+    m_list.add(node);
   }
 
   void print(std::ostream& out) const {
     out << "Block(";
-
-    if(m_nodesIndex > 0) {
-      auto ptr = m_nodes;
-      auto n = *ptr++;
-
-      if(nullptr == n) {
-        out << "null";
-      } else {
-        n->print(out);
-      }
-
-      for(size_t i = 1; i < m_nodesIndex; ++i) {
-        out << ',' << std::endl;
-
-        n = *ptr++;
-
-        if(nullptr == n) {
-          out << "null";
-        } else {
-          n->print(out);
-        }
-      }
-    }
-
+    m_list.print(out, true);
     out << ')';
   }
 
   Kind kind() const { return BLOCK; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Block);
-  Node** m_nodes;
-  size_t m_nodesSize, m_nodesIndex;
+  NodeList m_list;
 };
 
 class If : public Node {
@@ -234,6 +289,77 @@ public:
   Kind kind() const { return FALSE_; }
 private:
   DISALLOW_COPY_AND_ASSIGN(False);
+};
+
+class Select : public Node {
+public: 
+  explicit Select() {}
+  void init(Node* object, Node* qualifier) {
+    m_object = object;
+    m_qualifier = qualifier;
+  }
+  void print(std::ostream& out) const {
+    out << "Select(";
+    m_object->print(out);
+    out << ',';
+    m_qualifier->print(out);
+    out << ')';
+  }
+  Kind kind() const { return SELECT; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(Select);
+  Node* m_object;
+  Node* m_qualifier;
+};
+
+class Call : public Node {
+public: 
+  explicit Call() {}
+  void init(Node* callee) {
+    m_callee = callee;
+  }
+
+  NodeList* arguments() {
+    return &m_arguments;
+  }
+
+  void print(std::ostream& out) const {
+    out << "Call(";
+    m_callee->print(out);
+    out << ',';
+    m_arguments.print(out, false);
+    out << ')';
+  }
+  Kind kind() const { return CALL; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(Call);
+  Node* m_callee;
+  NodeList m_arguments;
+};
+
+class Argument : public Node {
+public:
+  explicit Argument() {}
+
+  void init(Node* name, Node* value) {
+    m_name = name;
+    m_value = value;
+  }
+
+  void print(std::ostream& out) const {
+    out << "Argument(";
+    if(nullptr != m_name) {
+      m_name->print(out);
+      out << '=';
+    }
+    m_value->print(out);
+    out << ')';
+  }
+  Kind kind() const { return ARGUMENT; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(Argument);
+  Node* m_name;
+  Node* m_value;
 };
 
 #endif

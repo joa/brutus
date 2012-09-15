@@ -14,7 +14,11 @@ enum Kind {
   FALSE_,
   SELECT,
   CALL,
-  ARGUMENT
+  ARGUMENT,
+  BRANCH,
+  BRANCH_CASE,
+  ANONYMOUS_FUNCTION,
+  ANONYMOUS_FUNCTION_PARAMETER
 }; //enum Kind
 
 class Node {
@@ -127,7 +131,7 @@ private:
 
 class Error : public Node {
 public:
-  explicit Error() {}
+  explicit Error() : m_value(nullptr), m_line(0), m_column(0) {}
 
   void init(const char* value, unsigned int line, unsigned int column) {
     m_value = value;
@@ -238,7 +242,7 @@ private:
 
 class Variable : public Node {
 public:
-  explicit Variable() {}
+  explicit Variable() : m_isModifiable(NO), m_name(nullptr), m_type(nullptr), m_init(nullptr) {}
   void init(bool isModifiable, Node* name, Node* type, Node* init) {
     m_isModifiable = isModifiable;
     m_name = name;
@@ -293,7 +297,7 @@ private:
 
 class Select : public Node {
 public: 
-  explicit Select() {}
+  explicit Select() : m_object(nullptr), m_qualifier(nullptr) {}
   void init(Node* object, Node* qualifier) {
     m_object = object;
     m_qualifier = qualifier;
@@ -312,9 +316,53 @@ private:
   Node* m_qualifier;
 };
 
+class Branch : public Node {
+public:
+  explicit Branch() {}
+
+  NodeList* cases() {
+    return &m_cases;
+  }
+
+  void print(std::ostream& out) const {
+    out << "Branch(";
+    m_cases.print(out, true);
+    out << ")";
+  }
+
+  Kind kind() const { return BRANCH; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(Branch);
+  NodeList m_cases;
+};
+
+class BranchCase : public Node {
+public:
+  explicit BranchCase() : m_condition(nullptr), m_block(nullptr) {}
+  
+  void init(Node* condition, Node* block) {
+    m_condition = condition;
+    m_block = block;
+  }
+
+  void print(std::ostream& out) const {
+    out << "BranchCase(";
+    m_condition->print(out);
+    out << ',';
+    m_block->print(out);
+    out << ")";
+  }
+  
+  Kind kind() const { return BRANCH_CASE; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(BranchCase);
+  Node* m_condition;
+  Node* m_block;
+};
+
 class Call : public Node {
 public: 
-  explicit Call() {}
+  explicit Call() : m_callee(nullptr) {}
   void init(Node* callee) {
     m_callee = callee;
   }
@@ -339,7 +387,7 @@ private:
 
 class Argument : public Node {
 public:
-  explicit Argument() {}
+  explicit Argument() : m_name(nullptr), m_value(nullptr) {}
 
   void init(Node* name, Node* value) {
     m_name = name;
@@ -362,4 +410,56 @@ private:
   Node* m_value;
 };
 
+class AnonymousFunction : public Node {
+public:
+  explicit AnonymousFunction() : m_block(nullptr) {}
+  
+  NodeList* parameters() {
+    return &m_parameters;
+  }
+
+  void init(Node* block) {
+    m_block = block;
+  }
+
+  void print(std::ostream& out) const {
+    out << "AF(";
+    m_parameters.print(out, false);
+    out << ',';
+    m_block->print(out);
+    out << ')';
+  }
+
+  Kind kind() const { return ANONYMOUS_FUNCTION; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(AnonymousFunction);
+  NodeList m_parameters;
+  Node* m_block;
+};
+
+class AnonymousFunctionParameter : public Node {
+public:
+  explicit AnonymousFunctionParameter() : m_name(nullptr), m_type(nullptr) {}
+  
+  void init(Node* name, Node* type) {
+    m_name = name;
+    m_type = type;
+  }
+
+  void print(std::ostream& out) const {
+    out << "AFParameter(";
+    m_name->print(out);
+    if(nullptr != m_type) {
+      out << ',';
+      m_type->print(out);
+    }
+    out << ')';
+  }
+
+  Kind kind() const { return ANONYMOUS_FUNCTION_PARAMETER; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(AnonymousFunctionParameter);
+  Node* m_name;
+  Node* m_type;
+};
 #endif

@@ -117,27 +117,20 @@ namespace brutus {
     COMMENT_MULTI,
 
     // Control characters:
-    SEMICOLON,
-    COMMA,
-    LPAREN,
-    RPAREN,
-    LBRAC,
-    RBRAC,
-    LBRACE,
-    RBRACE,
-    DOT,
-    COLON,
-    ASSIGN,
-    EQUALS,
-    LARROW,
-    RARROW,
-
-    // Operators: (soon to be gone?)
-    PLUS,
-    MINUS,
-    ASTERISK,
-    SLASH,
-    PERCENT,
+    SEMICOLON,  //;
+    COMMA,      //,
+    LPAREN,     // (
+    RPAREN,     // )
+    LBRAC,      // [
+    RBRAC,      // ]
+    LBRACE,     // {
+    RBRACE,     // }
+    DOT,        // .
+    COLON,      // :
+    ASSIGN,     // =
+    EQUALS,     // ==
+    LARROW,     // <- and ←
+    RARROW,     // -> and →
 
     // Keywords:
     THIS,
@@ -151,7 +144,8 @@ namespace brutus {
     TRUE_,
     FALSE_,
     YES_,
-    NO_
+    NO_,
+    BRANCH
   }; // enum Token
 
   const char* toString(const Token& token);
@@ -200,6 +194,7 @@ namespace brutus {
     bool isDigit(const char c);
 
     bool isIdentifierStart(const char c);
+    bool isObscureIdentifierStart(const char c);
     bool isIdentifierPart(const char c);
 
     tok::Token continueWithNumberStart(const char currentChar);
@@ -235,10 +230,15 @@ namespace brutus {
     ast::Node* parseCall(ast::Node* callee);
     void parseArgumentList(ast::NodeList* list);
     ast::Node* parseArgument();
+    ast::Node* parseAnonymousFunctionExpression();
+    void parseAnonymousFunctionParameters(ast::NodeList* list);
+    ast::Node* parseAnonymousFunctionParameter();
     ast::Node* parseBooleanLiteral();
     ast::Node* parseNumberLiteral();
     ast::Node* parseStringLiteral();
     ast::Node* parseIfExpression();
+    ast::Node* parseBranchExpression();
+    ast::Node* parseBranchCase();
     ast::Node* parseVariableExpression();
     ast::Node* parseType();
     ast::Node* parseIdentifier();

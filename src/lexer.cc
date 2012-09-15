@@ -19,7 +19,8 @@ static const char* KeywordChars[] = {
   "<-",
   u8"←",
   "->",
-  u8"→"
+  u8"→",
+  "branch"
 };
 
 static const Token KeywordTokens[] = {
@@ -38,7 +39,8 @@ static const Token KeywordTokens[] = {
   LARROW,
   LARROW,
   RARROW,
-  RARROW
+  RARROW,
+  BRANCH
 };
 
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
@@ -69,12 +71,6 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(ASSIGN, "ASSIGN");
     TOKEN_TO_STRING_CASE(EQUALS, "EQUALS");
 
-    TOKEN_TO_STRING_CASE(PLUS, "PLUS");
-    TOKEN_TO_STRING_CASE(MINUS, "MINUS");
-    TOKEN_TO_STRING_CASE(ASTERISK, "ASTERISK");
-    TOKEN_TO_STRING_CASE(SLASH, "SLASH");
-    TOKEN_TO_STRING_CASE(PERCENT, "PERCENT");
-
     TOKEN_TO_STRING_CASE(THIS, "THIS");
     TOKEN_TO_STRING_CASE(VAL, "VAL");
     TOKEN_TO_STRING_CASE(VAR, "VAR");
@@ -87,6 +83,7 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(FALSE_, "FALSE");
     TOKEN_TO_STRING_CASE(YES_, "YES");
     TOKEN_TO_STRING_CASE(NO_, "NO");
+    TOKEN_TO_STRING_CASE(BRANCH, "BRANCH");
 
     default: return "UNKNOWN";
   }
@@ -162,12 +159,13 @@ tok::Token Lexer::nextToken() {
         case '}': return tok::RBRACE;
         case '.': return tok::DOT;
         case ':': return tok::COLON;
-
-        case '+': return tok::PLUS;
-        case '-': return tok::MINUS;
-        case '*': return tok::ASTERISK;
-        case '%': return tok::PERCENT;
-
+        case '-': 
+          if(advance() == '>') {
+            return tok::RARROW;
+          } else {
+            rewind();
+            return continueWithIdentifierStart(currentChar);
+          }
         case '=': 
           if(advance() == '=') {
             return tok::EQUALS;
@@ -251,10 +249,29 @@ bool Lexer::isNumberStart(const char c) {
 bool Lexer::isIdentifierStart(const char c) {
   return (c >= 'a' && c <= 'z')
       || (c >= 'A' && c <= 'Z')
-      || (c == '_')
-      || ((unsigned char)c >= 0xC0);
+      || ((unsigned char)c >= 0xC0)
+      || isObscureIdentifierStart(c);
 }
 
+bool Lexer::isObscureIdentifierStart(const char c) {
+  return c == '!'
+      || c == '#'
+      || c == '$'
+      || c == '%'
+      || c == '&'
+      || c == '*'
+      || c == '+'
+      || c == '-'
+      || c == '/'
+      || c == '<'
+      || c == '>'
+      || c == '?'
+      || c == '\\'
+      || c == '^'
+      || c == '_'
+      || c == '|'
+      || c == '~';
+}
 bool Lexer::isIdentifierPart(const char c) {
   return isIdentifierStart(c)
       || (c >= '0' && c <= '9')
@@ -318,6 +335,7 @@ tok::Token Lexer::continueWithIdentifierStart(const char currentChar) {
   if(ident == tok::IDENTIFIER) {
     // If we really got an identifier we will check for a keyword.
 
+    //TODO(joa): optimize keyword lookup
     for(size_t i = 0; i < tok::NUM_KEYWORDS; ++i) {
       if(0 == std::strcmp(tok::KeywordChars[i], m_buffer)) {
         return tok::KeywordTokens[i];
@@ -380,7 +398,7 @@ tok::Token Lexer::continueWithSlash(const char currentChar) {
     return tok::COMMENT_MULTI;
   } else {
     rewind();
-    return tok::SLASH;
+    return continueWithIdentifierStart(currentChar);
   }
 }
 

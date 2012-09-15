@@ -111,6 +111,8 @@ ast::Node* Parser::parseExpression() {
     EXPECT(tok::RPAREN);
   } else if(peek(tok::IDENTIFIER)) {
     expression = parseIdentifier();
+  } else if(peek(tok::BRANCH)) {
+    expression = parseBranchExpression();
   } else if(peek(tok::IF)) {
     expression =  parseIfExpression();
   } else if(peek(tok::VAL) || peek(tok::VAR)) {
@@ -123,7 +125,7 @@ ast::Node* Parser::parseExpression() {
     expression =  parseStringLiteral();
   } else if(poll(tok::THIS)) {
     expression =  alloc<ast::This>();
-  } 
+  }
 
   return continueWithExpression(expression);
 }
@@ -165,7 +167,7 @@ ast::Node* Parser::parseSelect(ast::Node* object) {
 
 //
 // Call
-//  : Expression '(' Arguments ')'
+//  : Expression '(' ArgumentList ')'
 //  | Expression Identifier Argument
 //
 ast::Node* Parser::parseCall(ast::Node* callee) {
@@ -206,6 +208,8 @@ void Parser::parseArgumentList(ast::NodeList* list) {
 // Argument
 //  : Expression
 //  | Identifier '=' Expression
+//  | AnonymousFunctionExpression
+//  | Identifier '=' AnonymousFunctionExpression
 //
 ast::Node* Parser::parseArgument() {
   auto result = alloc<ast::Argument>();
@@ -214,15 +218,60 @@ ast::Node* Parser::parseArgument() {
     auto ident = parseIdentifier();
 
     if(poll(tok::ASSIGN)) {
-      auto value = parseExpression();
-      result->init(ident, value);
+      if(peek(tok::LBRACE)) {
+        result->init(ident, parseAnonymousFunctionExpression());
+      } else {
+        result->init(ident, parseExpression());
+      }
     } else {
       result->init(nullptr, continueWithExpression(ident));
     }
   } else {
-    result->init(nullptr, parseExpression());
+    if(peek(tok::LBRACE)) {
+      result->init(nullptr, parseAnonymousFunctionExpression());
+    } else {
+      result->init(nullptr, parseExpression());
+    }
   }
 
+  return result;
+}
+
+//
+// AnonymousFunctionExpression
+//  : '{' NEWLINE* AnonymousFunctionParameters '->' Block NEWLINE* '}'
+//
+ast::Node* Parser::parseAnonymousFunctionExpression() {
+  EXPECT(tok::LBRACE);
+  pollAll(tok::NEWLINE);
+  auto result = alloc<ast::AnonymousFunction>();
+  parseAnonymousFunctionParameters(result->parameters());
+  EXPECT(tok::RARROW);
+  result->init(parseBlock());
+  pollAll(tok::NEWLINE);
+  EXPECT(tok::RBRACE);
+  return result;
+}
+
+//
+// AnonymousFunctionParameters
+//  : AnonymousFunctionParameter (',' AnonymousFunctionParameter)*
+//
+void Parser::parseAnonymousFunctionParameters(ast::NodeList* parameters) {
+  do {
+    parameters->add(parseAnonymousFunctionParameter());
+  } while(poll(tok::COMMA));
+}
+
+//
+// AnonymousFunctionParameter
+//  : Identifier (':' Type)?
+//
+ast::Node* Parser::parseAnonymousFunctionParameter() {
+  auto ident = parseIdentifier();
+  auto type = poll(tok::COLON) ? parseType() : nullptr;
+  auto result = alloc<ast::AnonymousFunctionParameter>();
+  result->init(ident, type);
   return result;
 }
 
@@ -275,6 +324,38 @@ ast::Node* Parser::parseIfExpression() {
 
   result->init(condition, trueCase, falseCase);
 
+  return result;
+}
+
+//
+// BranchExpression
+//  : branch '{' NEWLINE (BranchCase NEWLINE)+ '}'
+//  | branch BranchCase
+ast::Node* Parser::parseBranchExpression() {
+  auto branch = alloc<ast::Branch>();
+  
+  EXPECT(tok::BRANCH);
+  if(poll(tok::LBRACE)) {
+    EXPECT(tok::NEWLINE);
+    auto cases = branch->cases();
+    do {
+      cases->add(parseBranchCase());
+      EXPECT(tok::NEWLINE);
+    } while(!peek(tok::RBRACE));
+    EXPECT(tok::RBRACE);
+  } else {
+    branch->cases()->add(parseBranchCase());
+  }
+
+  return branch;
+}
+
+ast::Node* Parser::parseBranchCase() {
+  auto condition = parseExpression();
+  EXPECT(tok::RARROW);
+  auto block = parseBlock();
+  auto result = alloc<ast::BranchCase>();
+  result->init(condition, block);
   return result;
 }
 
@@ -356,11 +437,11 @@ ast::Node* Parser::error(const char* value) {
   return result;
 }
 
-bool Parser::peek(const tok::Token& token) {
+ALWAYS_INLINE bool Parser::peek(const tok::Token& token) {
   return m_currentToken == token;
 }
 
-bool Parser::poll(const tok::Token& token) {
+ALWAYS_INLINE bool Parser::poll(const tok::Token& token) {
   if(peek(token)) {
     advance();
     return YES;

@@ -8,7 +8,6 @@ enum Kind {
   NUMBER,
   STRING,
   THIS,
-  IF,
   VARIABLE,
   TRUE_,
   FALSE_,
@@ -17,8 +16,9 @@ enum Kind {
   ARGUMENT,
   BRANCH,
   BRANCH_CASE,
-  ANONYMOUS_FUNCTION,
-  ANONYMOUS_FUNCTION_PARAMETER
+  FUNCTION,
+  PARAMETER,
+  TYPE_PARAMETER
 }; //enum Kind
 
 class Node {
@@ -211,35 +211,6 @@ private:
   NodeList m_list;
 };
 
-class If : public Node {
-public:
-  explicit If() : m_condition(nullptr), m_trueCase(nullptr), m_falseCase(nullptr) {}
-  void init(Node* condition, Node* trueCase, Node* falseCase) {
-    m_condition = condition;
-    m_trueCase = trueCase;
-    m_falseCase = falseCase;
-  }
-  void print(std::ostream& out) const {
-    out << "If(";
-    m_condition->print(out);
-    out << ',';
-    m_trueCase->print(out);
-
-    if(nullptr != m_falseCase) {
-      out << ',';
-      m_falseCase->print(out);
-    }
-
-    out << ')';
-  }
-  Kind kind() const { return IF; }
-private:
-  DISALLOW_COPY_AND_ASSIGN(If);
-  Node* m_condition;
-  Node* m_trueCase;
-  Node* m_falseCase;
-};
-
 class Variable : public Node {
 public:
   explicit Variable() : m_isModifiable(NO), m_name(nullptr), m_type(nullptr), m_init(nullptr) {}
@@ -410,36 +381,59 @@ private:
   Node* m_value;
 };
 
-class AnonymousFunction : public Node {
+class Function : public Node {
 public:
-  explicit AnonymousFunction() : m_block(nullptr) {}
-  
-  NodeList* parameters() {
-    return &m_parameters;
-  }
+  explicit Function() : m_name(nullptr), m_type(nullptr), m_block(nullptr) {}
 
-  void init(Node* block) {
+  void init(Node* name, Node* type, Node* block) {
+    m_name = name;
+    m_type = type;
     m_block = block;
   }
 
   void print(std::ostream& out) const {
-    out << "AF(";
+    out << "Function(";
+    if(nullptr == m_name) {
+      out << "<anonymous>";
+    } else {
+      m_name->print(out);
+    }
+    out << ',';
+    m_typeParameters.print(out, false);
+    out << ',';
     m_parameters.print(out, false);
+    out << ',';
+    if(nullptr != m_type) {
+      m_type->print(out);
+    } else {
+      out << "null";
+    }
     out << ',';
     m_block->print(out);
     out << ')';
   }
 
-  Kind kind() const { return ANONYMOUS_FUNCTION; }
+  NodeList* parameters() {
+    return &m_parameters;
+  }
+
+  NodeList* typeParameters() {
+    return &m_typeParameters;
+  }
+
+  Kind kind() const { return FUNCTION; }
 private:
-  DISALLOW_COPY_AND_ASSIGN(AnonymousFunction);
-  NodeList m_parameters;
+  DISALLOW_COPY_AND_ASSIGN(Function);
+  Node* m_name;
+  Node* m_type;
   Node* m_block;
+  NodeList m_typeParameters;
+  NodeList m_parameters;
 };
 
-class AnonymousFunctionParameter : public Node {
+class Parameter : public Node {
 public:
-  explicit AnonymousFunctionParameter() : m_name(nullptr), m_type(nullptr) {}
+  explicit Parameter() : m_name(nullptr), m_type(nullptr) {}
   
   void init(Node* name, Node* type) {
     m_name = name;
@@ -447,7 +441,7 @@ public:
   }
 
   void print(std::ostream& out) const {
-    out << "AFParameter(";
+    out << "Parameter(";
     m_name->print(out);
     if(nullptr != m_type) {
       out << ',';
@@ -456,10 +450,40 @@ public:
     out << ')';
   }
 
-  Kind kind() const { return ANONYMOUS_FUNCTION_PARAMETER; }
+  Kind kind() const { return PARAMETER; }
 private:
-  DISALLOW_COPY_AND_ASSIGN(AnonymousFunctionParameter);
+  DISALLOW_COPY_AND_ASSIGN(Parameter);
   Node* m_name;
   Node* m_type;
 };
+
+class TypeParameter : public Node  {
+public:
+  explicit TypeParameter() : m_name(nullptr), m_bound(nullptr), m_boundType(0) {}
+
+  void init(Node* name, Node* bound, unsigned int boundType) {
+    m_name = name;
+    m_bound = bound;
+    m_boundType = boundType;
+  }
+
+  void print(std::ostream& out) const {
+    out << "TypeParameter(";
+    m_name->print(out);
+    if(m_boundType != 0) {
+      out << ',';
+      m_bound->print(out);
+      out << ',' << m_boundType;
+    }
+    out << ')';
+  }
+
+  Kind kind() const { return TYPE_PARAMETER; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(TypeParameter);
+  Node* m_name;
+  Node* m_bound;
+  unsigned int m_boundType;
+};
+
 #endif

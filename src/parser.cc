@@ -70,6 +70,10 @@ ast::Node* Parser::parseBlock() {
     EXPECT(tok::RBRACE);
     return block;
   } else {
+    if(peek(tok::DEF)) {
+      return parseDefinition();
+    }
+
     return parseExpression();
   }
 }
@@ -87,6 +91,58 @@ ast::Node* Parser::parseBlock() {
 //  | '/' Path
 //  | Identifier ('/' Path)?
 //
+
+// this is inconsistent since '{' Block '}' is not true. '{' and '}' are
+// already part of the block but they must be present!
+//
+// Definition
+//  : 'def' Identifier TypeParameterList? '(' ParameterList ')' Type '=' Block
+//  | 'def' Identifier TypeParameterList? '(' ParameterList ')' '{' Block '}'
+//
+ast::Node* Parser::parseDefinition() {
+  EXPECT(tok::DEF);
+  auto name = parseIdentifier();
+  auto result = alloc<ast::Function>();
+  if(peek(tok::LBRAC)) {
+    auto error = parseTypeParameterList(result->typeParameters());
+    if(nullptr != error) {
+      return error;
+    }
+  }
+  EXPECT(tok::LPAREN);
+  if(!peek(tok::RPAREN)) {
+    parseParameterList(result->parameters());
+  }
+  EXPECT(tok::RPAREN);
+  if(poll(tok::COLON)) {
+    auto type = parseType();
+    EXPECT(tok::ASSIGN);
+    auto block = parseBlock();
+    result->init(name, type, block);
+  } else if(peek(tok::LBRACE)) {
+    auto block = parseBlock();
+    result->init(name, nullptr, block);
+  }
+
+  return result;
+}
+
+void Parser::parseParameterList(ast::NodeList* list) {
+  do {
+    list->add(parseParameter());
+  } while(poll(tok::COMMA));
+}
+
+ast::Node* Parser::parseParameter() {
+  auto name = parseIdentifier();
+  EXPECT(tok::COLON);
+  auto type = parseType();
+  auto result = alloc<ast::Parameter>();
+
+  result->init(name, type);
+  
+  return result;
+}
 
 //
 // Expression
@@ -113,8 +169,6 @@ ast::Node* Parser::parseExpression() {
     expression = parseIdentifier();
   } else if(peek(tok::BRANCH)) {
     expression = parseBranchExpression();
-  } else if(peek(tok::IF)) {
-    expression =  parseIfExpression();
   } else if(peek(tok::VAL) || peek(tok::VAR)) {
     expression =  parseVariableExpression();
   } else if(peek(tok::NUMBER_LITERAL)) {
@@ -239,25 +293,25 @@ ast::Node* Parser::parseArgument() {
 
 //
 // AnonymousFunctionExpression
-//  : '{' NEWLINE* AnonymousFunctionParameters '->' Block NEWLINE* '}'
+//  : '{' NEWLINE* AnonymousFunctionParameterList '->' Block NEWLINE* '}'
 //
 ast::Node* Parser::parseAnonymousFunctionExpression() {
   EXPECT(tok::LBRACE);
   pollAll(tok::NEWLINE);
-  auto result = alloc<ast::AnonymousFunction>();
-  parseAnonymousFunctionParameters(result->parameters());
+  auto result = alloc<ast::Function>();
+  parseAnonymousFunctionParameterList(result->parameters());
   EXPECT(tok::RARROW);
-  result->init(parseBlock());
+  result->init(nullptr, nullptr, parseBlock());
   pollAll(tok::NEWLINE);
   EXPECT(tok::RBRACE);
   return result;
 }
 
 //
-// AnonymousFunctionParameters
+// AnonymousFunctionParameterList
 //  : AnonymousFunctionParameter (',' AnonymousFunctionParameter)*
 //
-void Parser::parseAnonymousFunctionParameters(ast::NodeList* parameters) {
+void Parser::parseAnonymousFunctionParameterList(ast::NodeList* parameters) {
   do {
     parameters->add(parseAnonymousFunctionParameter());
   } while(poll(tok::COMMA));
@@ -270,7 +324,7 @@ void Parser::parseAnonymousFunctionParameters(ast::NodeList* parameters) {
 ast::Node* Parser::parseAnonymousFunctionParameter() {
   auto ident = parseIdentifier();
   auto type = poll(tok::COLON) ? parseType() : nullptr;
-  auto result = alloc<ast::AnonymousFunctionParameter>();
+  auto result = alloc<ast::Parameter>();
   result->init(ident, type);
   return result;
 }
@@ -309,25 +363,6 @@ ast::Node* Parser::parseStringLiteral() {
 }
 
 //
-// IfExpression
-//  : 'if' '(' Expression ')' Block ('else' Block)?
-//
-ast::Node* Parser::parseIfExpression() {
-  EXPECT(tok::IF);
-  EXPECT(tok::LPAREN);
-  auto condition = parseExpression();
-  EXPECT(tok::RPAREN);
-  
-  auto trueCase = parseBlock();
-  auto falseCase = poll(tok::ELSE) ? parseBlock() : nullptr;
-  auto result = alloc<ast::If>();
-
-  result->init(condition, trueCase, falseCase);
-
-  return result;
-}
-
-//
 // BranchExpression
 //  : branch '{' NEWLINE (BranchCase NEWLINE)+ '}'
 //  | branch BranchCase
@@ -350,6 +385,10 @@ ast::Node* Parser::parseBranchExpression() {
   return branch;
 }
 
+//
+// BranchCase
+//  : Expression '->' Block
+//
 ast::Node* Parser::parseBranchCase() {
   auto condition = parseExpression();
   EXPECT(tok::RARROW);
@@ -399,12 +438,62 @@ ast::Node* Parser::parseVariableExpression() {
   return result;
 }
 
+//
 // Type
 //  : Identifier ('[' Type ']')?
+//  | Type '->' Type
 //
 ast::Node* Parser::parseType() {
   //TODO(joa): wrap in type, add attrib
-  return parseIdentifier();
+  auto name = parseIdentifier();
+  if(poll(tok::LBRAC)) {
+    parseType();
+    EXPECT(tok::RBRAC);
+  }
+
+  if(poll(tok::RARROW)) {
+    parseType();
+  }
+  return name;
+}
+
+//
+// TypeParameterList
+//  : '[' TypeParameter (',' TypeParameter)* ']'
+//
+ast::Node* Parser::parseTypeParameterList(ast::NodeList* list) {
+  EXPECT(tok::LBRAC);
+  
+  do {
+    list->add(parseTypeParameter());
+  } while(poll(tok::COMMA));
+
+  EXPECT(tok::RBRAC);
+
+  return nullptr;
+}
+
+//
+// TypeParameter
+//  : Identifier
+//  | Identifier '->' Type
+//  | Identifier '<-' Type
+//
+ast::Node* Parser::parseTypeParameter() {
+  auto name = parseIdentifier();
+  auto result = alloc<ast::TypeParameter>();
+
+  if(poll(tok::RARROW)) {
+    auto bound = parseType();
+    result->init(name, bound, 1);
+  } else if(poll(tok::LARROW)) {
+    auto bound = parseType();
+    result->init(name, bound, 2);
+  } else {
+    result->init(name, nullptr, 0);
+  }
+
+  return result;
 }
 
 //

@@ -7,8 +7,7 @@ static const char* KeywordChars[] = {
   "this",
   "val",
   "var",
-  "if",
-  "else",
+  "def",
   "for",
   "while",
   "yield",
@@ -27,8 +26,7 @@ static const Token KeywordTokens[] = {
   THIS,
   VAL,
   VAR,
-  IF,
-  ELSE,
+  DEF,
   FOR,
   WHILE,
   YIELD,
@@ -74,8 +72,7 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(THIS, "THIS");
     TOKEN_TO_STRING_CASE(VAL, "VAL");
     TOKEN_TO_STRING_CASE(VAR, "VAR");
-    TOKEN_TO_STRING_CASE(IF, "IF");
-    TOKEN_TO_STRING_CASE(ELSE, "ELSE");
+    TOKEN_TO_STRING_CASE(DEF, "DEF");
     TOKEN_TO_STRING_CASE(FOR, "FOR");
     TOKEN_TO_STRING_CASE(WHILE, "WHILE");
     TOKEN_TO_STRING_CASE(YIELD, "YIELD");

@@ -136,8 +136,7 @@ namespace brutus {
     THIS,
     VAL,
     VAR,
-    IF,
-    ELSE,
+    DEF,
     FOR,
     WHILE,
     YIELD,
@@ -224,6 +223,9 @@ namespace brutus {
 
     ast::Node* parseProgram();
     ast::Node* parseBlock();
+    ast::Node* parseDefinition();
+    void parseParameterList(ast::NodeList* list);
+    ast::Node* parseParameter();
     ast::Node* parseExpression();
     ast::Node* continueWithExpression(ast::Node* expression);
     ast::Node* parseSelect(ast::Node* object);
@@ -231,7 +233,7 @@ namespace brutus {
     void parseArgumentList(ast::NodeList* list);
     ast::Node* parseArgument();
     ast::Node* parseAnonymousFunctionExpression();
-    void parseAnonymousFunctionParameters(ast::NodeList* list);
+    void parseAnonymousFunctionParameterList(ast::NodeList* list);
     ast::Node* parseAnonymousFunctionParameter();
     ast::Node* parseBooleanLiteral();
     ast::Node* parseNumberLiteral();
@@ -241,6 +243,8 @@ namespace brutus {
     ast::Node* parseBranchCase();
     ast::Node* parseVariableExpression();
     ast::Node* parseType();
+    ast::Node* parseTypeParameterList(ast::NodeList* list);
+    ast::Node* parseTypeParameter();
     ast::Node* parseIdentifier();
   private:
     DISALLOW_COPY_AND_ASSIGN(Parser);

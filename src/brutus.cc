@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
 
+#if 0
   withTokenFile([&](FILE* fp) {
     auto stream = new brutus::FileCharStream(fp);
     auto lexer = new brutus::Lexer(stream); 
@@ -39,6 +40,20 @@ int main(int argc, char** argv) {
 
     std::cout << std::endl;
   });
+#endif
+
+#if 1
+  withTokenFile([&](FILE* fp) {
+    auto stream = new brutus::FileCharStream(fp);
+    auto lexer = new brutus::Lexer(stream); 
+    auto parser = new brutus::Parser(lexer);
+    auto ast = parser->parseProgram();
+    
+    std::cout << "digraph {" << std::endl;
+    ast->printDOT(std::cout);
+    std::cout << "}" << std::endl << std::endl;
+  });
+#endif
 
 #if 0
   withTokenFile([&](FILE* fp) {

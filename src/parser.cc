@@ -147,15 +147,11 @@ ast::Node* Parser::parseParameter() {
 //
 // Expression
 //  : NEWLINE* '(' Expression ')'
-//  | NEWLINE* Identifier
 //  | NEWLINE* VariableExpression
 //  | NEWLINE* IfExpression
-//  | NEWLINE* NumberLiteral
-//  | NEWLINE* BooleanLiteral
-//  | NEWLINE* StringLiteral
-//  | NEWLINE* 'this'
 //  | NEWLINE* Select
 //  | NEWLINE* Call
+//  | NEWLINE* PrimaryExpression
 //
 ast::Node* Parser::parseExpression() {
   pollAll(tok::NEWLINE);
@@ -165,23 +161,50 @@ ast::Node* Parser::parseExpression() {
   if(poll(tok::LPAREN)) {
     expression = parseExpression();
     EXPECT(tok::RPAREN);
-  } else if(peek(tok::IDENTIFIER)) {
-    expression = parseIdentifier();
   } else if(peek(tok::BRANCH)) {
     expression = parseBranchExpression();
   } else if(peek(tok::VAL) || peek(tok::VAR)) {
     expression =  parseVariableExpression();
-  } else if(peek(tok::NUMBER_LITERAL)) {
-    expression =  parseNumberLiteral();
-  } else if(peek(tok::TRUE_) || peek(tok::YES_) || peek(tok::FALSE_) || peek(tok::NO_)) {
-    expression =  parseBooleanLiteral();
-  } else if(peek(tok::STRING_LITERAL)) {
-    expression =  parseStringLiteral();
-  } else if(poll(tok::THIS)) {
-    expression =  alloc<ast::This>();
+  } else if(peekPrimaryExpression()) {
+    expression = parsePrimaryExpression();
   }
 
   return continueWithExpression(expression);
+}
+
+//
+// PrimaryExpression
+//  : Identifier
+//  | NumberLiteral
+//  | BooleanLiteral
+//  | StringLiteral
+//  | This
+//
+ast::Node* Parser::parsePrimaryExpression() {
+  if(peek(tok::IDENTIFIER)) {
+    return parseIdentifier();
+  } else if(peek(tok::NUMBER_LITERAL)) {
+    return parseNumberLiteral();
+  } else if(peek(tok::TRUE_) || peek(tok::YES_) || peek(tok::FALSE_) || peek(tok::NO_)) {
+    return parseBooleanLiteral();
+  } else if(peek(tok::STRING_LITERAL)) {
+    return parseStringLiteral();
+  } else if(peek(tok::THIS)) {
+    return parseThis();
+  } else {
+    return error("Expected primary expression.");
+  }
+}
+
+bool Parser::peekPrimaryExpression() {
+  return peek(tok::IDENTIFIER)
+      || peek(tok::NUMBER_LITERAL)
+      || peek(tok::TRUE_)
+      || peek(tok::YES_)
+      || peek(tok::FALSE_)
+      || peek(tok::NO_)
+      || peek(tok::STRING_LITERAL)
+      || peek(tok::THIS);
 }
 
 ast::Node* Parser::continueWithExpression(ast::Node* expression) {
@@ -263,8 +286,8 @@ void Parser::parseArgumentList(ast::NodeList* list) {
 //  : Expression
 //  | Identifier '=' Expression
 //  | AnonymousFunctionExpression
-//  | Identifier '=' AnonymousFunctionExpression
-//
+//  | Identifier '=' AnonymousFunctionExpressione
+//e
 ast::Node* Parser::parseArgument() {
   auto result = alloc<ast::Argument>();
 
@@ -327,6 +350,18 @@ ast::Node* Parser::parseAnonymousFunctionParameter() {
   auto result = alloc<ast::Parameter>();
   result->init(ident, type);
   return result;
+}
+
+//
+// This
+//  : 'this'
+//
+ast::Node* Parser::parseThis() {
+  if(poll(tok::THIS)) {
+    return alloc<ast::This>();
+  }
+
+  return error("Expected this.");
 }
 
 //

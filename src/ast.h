@@ -21,11 +21,17 @@ enum Kind {
   TYPE_PARAMETER
 }; //enum Kind
 
+#define NODE_ID(x) (reinterpret_cast<intptr_t>(x))
+#define NODE_NAME(x) "n" << NODE_ID(x)
+
 class Node {
 public:
   explicit Node() {}
   virtual ~Node() {}
-  virtual void print(std::ostream& out) const = 0;    
+  virtual void print(std::ostream& out) const = 0;
+  virtual void printDOT(std::ostream& out) const {
+    out << NODE_NAME(this) << " [shape=box];" << std::endl;
+  }
   virtual Kind kind() const = 0;
 private:
   DISALLOW_COPY_AND_ASSIGN(Node);
@@ -112,6 +118,45 @@ public:
     out << ']';
   }
 
+  void printDOT(std::ostream& out) const {
+    if(m_nodesIndex > 0) {
+      auto ptr = m_nodes;
+      auto n = *ptr++;
+
+      if(nullptr != n) {
+        n->printDOT(out);
+      }
+
+      for(size_t i = 1; i < m_nodesIndex; ++i) {
+        n = *ptr++;
+
+        if(nullptr != n) {
+          n->printDOT(out);
+        }
+      }
+    }
+  }
+
+  template<class T>
+  void printDOTConnections(std::ostream& out, T* fromNode) const {
+    if(m_nodesIndex > 0) {
+      auto ptr = m_nodes;
+      auto n = *ptr++;
+
+      if(nullptr != n) {
+        out << NODE_NAME(fromNode) << " -> " NODE_NAME(n) << ';' << std::endl;
+      }
+
+      for(size_t i = 1; i < m_nodesIndex; ++i) {
+        n = *ptr++;
+
+        if(nullptr != n) {
+          out << NODE_NAME(fromNode) << " -> " NODE_NAME(n) << ';' << std::endl;
+        }
+      }
+    }
+  }
+
   size_t size() const { 
     return m_nodesIndex;
   }
@@ -143,6 +188,10 @@ public:
     out << "Error(" << m_value << " (line " << m_line << ", col " << m_column << "))";
   }
 
+  void printDOT(std::ostream& out) const {
+    out << NODE_NAME(this) << " [shape=box, label=\"Error\"];" << std::endl;
+  }
+
   Kind kind() const { return ERROR; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Error);
@@ -155,6 +204,7 @@ class Identifier : public NodeWithValue {
 public:
   explicit Identifier() {}
   void print(std::ostream& out) const { out << "Identifier(" << m_value << ')'; }
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=\"Identifier(" << m_value << ")\"];" << std::endl; }
   Kind kind() const { return IDENTIFIER; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Identifier);
@@ -164,6 +214,7 @@ class Number : public NodeWithValue {
 public:
   explicit Number() {}
   void print(std::ostream& out) const { out << "Number(" << m_value << ')'; }
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=\"Number(" << m_value << ")\"];" << std::endl; }
   Kind kind() const { return NUMBER; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Number);
@@ -173,6 +224,7 @@ class String : public NodeWithValue {
 public:
   explicit String() {}
   void print(std::ostream& out) const { out << "String(" << m_value << ')'; }
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=\"String(" << m_value << ")\"];" << std::endl; }
   Kind kind() const { return STRING; }
 private:
   DISALLOW_COPY_AND_ASSIGN(String);
@@ -182,6 +234,7 @@ class This : public Node {
 public:
   explicit This() {}
   void print(std::ostream& out) const { out << "This"; }
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=This];" << std::endl; }
   Kind kind() const { return THIS; }
 private:
   DISALLOW_COPY_AND_ASSIGN(This);
@@ -205,6 +258,12 @@ public:
     out << ')';
   }
 
+  void printDOT(std::ostream& out) const {
+    out << NODE_NAME(this) << " [shape=box, label=Block];" << std::endl;
+    m_list.printDOT(out);
+    m_list.printDOTConnections(out, this);
+  }
+
   Kind kind() const { return BLOCK; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Block);
@@ -214,12 +273,14 @@ private:
 class Variable : public Node {
 public:
   explicit Variable() : m_isModifiable(NO), m_name(nullptr), m_type(nullptr), m_init(nullptr) {}
+  
   void init(bool isModifiable, Node* name, Node* type, Node* init) {
     m_isModifiable = isModifiable;
     m_name = name;
     m_type = type;
     m_init = init;
   }
+
   void print(std::ostream& out) const {
     out << "Variable(" << (m_isModifiable ? "VAR" : "VAL") << ',';
     m_name->print(out);
@@ -239,6 +300,21 @@ public:
       out << "NO INIT)";
     }
   }
+
+  void printDOT(std::ostream& out) const {
+    out << NODE_NAME(this) << " [shape=box, label=Variable];" << std::endl;
+
+    if(nullptr != m_type) {
+      m_type->printDOT(out);
+      out << NODE_NAME(this) << " -> " << NODE_NAME(m_type) << "[label=Type];" << std::endl;
+    }
+
+    if(nullptr != m_init) {
+      m_init->printDOT(out);
+      out << NODE_NAME(this) << " -> " << NODE_NAME(m_init) << "[label=Init];" << std::endl;
+    }
+  }
+
   Kind kind() const { return VARIABLE; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Variable);
@@ -252,6 +328,7 @@ class True : public Node {
 public:
   explicit True() {}
   void print(std::ostream& out) const { out << "True"; }
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=True];" << std::endl; }
   Kind kind() const { return TRUE_; }
 private:
   DISALLOW_COPY_AND_ASSIGN(True);
@@ -261,6 +338,7 @@ class False : public Node {
 public:
   explicit False() {}
   void print(std::ostream& out) const { out << "False"; }
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=False];" << std::endl; }
   Kind kind() const { return FALSE_; }
 private:
   DISALLOW_COPY_AND_ASSIGN(False);
@@ -279,6 +357,13 @@ public:
     out << ',';
     m_qualifier->print(out);
     out << ')';
+  }
+  void printDOT(std::ostream& out) const {
+    out << NODE_NAME(this) << " [shape=box, label=Select];" << std::endl;
+    m_object->printDOT(out);
+    m_qualifier->printDOT(out);
+    out << NODE_NAME(this) << " -> " << NODE_NAME(m_object) << " [label=Object];" << std::endl;
+    out << NODE_NAME(this) << " -> " << NODE_NAME(m_qualifier) << " [label=Qualifier];" << std::endl;
   }
   Kind kind() const { return SELECT; }
 private:
@@ -300,7 +385,11 @@ public:
     m_cases.print(out, true);
     out << ")";
   }
-
+  void printDOT(std::ostream& out) const {
+    out << NODE_NAME(this) << " [shape=box, label=Branch];" << std::endl;
+    m_cases.printDOT(out);
+    m_cases.printDOTConnections(out, this);
+  }
   Kind kind() const { return BRANCH; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Branch);
@@ -324,6 +413,14 @@ public:
     out << ")";
   }
   
+  void printDOT(std::ostream& out) const {
+    out << NODE_NAME(this) << " [shape=box, label=BranchCase];" << std::endl;
+    m_condition->printDOT(out);
+    m_block->printDOT(out);
+    out << NODE_NAME(this) << " -> " << NODE_NAME(m_condition) << " [label=Condition];" << std::endl;
+    out << NODE_NAME(this) << " -> " << NODE_NAME(m_block) << " [label=Block];" << std::endl;
+  }
+
   Kind kind() const { return BRANCH_CASE; }
 private:
   DISALLOW_COPY_AND_ASSIGN(BranchCase);
@@ -349,6 +446,15 @@ public:
     m_arguments.print(out, false);
     out << ')';
   }
+
+  void printDOT(std::ostream& out) const {
+    m_callee->printDOT(out);
+    out << NODE_NAME(this) << " [shape=box, label=Call];" << std::endl;
+    out << NODE_NAME(this) << " -> " NODE_NAME(m_callee) << " [label=Callee];" << std::endl;
+    m_arguments.printDOT(out);
+    m_arguments.printDOTConnections(out, this);
+  }
+  
   Kind kind() const { return CALL; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Call);
@@ -374,6 +480,17 @@ public:
     m_value->print(out);
     out << ')';
   }
+
+  void printDOT(std::ostream& out) const { 
+    out << NODE_NAME(this) << " [shape=box, label=Argument];" << std::endl;
+    if(nullptr != m_name) {
+      m_name->printDOT(out);
+      out << NODE_NAME(this) << " -> " << NODE_NAME(m_name) << " [label=Name];" << std::endl;
+    }
+    m_value->printDOT(out);
+    out << NODE_NAME(this) << " -> " << NODE_NAME(m_value) << " [label=Value]" << std::endl;
+  }
+
   Kind kind() const { return ARGUMENT; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Argument);
@@ -412,7 +529,9 @@ public:
     m_block->print(out);
     out << ')';
   }
-
+  
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=Function];" << std::endl; }
+  
   NodeList* parameters() {
     return &m_parameters;
   }
@@ -450,6 +569,8 @@ public:
     out << ')';
   }
 
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=Parameter];" << std::endl; }
+
   Kind kind() const { return PARAMETER; }
 private:
   DISALLOW_COPY_AND_ASSIGN(Parameter);
@@ -477,6 +598,8 @@ public:
     }
     out << ')';
   }
+  
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=TypeParameter];" << std::endl; }
 
   Kind kind() const { return TYPE_PARAMETER; }
 private:
@@ -485,5 +608,5 @@ private:
   Node* m_bound;
   unsigned int m_boundType;
 };
-
+#undef NODE_ID
 #endif

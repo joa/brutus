@@ -227,13 +227,15 @@ namespace brutus {
     void parseParameterList(ast::NodeList* list);
     ast::Node* parseParameter();
     ast::Node* parseExpression();
+    ast::Node* parseExpression(bool allowInfixCall);
     ast::Node* parsePrimaryExpression();
     bool peekPrimaryExpression();
-    ast::Node* continueWithExpression(ast::Node* expression);
+    ast::Node* continueWithExpression(ast::Node* expression, bool allowInfixCall);
     ast::Node* parseSelect(ast::Node* object);
     ast::Node* parseCall(ast::Node* callee);
     void parseArgumentList(ast::NodeList* list);
     ast::Node* parseArgument();
+    ast::Node* parseSingleArgument();
     ast::Node* parseAnonymousFunctionExpression();
     void parseAnonymousFunctionParameterList(ast::NodeList* list);
     ast::Node* parseAnonymousFunctionParameter();

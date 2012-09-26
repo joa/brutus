@@ -101,19 +101,26 @@ ast::Node* Parser::parseBlock() {
 //
 ast::Node* Parser::parseDefinition() {
   EXPECT(tok::DEF);
+  
   auto name = parseIdentifier();
   auto result = alloc<ast::Function>();
+
   if(peek(tok::LBRAC)) {
     auto error = parseTypeParameterList(result->typeParameters());
+    
     if(nullptr != error) {
       return error;
     }
   }
+  
   EXPECT(tok::LPAREN);
+  
   if(!peek(tok::RPAREN)) {
     parseParameterList(result->parameters());
   }
+  
   EXPECT(tok::RPAREN);
+  
   if(poll(tok::COLON)) {
     auto type = parseType();
     EXPECT(tok::ASSIGN);
@@ -149,11 +156,15 @@ ast::Node* Parser::parseParameter() {
 //  : NEWLINE* '(' Expression ')'
 //  | NEWLINE* VariableExpression
 //  | NEWLINE* IfExpression
-//  | NEWLINE* Select
-//  | NEWLINE* Call
+//  | NEWLINE* Expression Select*
+//  | NEWLINE* Expression Call*
 //  | NEWLINE* PrimaryExpression
 //
 ast::Node* Parser::parseExpression() {
+  return parseExpression(true);
+}
+
+ast::Node* Parser::parseExpression(bool allowInfixCall) {
   pollAll(tok::NEWLINE);
 
   ast::Node* expression = nullptr;
@@ -169,7 +180,7 @@ ast::Node* Parser::parseExpression() {
     expression = parsePrimaryExpression();
   }
 
-  return continueWithExpression(expression);
+  return continueWithExpression(expression, allowInfixCall);
 }
 
 //
@@ -207,7 +218,7 @@ bool Parser::peekPrimaryExpression() {
       || peek(tok::THIS);
 }
 
-ast::Node* Parser::continueWithExpression(ast::Node* expression) {
+ast::Node* Parser::continueWithExpression(ast::Node* expression, bool allowInfixCall) {
   if(nullptr == expression) {
     return error("Expected expression.");
   } else {
@@ -215,7 +226,7 @@ ast::Node* Parser::continueWithExpression(ast::Node* expression) {
       if(peek(tok::DOT)) {
         auto select = parseSelect(expression);
         expression = select;
-      } else if(peek(tok::LPAREN) || peek(tok::IDENTIFIER)) {
+      } else if(peek(tok::LPAREN) || (allowInfixCall && peek(tok::IDENTIFIER))) {
         auto call = parseCall(expression);
         expression = call;
       } else {
@@ -245,7 +256,7 @@ ast::Node* Parser::parseSelect(ast::Node* object) {
 //
 // Call
 //  : Expression '(' ArgumentList ')'
-//  | Expression Identifier Argument
+//  | Expression Identifier SingleArgument
 //
 ast::Node* Parser::parseCall(ast::Node* callee) {
   auto result = alloc<ast::Call>();
@@ -263,7 +274,7 @@ ast::Node* Parser::parseCall(ast::Node* callee) {
     select->init(callee, name);
     result->init(select);
 
-    result->arguments()->add(parseArgument());
+    result->arguments()->add(parseSingleArgument());
   } else {
     return error("Expected call.");
   }
@@ -287,7 +298,7 @@ void Parser::parseArgumentList(ast::NodeList* list) {
 //  | Identifier '=' Expression
 //  | AnonymousFunctionExpression
 //  | Identifier '=' AnonymousFunctionExpressione
-//e
+//
 ast::Node* Parser::parseArgument() {
   auto result = alloc<ast::Argument>();
 
@@ -301,7 +312,7 @@ ast::Node* Parser::parseArgument() {
         result->init(ident, parseExpression());
       }
     } else {
-      result->init(nullptr, continueWithExpression(ident));
+      result->init(nullptr, continueWithExpression(ident, true));
     }
   } else {
     if(peek(tok::LBRACE)) {
@@ -309,6 +320,23 @@ ast::Node* Parser::parseArgument() {
     } else {
       result->init(nullptr, parseExpression());
     }
+  }
+
+  return result;
+}
+
+//
+// SingleArgument
+//  : Expression
+//  | AnonymousFunctionExpression
+//
+ast::Node* Parser::parseSingleArgument() {
+  auto result = alloc<ast::Argument>();
+
+  if(peek(tok::LBRACE)) {
+    result->init(nullptr, parseAnonymousFunctionExpression());
+  } else {
+    result->init(nullptr, parseExpression(false));
   }
 
   return result;

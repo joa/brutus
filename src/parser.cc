@@ -152,6 +152,13 @@ ast::Node* Parser::parseParameter() {
 }
 
 //
+// A special case for the expression grammar: currently I am lazy and
+// the fact that infix calls are left-associative is only expressed
+// via a boolean that makes the production less greedy. So
+// the option Expression Call* is always valid but it accepts only calls
+// in the form of "foo.bar(baz)" if allowInfixCall is false. Otherwise
+// it accepts "foo.bar(baz)" and "foo bar baz".
+//
 // Expression
 //  : NEWLINE* '(' Expression ')'
 //  | NEWLINE* VariableExpression
@@ -344,15 +351,19 @@ ast::Node* Parser::parseSingleArgument() {
 
 //
 // AnonymousFunctionExpression
-//  : '{' NEWLINE* AnonymousFunctionParameterList '->' Block NEWLINE* '}'
+//  : '{' NEWLINE* AnonymousFunctionParameterList (':' Type?) ->' Block NEWLINE* '}'
 //
 ast::Node* Parser::parseAnonymousFunctionExpression() {
   EXPECT(tok::LBRACE);
   pollAll(tok::NEWLINE);
   auto result = alloc<ast::Function>();
   parseAnonymousFunctionParameterList(result->parameters());
+  ast::Node* returnType = nullptr;
+  if(poll(tok::COLON)) {
+    returnType = parseType();
+  }
   EXPECT(tok::RARROW);
-  result->init(nullptr, nullptr, parseBlock());
+  result->init(nullptr, returnType, parseBlock());
   pollAll(tok::NEWLINE);
   EXPECT(tok::RBRACE);
   return result;

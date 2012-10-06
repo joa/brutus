@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Requires inotify-tools to work:
+# sudo apt-get install inotify-tools
+
 while true; do
   change=$(inotifywait -e close_write,moved_to,create . ./src)
   change=${change#./ * }

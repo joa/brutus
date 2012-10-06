@@ -19,7 +19,7 @@ static const char* KeywordChars[] = {
   u8"←",
   "->",
   u8"→",
-  "branch"
+  "if"
 };
 
 static const Token KeywordTokens[] = {
@@ -38,7 +38,7 @@ static const Token KeywordTokens[] = {
   LARROW,
   RARROW,
   RARROW,
-  BRANCH
+  IF
 };
 
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
@@ -80,7 +80,7 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(FALSE_, "FALSE");
     TOKEN_TO_STRING_CASE(YES_, "YES");
     TOKEN_TO_STRING_CASE(NO_, "NO");
-    TOKEN_TO_STRING_CASE(BRANCH, "BRANCH");
+    TOKEN_TO_STRING_CASE(IF, "IF");
 
     default: return "UNKNOWN";
   }

@@ -179,8 +179,8 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
   if(poll(tok::LPAREN)) {
     expression = parseExpression();
     EXPECT(tok::RPAREN);
-  } else if(peek(tok::BRANCH)) {
-    expression = parseBranchExpression();
+  } else if(peek(tok::IF)) {
+    expression = parseIfExpression();
   } else if(peek(tok::VAL) || peek(tok::VAR)) {
     expression =  parseVariableExpression();
   } else if(peekPrimaryExpression()) {
@@ -437,37 +437,37 @@ ast::Node* Parser::parseStringLiteral() {
 }
 
 //
-// BranchExpression
-//  : branch '{' NEWLINE (BranchCase NEWLINE)+ '}'
-//  | branch BranchCase
-ast::Node* Parser::parseBranchExpression() {
-  auto branch = alloc<ast::Branch>();
+// IfExpression
+//  : if '{' NEWLINE (IfCase NEWLINE)+ '}'
+//  | if IfCase
+ast::Node* Parser::parseIfExpression() {
+  auto result = alloc<ast::If>();
   
-  EXPECT(tok::BRANCH);
+  EXPECT(tok::IF);
   if(poll(tok::LBRACE)) {
     EXPECT(tok::NEWLINE);
-    auto cases = branch->cases();
+    auto cases = result->cases();
     do {
-      cases->add(parseBranchCase());
+      cases->add(parseIfCase());
       EXPECT(tok::NEWLINE);
     } while(!peek(tok::RBRACE));
     EXPECT(tok::RBRACE);
   } else {
-    branch->cases()->add(parseBranchCase());
+    result->cases()->add(parseIfCase());
   }
 
-  return branch;
+  return result;
 }
 
 //
-// BranchCase
+// IfCase
 //  : Expression '->' Block
 //
-ast::Node* Parser::parseBranchCase() {
+ast::Node* Parser::parseIfCase() {
   auto condition = parseExpression();
   EXPECT(tok::RARROW);
   auto block = parseBlock();
-  auto result = alloc<ast::BranchCase>();
+  auto result = alloc<ast::IfCase>();
   result->init(condition, block);
   return result;
 }

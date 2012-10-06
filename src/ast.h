@@ -14,8 +14,8 @@ enum Kind {
   SELECT,
   CALL,
   ARGUMENT,
-  BRANCH,
-  BRANCH_CASE,
+  IF,
+  IF_CASE,
   FUNCTION,
   PARAMETER,
   TYPE_PARAMETER
@@ -372,33 +372,33 @@ private:
   Node* m_qualifier;
 };
 
-class Branch : public Node {
+class If : public Node {
 public:
-  explicit Branch() {}
+  explicit If() {}
 
   NodeList* cases() {
     return &m_cases;
   }
 
   void print(std::ostream& out) const {
-    out << "Branch(";
+    out << "If(";
     m_cases.print(out, true);
     out << ")";
   }
   void printDOT(std::ostream& out) const {
-    out << NODE_NAME(this) << " [shape=box, label=Branch];" << std::endl;
+    out << NODE_NAME(this) << " [shape=box, label=If];" << std::endl;
     m_cases.printDOT(out);
     m_cases.printDOTConnections(out, this);
   }
-  Kind kind() const { return BRANCH; }
+  Kind kind() const { return IF; }
 private:
-  DISALLOW_COPY_AND_ASSIGN(Branch);
+  DISALLOW_COPY_AND_ASSIGN(If);
   NodeList m_cases;
 };
 
-class BranchCase : public Node {
+class IfCase : public Node {
 public:
-  explicit BranchCase() : m_condition(nullptr), m_block(nullptr) {}
+  explicit IfCase() : m_condition(nullptr), m_block(nullptr) {}
   
   void init(Node* condition, Node* block) {
     m_condition = condition;
@@ -406,7 +406,7 @@ public:
   }
 
   void print(std::ostream& out) const {
-    out << "BranchCase(";
+    out << "IfCase(";
     m_condition->print(out);
     out << ',';
     m_block->print(out);
@@ -414,16 +414,16 @@ public:
   }
   
   void printDOT(std::ostream& out) const {
-    out << NODE_NAME(this) << " [shape=box, label=BranchCase];" << std::endl;
+    out << NODE_NAME(this) << " [shape=box, label=IfCase];" << std::endl;
     m_condition->printDOT(out);
     m_block->printDOT(out);
     out << NODE_NAME(this) << " -> " << NODE_NAME(m_condition) << " [label=Condition];" << std::endl;
     out << NODE_NAME(this) << " -> " << NODE_NAME(m_block) << " [label=Block];" << std::endl;
   }
 
-  Kind kind() const { return BRANCH_CASE; }
+  Kind kind() const { return IF_CASE; }
 private:
-  DISALLOW_COPY_AND_ASSIGN(BranchCase);
+  DISALLOW_COPY_AND_ASSIGN(IfCase);
   Node* m_condition;
   Node* m_block;
 };

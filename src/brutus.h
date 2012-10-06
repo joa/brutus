@@ -144,7 +144,7 @@ namespace brutus {
     FALSE_,
     YES_,
     NO_,
-    BRANCH
+    IF
   }; // enum Token
 
   const char* toString(const Token& token);
@@ -244,8 +244,7 @@ namespace brutus {
     ast::Node* parseNumberLiteral();
     ast::Node* parseStringLiteral();
     ast::Node* parseIfExpression();
-    ast::Node* parseBranchExpression();
-    ast::Node* parseBranchCase();
+    ast::Node* parseIfCase();
     ast::Node* parseVariableExpression();
     ast::Node* parseType();
     ast::Node* parseTypeParameterList(ast::NodeList* list);

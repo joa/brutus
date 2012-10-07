@@ -19,3 +19,10 @@ build/gyp/*
 *.lai
 *.la
 *.a
+
+# Compiled Python files
+*.pyc
+
+# Visual Studio files
+*.vcxproj
+*.sln

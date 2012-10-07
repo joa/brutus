@@ -6,11 +6,14 @@
 </pre>
 locaiton transparent vm for shared-nothing actors.
 
-Linux
--------------
-`make dependencies`
-`make x64.debug` or `make x64.release`
+# Build
+## Prequisites
+* Python 2.7.3 
+* Subversion
 
-Windows
--------------
-:(
+## Linux
+* `make dependencies`
+* `make x64.debug` or `make x64.release`
+
+## Windows
+* `svn checkout --force http://gyp.googlecode.com/svn/trunk build/gyp --revision 1451`

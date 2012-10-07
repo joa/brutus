@@ -1,0 +1,66 @@
+#!/usr/bin/python
+#
+# As the rest of the build system this is pretty much the same 
+# as http://v8.googlecode.com/svn/trunk/build/gyp_v8
+#
+
+import glob
+import os
+import shlex
+import sys
+
+script_dir = os.path.dirname(__file__)
+brutus_root = os.path.normpath(os.path.join(script_dir, os.pardir))
+
+if __name__ == '__main__':
+  os.chdir(brutus_root)
+  script_dir = os.path.dirname(__file__)
+  brutus_root = '.'
+
+sys.path.insert(0, os.path.join(brutus_root, 'tools'))
+import utils
+
+sys.path.insert(0, os.path.join(brutus_root, 'build', 'gyp', 'pylib'))
+import gyp
+
+def additional_include_files(args=[]):
+  specified_includes = set()
+  for arg in args:
+    if arg.startswith('-I') and len(arg) > 2:
+      specified_includes.add(os.path.realpath(arg[2:]))
+
+  result = []
+  def AddInclude(path):
+    if os.path.realpath(path) not in specified_includes:
+      result.append(path)
+
+  AddInclude(os.path.join(brutus_root, 'build', 'standalone.gypi'))
+
+  supplements = glob.glob(os.path.join(brutus_root, '*', 'supplement.gypi'))
+  for supplement in supplements:
+    AddInclude(supplement)
+
+  return result
+
+def run_gyp(args):
+  rc = gyp.main(args)
+  if rc != 0:
+    print('Error running GYP')
+    sys.exit(rc)
+
+if __name__ == '__main__':
+  args = sys.argv[1:]
+
+  args.append(os.path.join('build', 'all.gyp'))
+  args.extend(['-I' + i for i in additional_include_files(args)])
+
+  args.append('--no-circular-check')
+  args.append('--depth=' + brutus_root)
+
+  print 'Updating projects from gyp files...'
+  sys.stdout.flush()
+
+  gyp_args = list(args)
+  if utils.GuessOS() == 'linux':
+    gyp_args.append('--generator-output=out')
+  run_gyp(gyp_args)

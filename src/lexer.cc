@@ -16,17 +16,9 @@ static const char* KeywordChars[] = {
   "yes",
   "no",
   "<-",
-#ifdef __GNUC__
   u8"←",
-#else
-  "←",
-#endif
   "->",
-#ifdef __GNUC__
   u8"→",
-#else
-  "→",
-#endif
   "if"
 };
 
@@ -49,12 +41,7 @@ static const Token KeywordTokens[] = {
   IF
 };
 
-static const size_t NUM_KEYWORDS = 
-#if __GNUC__
-	NumberOfElements(KeywordChars);
-#else
-	16;
-#endif
+static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
 
 const char* toString(const Token& token) {
   #define TOKEN_TO_STRING_CASE(T, S) case T: return S

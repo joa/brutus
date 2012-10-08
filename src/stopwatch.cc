@@ -11,6 +11,7 @@ void Stopwatch::stop() {
 
 void Stopwatch::log() const {
 #if __GNUC__
+  //TODO(joa): deltaTicks cannot be defined with VS2012 and leads to an error.
   auto deltaTicks = 
     std::chrono::duration<
       double,

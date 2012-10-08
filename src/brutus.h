@@ -151,6 +151,7 @@ namespace brutus {
     EQUALS,     // ==
     LARROW,     // <- and ←
     RARROW,     // -> and →
+    HASH,       // #
 
     // Keywords:
     THIS,
@@ -164,7 +165,17 @@ namespace brutus {
     FALSE_,
     YES_,
     NO_,
-    IF
+    IF,
+    NEW,
+    ON,
+    CLASS,
+    TRAIT,
+    VIRTUAL,
+    PUBLIC,
+    PRIVATE,
+    PROTECTED,
+    INTERNAL,
+    NATIVE
   }; // enum Token
 
   const char* toString(const Token& token);
@@ -239,11 +250,22 @@ namespace brutus {
 
   class Parser {
   public:
+    static const int ACC_VIRTUAL = 1;
+    static const int ACC_PUBLIC = 1 << 1;
+    static const int ACC_PRIVATE = 1 << 2;
+    static const int ACC_PROTECTED = 1 << 3;
+    static const int ACC_INTERNAL = 1 << 4;
+    static const int ACC_NATIVE = 1 << 5;
+
     explicit Parser(Lexer* lexer) : m_lexer(lexer), m_arena() {}
 
     ast::Node* parseProgram();
     ast::Node* parseBlock();
+    bool peekVisibility();
     ast::Node* parseDefinition();
+    ast::Node* parseFunction(unsigned int flags);
+    ast::Node* parseClass(unsigned int flags);
+    ast::Node* parseTrait(unsigned int flags);
     void parseParameterList(ast::NodeList* list);
     ast::Node* parseParameter();
     ast::Node* parseExpression();

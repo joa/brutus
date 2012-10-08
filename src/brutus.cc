@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
 
-#if 0
+#if 1
   withTokenFile([&](FILE* fp) {
     auto stream = new brutus::FileCharStream(fp);
     auto lexer = new brutus::Lexer(stream); 
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   });
 #endif
 
-#if 1
+#if 0
   withTokenFile([&](FILE* fp) {
     auto stream = new brutus::FileCharStream(fp);
     auto lexer = new brutus::Lexer(stream); 
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
       }
     }
 
-    std::cout << u8"tokens: " << numT << std::endl;
+    std::cout << "Tokens: " << numT << std::endl;
   });
 #endif
 

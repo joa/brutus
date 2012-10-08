@@ -19,7 +19,17 @@ static const char* KeywordChars[] = {
   u8"←",
   "->",
   u8"→",
-  "if"
+  "if",
+  "new",
+  "on",
+  "class",
+  "trait",
+  "virtual",
+  "public",
+  "private",
+  "protected",
+  "internal",
+  "native"
 };
 
 static const Token KeywordTokens[] = {
@@ -38,7 +48,17 @@ static const Token KeywordTokens[] = {
   LARROW,
   RARROW,
   RARROW,
-  IF
+  IF,
+  NEW,
+  ON,
+  CLASS,
+  TRAIT,
+  VIRTUAL,
+  PUBLIC,
+  PRIVATE,
+  PROTECTED,
+  INTERNAL,
+  NATIVE
 };
 
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
@@ -68,6 +88,7 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(COLON, "COLON");
     TOKEN_TO_STRING_CASE(ASSIGN, "ASSIGN");
     TOKEN_TO_STRING_CASE(EQUALS, "EQUALS");
+    TOKEN_TO_STRING_CASE(HASH, "HASH");
 
     TOKEN_TO_STRING_CASE(THIS, "THIS");
     TOKEN_TO_STRING_CASE(VAL, "VAL");
@@ -81,6 +102,16 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(YES_, "YES");
     TOKEN_TO_STRING_CASE(NO_, "NO");
     TOKEN_TO_STRING_CASE(IF, "IF");
+    TOKEN_TO_STRING_CASE(NEW, "NEW");
+    TOKEN_TO_STRING_CASE(ON, "ON");
+    TOKEN_TO_STRING_CASE(CLASS, "CLASS");
+    TOKEN_TO_STRING_CASE(TRAIT, "TRAIT");
+    TOKEN_TO_STRING_CASE(VIRTUAL, "VIRTUAL");
+    TOKEN_TO_STRING_CASE(PUBLIC, "PUBLIC");
+    TOKEN_TO_STRING_CASE(PRIVATE, "PRIVATE");
+    TOKEN_TO_STRING_CASE(PROTECTED, "PROTECTED");
+    TOKEN_TO_STRING_CASE(INTERNAL, "INTERNAL");
+    TOKEN_TO_STRING_CASE(NATIVE, "NATIVE");
 
     default: return "UNKNOWN";
   }
@@ -119,6 +150,8 @@ tok::Token Lexer::resulting(
   return result;
 }
 
+//TODO(joa): the lexer is currently not smart enough. and a decision has to be made. is "a=123" a valid identifier? it shouldn't be...
+
 tok::Token Lexer::nextToken() {
   while(canAdvance()) {
     auto currentChar = advance();
@@ -156,6 +189,7 @@ tok::Token Lexer::nextToken() {
         case '}': return tok::RBRACE;
         case '.': return tok::DOT;
         case ':': return tok::COLON;
+        case '#': return tok::HASH;
         case '-': 
           if(advance() == '>') {
             return tok::RARROW;

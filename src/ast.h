@@ -18,7 +18,8 @@ enum Kind {
   IF_CASE,
   FUNCTION,
   PARAMETER,
-  TYPE_PARAMETER
+  TYPE_PARAMETER,
+  CLASS
 }; //enum Kind
 
 #define NODE_ID(x) (reinterpret_cast<intptr_t>(x))
@@ -500,12 +501,13 @@ private:
 
 class Function : public Node {
 public:
-  explicit Function() : m_name(nullptr), m_type(nullptr), m_block(nullptr) {}
+  explicit Function() : m_name(nullptr), m_type(nullptr), m_block(nullptr), m_flags(0) {}
 
-  void init(Node* name, Node* type, Node* block) {
+  void init(Node* name, Node* type, Node* block, unsigned int flags) {
     m_name = name;
     m_type = type;
     m_block = block;
+    m_flags = flags;
   }
 
   void print(std::ostream& out) const {
@@ -546,6 +548,7 @@ private:
   Node* m_name;
   Node* m_type;
   Node* m_block;
+  unsigned int m_flags;
   NodeList m_typeParameters;
   NodeList m_parameters;
 };
@@ -608,5 +611,44 @@ private:
   Node* m_bound;
   unsigned int m_boundType;
 };
+
+class Class : public Node {
+public:
+  explicit Class() : m_name(nullptr), m_flags(0) {}
+
+  void init(Node* name, unsigned int flags) {
+    m_name = name;
+    m_flags = flags;
+  }
+
+  void print(std::ostream& out) const {
+    out << "Class(";
+    m_name->print(out);
+    out << ',';
+    m_typeParameters.print(out, false);
+    out << ',';
+    m_members.print(out, true);
+    out << ')';
+  }
+  
+  void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=Class];" << std::endl; }
+
+  NodeList* typeParameters() {
+    return &m_typeParameters;
+  }
+
+  NodeList* members() {
+    return &m_members;
+  }
+
+  Kind kind() const { return CLASS; }
+private:
+  DISALLOW_COPY_AND_ASSIGN(Class);
+  Node* m_name;
+  unsigned int m_flags;
+  NodeList m_typeParameters;
+  NodeList m_members;
+};
+
 #undef NODE_ID
 #endif

@@ -54,8 +54,10 @@ ast::Node* Parser::parseProgram() {
 
 //
 // Block 
-//  : '{' NEWLINE (Expression NEWLINE)+ '}'
+//  : '{' NEWLINE (Block NEWLINE)+ '}'
 //  | Expression
+//  | Definition
+//  ;
 // 
 ast::Node* Parser::parseBlock() {
   if(poll(tok::LBRACE)) {
@@ -70,12 +72,149 @@ ast::Node* Parser::parseBlock() {
     EXPECT(tok::RBRACE);
     return block;
   } else {
-    if(peek(tok::DEF)) {
-      return parseDefinition();
+    ast::Node* definition = parseDefinition();
+    
+    if(nullptr == definition) {
+      return parseExpression();
+    }
+    
+    return definition;
+  }
+}
+
+
+//
+// Definition
+//  : Function
+//  | Class
+//  | Trait
+//  ;
+//
+ast::Node* Parser::parseDefinition() {
+  if(peek(tok::DEF)) {
+    return parseFunction(Parser::ACC_PUBLIC);
+  } else if(peek(tok::CLASS)) {
+    return parseClass(Parser::ACC_PUBLIC);
+  } else if(peek(tok::TRAIT)) {
+    return parseTrait(Parser::ACC_PUBLIC);
+  } else if(peekVisibility()) {
+    unsigned int flags = 0;
+
+    if(poll(tok::PUBLIC)) {
+      flags |= Parser::ACC_PUBLIC;
+    } else if(poll(tok::PRIVATE)) {
+      flags |= Parser::ACC_PRIVATE;
+    } else if(poll(tok::PROTECTED)) {
+      flags |= Parser::ACC_PROTECTED;
+    } else if(poll(tok::INTERNAL)) {
+      flags |= Parser::ACC_INTERNAL;
     }
 
-    return parseExpression();
+    if(poll(tok::VIRTUAL)) {
+      flags |= Parser::ACC_VIRTUAL;
+    }
+
+    if(poll(tok::NATIVE)) {
+      flags |= Parser::ACC_NATIVE;
+    }
+
+    if(peek(tok::DEF)) {
+      return parseFunction(flags);
+    } else if(peek(tok::CLASS)) {
+      return parseClass(flags);
+    } else if(peek(tok::TRAIT)) {
+      return parseTrait(flags);
+    } else {
+      return error("Expected 'def', 'class' or 'trait'.");
+    }
+  } else if(poll(tok::VIRTUAL)) {
+    // "virtual class" is the same as "public virtual class"
+    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_VIRTUAL; 
+
+    if(poll(tok::NATIVE)) {
+      flags |= Parser::ACC_NATIVE;
+    }
+
+    if(peek(tok::DEF)) {
+      return parseFunction(flags);
+    } else if(peek(tok::CLASS)) {
+      return parseClass(flags);
+    } else if(peek(tok::TRAIT)) {
+      return parseTrait(flags);
+    } else {
+      return error("Expected 'def', 'class' or 'trait'.");
+    }
+  } else {
+    return nullptr;
   }
+}
+
+bool Parser::peekVisibility() {
+  return peek(tok::PUBLIC) 
+      || peek(tok::PRIVATE) 
+      || peek(tok::PROTECTED) 
+      || peek(tok::INTERNAL);
+}
+
+//
+// Visibility
+//  : Public
+//  | Private
+//  | Protected
+//  | Internal
+//  ;
+
+//
+// Class
+//  : Visibility? 'virtual'? 'native'? 'class' Identifier TypeParameter? Constructor Extends? '{' NEWLINE (Definition NEWLINE)* '}' 
+//
+ast::Node* Parser::parseClass(unsigned int flags) {
+  if(0 == flags) {
+    return error("Internal error.");
+  }
+
+  EXPECT(tok::CLASS);
+
+  auto name = parseIdentifier();
+  auto result = alloc<ast::Class>();
+
+  if(peek(tok::LBRAC)) {
+    auto error = parseTypeParameterList(result->typeParameters());
+    
+    if(nullptr != error) {
+      return error;
+    }
+  }
+
+  if(poll(tok::LPAREN)) {
+    //TODO(joa): implement ctor
+    EXPECT(tok::RPAREN);
+  }
+
+
+  if(poll(tok::COLON)) {
+    //...
+  }
+
+  if(poll(tok::LBRACE)) {
+    EXPECT(tok::NEWLINE);
+
+    auto members = result->members();
+    
+    while(!poll(tok::RBRACE)) {
+      pollAll(tok::NEWLINE);
+      members->add(parseDefinition());
+      EXPECT(tok::NEWLINE);
+    }
+  }
+
+  result->init(name, flags);
+
+  return result;
+}
+
+ast::Node* Parser::parseTrait(unsigned int flags) {
+  return nullptr;
 }
 
 //
@@ -99,7 +238,7 @@ ast::Node* Parser::parseBlock() {
 //  : 'def' Identifier TypeParameterList? '(' ParameterList ')' Type '=' Block
 //  | 'def' Identifier TypeParameterList? '(' ParameterList ')' '{' Block '}'
 //
-ast::Node* Parser::parseDefinition() {
+ast::Node* Parser::parseFunction(unsigned int flags) {
   EXPECT(tok::DEF);
   
   auto name = parseIdentifier();
@@ -125,10 +264,10 @@ ast::Node* Parser::parseDefinition() {
     auto type = parseType();
     EXPECT(tok::ASSIGN);
     auto block = parseBlock();
-    result->init(name, type, block);
+    result->init(name, type, block, flags);
   } else if(peek(tok::LBRACE)) {
     auto block = parseBlock();
-    result->init(name, nullptr, block);
+    result->init(name, nullptr, block, flags);
   }
 
   return result;
@@ -363,7 +502,7 @@ ast::Node* Parser::parseAnonymousFunctionExpression() {
     returnType = parseType();
   }
   EXPECT(tok::RARROW);
-  result->init(nullptr, returnType, parseBlock());
+  result->init(nullptr, returnType, parseBlock(), ACC_PUBLIC);
   pollAll(tok::NEWLINE);
   EXPECT(tok::RBRACE);
   return result;

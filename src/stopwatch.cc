@@ -10,6 +10,7 @@ void Stopwatch::stop() {
 }
 
 void Stopwatch::log() const {
+#if __GNUC__
   auto deltaTicks = 
     std::chrono::duration<
       double,
@@ -27,12 +28,26 @@ void Stopwatch::log() const {
     >(deltaTicks);
 
   std::cout
-    << u8"Elapsed Time: "
+    << "Elapsed Time: "
     << deltaMs.count() 
-    << u8"ms, " 
+    << "ms, " 
     << deltaNs.count() 
-    << u8"ns"
+    << "ns"
     << std::endl;
+#else
+  auto deltaTicks = m_end - m_start;
+
+  auto deltaNs =
+    std::chrono::duration_cast<
+      std::chrono::nanoseconds
+    >(deltaTicks);
+
+  std::cout
+    << "Elapsed Time: "
+    << deltaNs.count() 
+    << "ns"
+    << std::endl;
+#endif
 }
 
 void Stopwatch::stopAndLog() {

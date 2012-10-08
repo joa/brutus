@@ -10,12 +10,17 @@
 
 // Macro to disallow the invocation of copy constructor
 // and assignment operator.
+#ifdef __GNUC__
 #define DISALLOW_COPY_AND_ASSIGN(T) \
   T& operator=(const T&) = delete; \
   T&& operator=(const T&&) = delete; \
   T(const T&) = delete; \
   T(const T&&) = delete
-
+#else
+  #define DISALLOW_COPY_AND_ASSIGN(T) \
+    T(const T&); \
+    void operator=(const T&)
+  #endif
 #define YES true
 #define NO false
 
@@ -27,10 +32,13 @@
   #endif
 #endif
 
+#if 0
+// Does not work with VS2012
 template<typename T, size_t sizeOfArray>
 constexpr size_t NumberOfElements(T (&)[sizeOfArray]) {
     return sizeOfArray;
 }
+#endif
 
 template<typename T>
 ALWAYS_INLINE T* NewArray(const size_t& size) {

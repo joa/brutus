@@ -25,4 +25,16 @@ build/gyp/*
 
 # Visual Studio files
 *.vcxproj
+*.vcxproj.user
+*.sdf
+*.suo
 *.sln
+*.opensdf
+build/Debug/*
+build/Release*
+build/ipch/*
+src/Debug/*
+src/Release/*
+
+# Currently used during development
+tokens.txt

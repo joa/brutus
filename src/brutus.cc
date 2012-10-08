@@ -8,15 +8,16 @@ void perf_test(std::function<int()> f) {
 
   for(auto trail = 0; trail < numTrials; ++trail) {
     stopwatch.start();
-    std::cout << u8"Result: " << f() << std::endl;   
+    std::cout << "Result: " << f() << std::endl;   
     stopwatch.stopAndLog();
   }
 }
 
 void withTokenFile(std::function<void(FILE*)> f) {
-  auto fp = fopen(u8"tokens.txt", u8"r");
+  auto fp = fopen("tokens.txt", "r");
 
   if(!fp) {
+	std::cout << "Could not read tokens.txt file." << std::endl;
     return;
   }
 
@@ -108,15 +109,15 @@ int main2(int argc, char** argv) {
     return sum;
   };
 
-  std::cout << u8"Test with normal loop:" << std::endl;
+  std::cout << "Test with normal loop:" << std::endl;
 
   perf_test(test0);
 
-  std::cout << u8"Test with anonymous function:" << std::endl;
+  std::cout << "Test with anonymous function:" << std::endl;
 
   perf_test(test1);
 
-  std::cout << u8"Complete." << std::endl;
+  std::cout << "Complete." << std::endl;
 
   return 0;
 }

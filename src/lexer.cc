@@ -16,9 +16,17 @@ static const char* KeywordChars[] = {
   "yes",
   "no",
   "<-",
+#ifdef __GNUC__
   u8"←",
+#else
+  "←",
+#endif
   "->",
+#ifdef __GNUC__
   u8"→",
+#else
+  "→",
+#endif
   "if"
 };
 
@@ -41,7 +49,12 @@ static const Token KeywordTokens[] = {
   IF
 };
 
-static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
+static const size_t NUM_KEYWORDS = 
+#if __GNUC__
+	NumberOfElements(KeywordChars);
+#else
+	16;
+#endif
 
 const char* toString(const Token& token) {
   #define TOKEN_TO_STRING_CASE(T, S) case T: return S
@@ -215,7 +228,7 @@ char Lexer::advance() {
 void Lexer::rewind() {
 #ifdef DEBUG
   if(m_advanceWithLastChar) {
-    std::cout << u8"Error: Called Lexer::rewind() twice in a row." << std::endl;
+    std::cout << "Error: Called Lexer::rewind() twice in a row." << std::endl;
   }
 #endif
 

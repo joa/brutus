@@ -8,7 +8,7 @@ locaiton transparent vm for shared-nothing actors.
 
 # Build
 ## Prequisites
-* Python 2.7.3 
+* Python 2.7.3
 * Subversion
 
 ## Linux
@@ -18,4 +18,4 @@ locaiton transparent vm for shared-nothing actors.
 ## Windows
 * `svn checkout --force http://gyp.googlecode.com/svn/trunk build/gyp --revision 1451`
 * `python build/gyp_brutus`
-* Open in Visual Studio
+* Open in Visual Studio 2012

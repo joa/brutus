@@ -17,7 +17,7 @@ void withTokenFile(std::function<void(FILE*)> f) {
   auto fp = fopen("tokens.txt", "r");
 
   if(!fp) {
-	std::cout << "Could not read tokens.txt file." << std::endl;
+    std::cout << "Could not read tokens.txt file." << std::endl;
     return;
   }
 

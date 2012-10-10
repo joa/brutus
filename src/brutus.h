@@ -262,7 +262,7 @@ namespace brutus {
     ast::Node* parseProgram();
     ast::Node* parseBlock();
     bool peekVisibility();
-    ast::Node* parseDefinition();
+    ast::Node* parseDeclaration();
     ast::Node* parseFunction(unsigned int flags);
     ast::Node* parseClass(unsigned int flags);
     ast::Node* parseTrait(unsigned int flags);

@@ -56,7 +56,7 @@ ast::Node* Parser::parseProgram() {
 // Block 
 //  : '{' NEWLINE (Block NEWLINE)+ '}'
 //  | Expression
-//  | Definition
+//  | Declaration
 //  ;
 // 
 ast::Node* Parser::parseBlock() {
@@ -72,25 +72,25 @@ ast::Node* Parser::parseBlock() {
     EXPECT(tok::RBRACE);
     return block;
   } else {
-    ast::Node* definition = parseDefinition();
+    ast::Node* declaration = parseDeclaration();
     
-    if(nullptr == definition) {
+    if(nullptr == declaration) {
       return parseExpression();
     }
     
-    return definition;
+    return declaration;
   }
 }
 
 
 //
-// Definition
+// Declaration
 //  : Function
 //  | Class
 //  | Trait
 //  ;
 //
-ast::Node* Parser::parseDefinition() {
+ast::Node* Parser::parseDeclaration() {
   if(peek(tok::DEF)) {
     return parseFunction(Parser::ACC_PUBLIC);
   } else if(peek(tok::CLASS)) {
@@ -203,7 +203,7 @@ ast::Node* Parser::parseClass(unsigned int flags) {
     
     while(!poll(tok::RBRACE)) {
       pollAll(tok::NEWLINE);
-      members->add(parseDefinition());
+      members->add(parseDeclaration());
       EXPECT(tok::NEWLINE);
     }
   }

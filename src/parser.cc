@@ -33,9 +33,8 @@ namespace internal {
 // Macro to expect a certain token type. If no such token is found
 // the ast::Error token is returned.
 
-//TODO(joa): arena
 #define EXPECT(t) if(!poll(t)) { \
-  auto buf = NewArray<char>(0x100); \
+  auto buf = m_arena->newArray<char>(0x100); \
   sprintf(buf, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, __LINE__,tok::toString(t), tok::toString(m_currentToken)); \
   return error(buf); \
 }
@@ -66,7 +65,7 @@ ast::Node* Parser::parseBlock() {
     auto block = alloc<ast::Block>();
 
     do {
-      block->add(parseBlock());
+      block->add(parseBlock(), m_arena);
       EXPECT(tok::NEWLINE);
     } while(!peek(tok::RBRACE));
 
@@ -204,7 +203,7 @@ ast::Node* Parser::parseClass(unsigned int flags) {
     
     while(!poll(tok::RBRACE)) {
       pollAll(tok::NEWLINE);
-      members->add(parseDeclaration());
+      members->add(parseDeclaration(), m_arena);
       EXPECT(tok::NEWLINE);
     }
   }
@@ -277,7 +276,7 @@ ast::Node* Parser::parseFunction(unsigned int flags) {
 
 void Parser::parseParameterList(ast::NodeList* list) {
   do {
-    list->add(parseParameter());
+    list->add(parseParameter(), m_arena);
   } while(poll(tok::COMMA));
 }
 
@@ -422,7 +421,7 @@ ast::Node* Parser::parseCall(ast::Node* callee) {
     select->init(callee, name);
     result->init(select);
 
-    result->arguments()->add(parseSingleArgument());
+    result->arguments()->add(parseSingleArgument(), m_arena);
   } else {
     return error("Expected call.");
   }
@@ -436,7 +435,7 @@ ast::Node* Parser::parseCall(ast::Node* callee) {
 //
 void Parser::parseArgumentList(ast::NodeList* list) {
   do {
-    list->add(parseArgument());
+    list->add(parseArgument(), m_arena);
   } while(poll(tok::COMMA));
 }
 
@@ -516,7 +515,7 @@ ast::Node* Parser::parseAnonymousFunctionExpression() {
 //
 void Parser::parseAnonymousFunctionParameterList(ast::NodeList* parameters) {
   do {
-    parameters->add(parseAnonymousFunctionParameter());
+    parameters->add(parseAnonymousFunctionParameter(), m_arena);
   } while(poll(tok::COMMA));
 }
 
@@ -589,12 +588,12 @@ ast::Node* Parser::parseIfExpression() {
     EXPECT(tok::NEWLINE);
     auto cases = result->cases();
     do {
-      cases->add(parseIfCase());
+      cases->add(parseIfCase(), m_arena);
       EXPECT(tok::NEWLINE);
     } while(!peek(tok::RBRACE));
     EXPECT(tok::RBRACE);
   } else {
-    result->cases()->add(parseIfCase());
+    result->cases()->add(parseIfCase(), m_arena);
   }
 
   return result;
@@ -680,7 +679,7 @@ ast::Node* Parser::parseTypeParameterList(ast::NodeList* list) {
   EXPECT(tok::LBRAC);
   
   do {
-    list->add(parseTypeParameter());
+    list->add(parseTypeParameter(), m_arena);
   } while(poll(tok::COMMA));
 
   EXPECT(tok::RBRAC);
@@ -730,7 +729,7 @@ T* Parser::alloc() {
 template<class T>
 T* Parser::allocWithValue() {
   auto result = alloc<T>();
-  result->copyValue(m_lexer);
+  result->copyValue(m_lexer, m_arena);
   return result;
 }
 

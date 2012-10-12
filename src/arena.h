@@ -12,6 +12,8 @@ namespace brutus {
           m_blockSize(blockSize),
           m_alignment(alignment),
           m_position(0),
+          m_totalBlocks(0),
+          m_totalBytes(0),
           m_currentBlock(nullptr),
           m_freeBlocks(nullptr),
           m_usedBlocks(nullptr) {}
@@ -19,10 +21,16 @@ namespace brutus {
         ~Arena();
 
         void init();
+
         void* alloc(int size);
-        void deleteAll();
+ 
         template<typename T>
-         T* newArray(int length);
+        ALWAYS_INLINE T* newArray(const size_t& length) {
+          return reinterpret_cast<T*>(alloc(sizeof(T) * length));
+        }
+
+        void deleteAll();
+
       private:
         DISALLOW_COPY_AND_ASSIGN(Arena);
 
@@ -71,6 +79,8 @@ namespace brutus {
         const int m_blockSize;
         const int m_alignment;
         int m_position;
+        int m_totalBlocks;
+        int m_totalBytes;
         ArenaBlock* m_currentBlock;
         ArenaBlock* m_freeBlocks;
         ArenaBlock* m_usedBlocks;

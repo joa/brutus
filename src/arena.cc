@@ -55,11 +55,6 @@ void* Arena::alloc(int size) {
   return addr;
 }
 
-template<typename T>
-T* Arena::newArray(int length) {
-  return alloc(sizeof(T) * length);
-}
-
 void Arena::nextBlock() {
   if(m_currentBlock != nullptr) {
     // Move the old block into the used-list.
@@ -100,6 +95,8 @@ void Arena::grow(int size) {
 
   while(required > 0) {
     m_freeBlocks = new ArenaBlock(blockSize, m_freeBlocks);
+    ++m_totalBlocks;
+    m_totalBytes += blockSize;
     required -= blockSize;
   }
 }
@@ -133,6 +130,10 @@ void Arena::deleteAll() {
 
     m_usedBlocks = nullptr;
   }
+
+  m_totalBlocks = 0;
+  m_totalBytes = 0;
+  m_position = aligned(m_blockSize);
 }
 } //namespace internal
 } //namespace brutus

@@ -53,13 +53,13 @@ namespace brutus {
         public:
           explicit NodeWithValue() : m_value(nullptr), m_length(0) {}
 
-          void copyValue(Lexer* lexer) {
+          void copyValue(Lexer* lexer, Arena* arena) {
             // Allocate a buffer with the given value's length.
             // We add +1 to that length to store a terminating 0
             // character.
 
             m_length = lexer->valueLength();
-            m_value = NewArray<char>(m_length + 1); //TODO(joa): arena
+            m_value = arena->newArray<char>(m_length + 1);
             m_value[m_length] = '\0';
 
             ArrayCopy(m_value, lexer->value(), sizeof(char) * m_length);
@@ -78,18 +78,20 @@ namespace brutus {
         public:
           explicit NodeList() {
             m_nodesIndex = 0;
-            m_nodesSize = 8;
-            m_nodes = NewArray<Node*>(m_nodesSize); //TODO(joa): arena
+            m_nodesSize = 0;
+            m_nodes = nullptr;
           }
 
-          void add(ast::Node* node) {
+          void add(ast::Node* node, Arena* arena) {
             if(m_nodesIndex == m_nodesSize) {
-              auto newSize = m_nodesSize << 1;
-              auto newNodes = NewArray<Node*>(newSize); //TODO(joa): arena
+              auto newSize = m_nodesSize == 0 ? 8 : m_nodesSize << 1;
+              auto newNodes = arena->newArray<Node*>(newSize);
 
-              ArrayCopy(newNodes, m_nodes, sizeof(ast::Node*) * m_nodesSize);
-
-              DeleteArray(m_nodes); //TODO(joa): arena
+              if(m_nodes != nullptr) {
+                // The nodes array is only null if the NodeList is fresh
+                // and no node has been added yet.
+                ArrayCopy(newNodes, m_nodes, sizeof(ast::Node*) * m_nodesSize);
+              }
 
               m_nodes = newNodes;
               m_nodesSize = newSize;
@@ -260,8 +262,8 @@ namespace brutus {
             return m_list.size();
           }
 
-          void add(ast::Node* node) {
-            m_list.add(node);
+          void add(ast::Node* node, Arena* arena) {
+            m_list.add(node, arena);
           }
 
           void print(std::ostream& out) const {

@@ -33,21 +33,26 @@ namespace brutus {
         std::memcpy(target, source, length);
       }
     }
-#if 0
-    ALWAYS_INLINE static void* New(size_t size) {
-      auto result = std::malloc(size);
 
-      if(result == nullptr) {
-        std::cerr << "Error: Could not allocate object." << std::endl;
-      }
-      
-      return result;
-    }
+    class Malloc {
+      public:
+        ALWAYS_INLINE static void* New(size_t size) {
+          auto result = std::malloc(size);
 
-    ALWAYS_INLINE static void Delete(void* ptr) {
-      std::free(ptr);
-    }
-#endif
+          if(result == nullptr) {
+            std::cerr << "Error: Could not allocate object." << std::endl;
+          }
+          
+          return result;
+        }
+
+        ALWAYS_INLINE static void Delete(void* ptr) {
+          std::free(ptr);
+        }
+      private:
+        DISALLOW_CTOR(Malloc);
+        DISALLOW_COPY_AND_ASSIGN(Malloc);
+    };
   } //namespace internal
 } //namespace brutus
 #endif

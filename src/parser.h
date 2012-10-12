@@ -17,7 +17,9 @@ namespace brutus {
         static const int ACC_INTERNAL = 1 << 4;
         static const int ACC_NATIVE = 1 << 5;
 
-        explicit Parser(Lexer* lexer) : m_lexer(lexer), m_arena() {}
+        explicit Parser(Lexer* lexer, Arena* arena) : 
+          m_lexer(lexer),
+          m_arena(arena) {}
 
         ast::Node* parseProgram();
         ast::Node* parseBlock();
@@ -56,7 +58,7 @@ namespace brutus {
         DISALLOW_COPY_AND_ASSIGN(Parser);
 
         Lexer* const m_lexer;
-        Arena m_arena;
+        Arena* m_arena;
         tok::Token m_currentToken;
 
         void advance();

@@ -2,6 +2,7 @@
 #define BRUTUS_AST_H_
 
 #include "brutus.h"
+#include "arena.h"
 #include "lexer.h"
 
 namespace brutus {
@@ -31,9 +32,12 @@ namespace brutus {
       #define NODE_ID(x) (reinterpret_cast<intptr_t>(x))
       #define NODE_NAME(x) "n" << NODE_ID(x)
 
-      class Node {
+      class Node : public ArenaMember {
         public:
-          explicit Node() {}
+          void* operator new(size_t size, Arena* arena) {
+            return arena->alloc(size);
+          }
+          Node() {}
           virtual ~Node() {}
           virtual void print(std::ostream& out) const = 0;
           virtual void printDOT(std::ostream& out) const {
@@ -41,6 +45,7 @@ namespace brutus {
           }
           virtual Kind kind() const = 0;
         private:
+          void* operator new(size_t size);
           DISALLOW_COPY_AND_ASSIGN(Node);
       };
 

@@ -1,5 +1,6 @@
 #include "brutus.h"
 
+#include "arena.h"
 #include "ast.h"
 #include "lexer.h"
 #include "parser.h"
@@ -38,27 +39,47 @@ int main(int argc, char** argv) {
 
 #if 1
   withTokenFile([&](FILE* fp) {
+    auto arena = new brutus::internal::Arena(
+      /*initialCapacity = */512 * brutus::consts::KiloByte,
+      /*blockSize = */128 * brutus::consts::KiloByte,
+      /*alignment = */brutus::consts::Alignment);
+    arena->init();
     auto stream = new brutus::internal::FileCharStream(fp);
     auto lexer = new brutus::internal::Lexer(stream); 
-    auto parser = new brutus::internal::Parser(lexer);
+    auto parser = new brutus::internal::Parser(lexer, arena);
     auto ast = parser->parseProgram();
     
     ast->print(std::cout);
 
     std::cout << std::endl;
+
+    delete parser;
+    delete lexer;
+    delete stream;
+    delete arena;
   });
 #endif
 
 #if 0
   withTokenFile([&](FILE* fp) {
+    auto arena = new brutus::internal::Arena(
+      /*initialCapacity = */512 * consts::KiloByte,
+      /*blockSize = */128 * consts::KiloByte,
+      /*alignment = */consts::Alignment);
+    arena->init();
     auto stream = new brutus::internal::FileCharStream(fp);
     auto lexer = new brutus::internal::Lexer(stream); 
-    auto parser = new brutus::internal::Parser(lexer);
+    auto parser = new brutus::internal::Parser(lexer, arena);
     auto ast = parser->parseProgram();
     
     std::cout << "digraph {" << std::endl;
     ast->printDOT(std::cout);
     std::cout << "}" << std::endl << std::endl;
+
+    delete parser;
+    delete lexer;
+    delete stream;
+    delete arena;
   });
 #endif
 

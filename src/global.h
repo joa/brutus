@@ -38,7 +38,7 @@
   #ifdef __GNUC__
     #define ALWAYS_INLINE __attribute__((always_inline))
   #else
-    #define ALWAYS_INLINE inline
+    #define ALWAYS_INLINE __forceinline
   #endif
 #endif
 
@@ -56,4 +56,6 @@
 // Preconditions for compiling Brutus
 static_assert(sizeof(char) == 1, "sizeof(char) must be one.");
 
+#define ASSERT_POW2(x) \
+  static_assert(x > 1 && (0 == (x & (x - 1))), "Error: " #x " must be a power of two.")
 #endif

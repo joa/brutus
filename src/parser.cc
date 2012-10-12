@@ -724,8 +724,7 @@ ast::Node* Parser::parseIdentifier() {
 
 template<class T>
 T* Parser::alloc() {
-  //TODO(joa): alloc in arena
-  return new T();
+  return new (m_arena) T();
 }
 
 template<class T>

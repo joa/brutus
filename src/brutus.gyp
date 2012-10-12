@@ -8,6 +8,7 @@
       'defines': [],
       'include_dirs': [],
       'sources': [
+        'arena.cc',
         'ast.cc',
         'brutus.cc',
         'lexer.cc',

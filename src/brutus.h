@@ -3,6 +3,7 @@
 
 #include "../include/brutus.h"
 #include "global.h"
+#include "consts.h"
 #include "alloc.h"
 
 #endif

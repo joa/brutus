@@ -1,8 +1,8 @@
-#include "brutus.h"
+#include "lexer.h"
 
 namespace brutus {
+namespace internal {
 namespace tok {
-
 static const char* KeywordChars[] = {
   "this",
   "val",
@@ -456,4 +456,5 @@ bool Lexer::continueBuffer(const char c) {
 
   return YES;
 }
+} //namespace internal
 } //namespace brutus

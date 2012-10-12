@@ -1,6 +1,7 @@
-#include "brutus.h"
+#include "parser.h"
 
 namespace brutus {
+namespace internal {
 //
 // Comments define the Brutus grammar in something similar to
 // EBNF. The following conventions are used:
@@ -214,6 +215,7 @@ ast::Node* Parser::parseClass(unsigned int flags) {
 }
 
 ast::Node* Parser::parseTrait(unsigned int flags) {
+  (void)flags;
   return nullptr;
 }
 
@@ -785,4 +787,5 @@ bool Parser::isIgnored(const tok::Token& token) {
       return NO;
   }
 }
+} //namespace internal
 } //namespace brutus

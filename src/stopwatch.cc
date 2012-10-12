@@ -1,6 +1,7 @@
-#include "brutus.h"
+#include "stopwatch.h"
 
 namespace brutus {
+namespace internal {
 void Stopwatch::start() {
   m_start = std::chrono::high_resolution_clock::now();  
 }
@@ -55,4 +56,5 @@ void Stopwatch::stopAndLog() {
   stop();
   log();
 }
-}
+} //namespace internal
+} //namespace brutus

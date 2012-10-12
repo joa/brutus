@@ -1,6 +1,7 @@
-#include "brutus.h"
+#include "streams.h"
 
 namespace brutus {
+namespace internal {
 bool FileCharStream::hasNext() {
   if(m_bufferIndex < m_bufferLength) {
     return YES;
@@ -38,4 +39,5 @@ void FileCharStream::foreach(std::function<void(char)> f) {
     f(next());
   }
 }
-}
+} //namespace internal
+} //namespace brutus

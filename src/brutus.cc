@@ -1,10 +1,16 @@
 #include "brutus.h"
 
+#include "ast.h"
+#include "lexer.h"
+#include "parser.h"
+#include "stopwatch.h"
+#include "streams.h"
+
 const auto numIterations = 100000000;
 const auto numTrials = 3;
 
 void perf_test(std::function<int()> f) {
-  brutus::Stopwatch stopwatch;    
+  brutus::internal::Stopwatch stopwatch;    
 
   for(auto trail = 0; trail < numTrials; ++trail) {
     stopwatch.start();
@@ -32,9 +38,9 @@ int main(int argc, char** argv) {
 
 #if 1
   withTokenFile([&](FILE* fp) {
-    auto stream = new brutus::FileCharStream(fp);
-    auto lexer = new brutus::Lexer(stream); 
-    auto parser = new brutus::Parser(lexer);
+    auto stream = new brutus::internal::FileCharStream(fp);
+    auto lexer = new brutus::internal::Lexer(stream); 
+    auto parser = new brutus::internal::Parser(lexer);
     auto ast = parser->parseProgram();
     
     ast->print(std::cout);
@@ -45,9 +51,9 @@ int main(int argc, char** argv) {
 
 #if 0
   withTokenFile([&](FILE* fp) {
-    auto stream = new brutus::FileCharStream(fp);
-    auto lexer = new brutus::Lexer(stream); 
-    auto parser = new brutus::Parser(lexer);
+    auto stream = new brutus::internal::FileCharStream(fp);
+    auto lexer = new brutus::internal::Lexer(stream); 
+    auto parser = new brutus::internal::Parser(lexer);
     auto ast = parser->parseProgram();
     
     std::cout << "digraph {" << std::endl;
@@ -58,8 +64,8 @@ int main(int argc, char** argv) {
 
 #if 0
   withTokenFile([&](FILE* fp) {
-    auto stream = new brutus::FileCharStream(fp);
-    auto lexer = new brutus::Lexer(stream);
+    auto stream = new brutus::internal::FileCharStream(fp);
+    auto lexer = new brutus::internal::Lexer(stream);
 
     brutus::tok::Token t;
     auto numT = 0;

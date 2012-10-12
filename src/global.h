@@ -9,6 +9,9 @@
     T&& operator=(const T&&) = delete; \
     T(const T&) = delete; \
     T(const T&&) = delete
+
+  #define DISALLOW_CTOR(T) \
+    T() = delete
 #else
   // VS2012 does not support delete yet so we go with
   // the old version instead.
@@ -17,6 +20,9 @@
     T(const T&&); \
     void operator=(const T&); \
     void operator=(const T&&)
+
+  #define DISALLOW_CTOR(T) \
+    T()
 #endif
 
 #if _MSC_VER

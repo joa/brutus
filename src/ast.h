@@ -4,8 +4,6 @@
 #include "brutus.h"
 #include "lexer.h"
 
-#include <cstring> //for std::memcpy
-
 namespace brutus {
   namespace internal {
     namespace ast {
@@ -59,7 +57,7 @@ namespace brutus {
             m_value = NewArray<char>(m_length + 1); //TODO(joa): arena
             m_value[m_length] = '\0';
 
-            std::memcpy(m_value, lexer->value(), sizeof(char) * m_length);
+            ArrayCopy(m_value, lexer->value(), sizeof(char) * m_length);
           }
 
           char* value() const { return m_value; }
@@ -84,7 +82,7 @@ namespace brutus {
               auto newSize = m_nodesSize << 1;
               auto newNodes = NewArray<Node*>(newSize); //TODO(joa): arena
 
-              std::memcpy(newNodes, m_nodes, sizeof(ast::Node*) * m_nodesSize);
+              ArrayCopy(newNodes, m_nodes, sizeof(ast::Node*) * m_nodesSize);
 
               DeleteArray(m_nodes); //TODO(joa): arena
 

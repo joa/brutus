@@ -2,6 +2,7 @@
 #define BRUTUS_PARSER_H_
 
 #include "brutus.h"
+#include "arena.h"
 #include "ast.h"
 #include "lexer.h"
 

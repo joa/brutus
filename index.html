@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Brutus by joa</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Brutus</h1>
+        <p>Personal research project in C++ 11, VM- &amp; PL-design</p>
+
+        <p class="view"><a href="https://github.com/joa/brutus">View the Project on GitHub <small>joa/brutus</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/joa/brutus/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/joa/brutus/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/joa/brutus">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <pre>
+ _____ _____ _____ _____ _____ _____ 
+| __  | __  |  |  |_   _|  |  |   __|
+| __ -|    -|  |  | | | |  |  |__   |
+|_____|__|__|_____| |_| |_____|_____|
+</pre>
+
+<h1>Background</h1>
+
+<p>Brutus is a personal research project and might never make it to a final product. The motivation is to create a location transparent VM for shared-nothing actors. There are several opportunities to develop new garbage collection algoriths given this premisse.</p>
+
+<p>Besides the implementation of a virtual machine there are also several opportunities to try new language features and different flavors in a type system.</p>
+
+<h1>Language</h1>
+
+<p>The Brutus language which does not even have a name yet is under heavy development. There are however already some key concepts.</p>
+
+<ol>
+<li>The language enforces a consistent coding style</li>
+<li>Written code must be easy to comprehend</li>
+<li>There is no null pointer</li>
+<li>There are no operators, therefore there is no precedence</li>
+<li>No packages but a module system</li>
+<li>\t and \r are illegal characters</li>
+</ol><p>Here is an example of how code might look like:</p>
+
+<pre><code>// Operators are left-associative by default and have no precedence.
+// This is the same as writing val num = (1.+(3)).*(3) so the actual
+// value is 12.
+val num = 1 + 3 * 3 
+
+// A function declaration. Anonymous functions are only
+// allowed as arguments for higher order functions.
+//
+// The if expression is also different in the sense
+// that it combines if and else-if constructs you
+// already know from other languages.
+// _ is the wildcard and means else.
+//
+// "yes" is a synonym for "true" and "no" is a synonym for "false".
+//
+// Parameter and return types are always required in order to
+// make sure type-inference does not do any harm.
+fun isEven(x: Int): Boolean = 
+  if {
+    x % 2 == 0 -&gt; yes
+    _ -&gt; no
+  }
+
+// This will print "12 is even"
+if isEven(num) -&gt; Console.println("$num is even.")
+
+// Operators ending with : are right-associative so this
+// is the same as writing ((Nil.::(3)).::(2)).::(1)
+val list = 1 :: 2 :: 3 :: Nil
+
+// Multiply the contents of the list by two.
+// Console#println is a reference to the println method
+// of the Console object.
+list map { x -&gt; x * 2 } map { _ * 2 } foreach Console#println
+
+// Classes are final by default so we have to
+// declare them virtual to allow inheritance.
+virtual class A(val prop: Int) {
+  // Methods are also final by default so we
+  // have to declare them virtual if another
+  // class is allowed to overwrite them.
+  //
+  // The foo method is not required to specify
+  // the return type because the missing equality
+  // sign declares it already as void.
+  virtual fun foo() {
+    println("Hello World")
+  }
+}
+
+// B inherits from A, we pass the value 123
+// as the constructor argument
+class B : A(123) {
+  override fun foo() {
+    println(prop)
+  }
+}
+
+// Create an instance of B and call the foo method
+val b = new B()
+b.foo() //prints 123
+
+// The notation x#y is always a reference to the member.
+// In case of b#field the type of lens is Property[Int] and
+// allows us to abstract over arbitrary properties.
+val lens = b#prop
+
+fun doubleIt(x: Property[Int]) {
+  val oldValue = x.value
+  val newValue = oldValue * 2
+  x.update(newValue)
+}
+
+doubleIt(lens)
+
+b.foo() //246
+</code></pre>
+
+<h1>Development</h1>
+
+<h2>Building Brutus from Source</h2>
+
+<p>The development environment for Brutus is generated using <a href="http://code.google.com/p/gyp/">GYP</a>. Currently supported platforms include Linux and Windows (64bit).</p>
+
+<p>Because this project is also aimed at a better understanding of the new C++11 features a modern compiler is required. The project compiles fine using <a href="http://clang.llvm.org/">clang</a> on Linux and Visual Studio 2012 Express (Desktop Edition) on Windows.</p>
+
+<h3>Prequisites</h3>
+
+<p>Besides a working compiler tool chain you will need a Python and Subversion installation to download and run GYP.</p>
+
+<ul>
+<li>Python 2.7.3</li>
+<li>Subversion</li>
+</ul><h3>Linux</h3>
+
+<ol>
+<li>
+<code>make dependencies</code> to download GYP </li>
+<li>
+<code>make x64.debug</code> or <code>make x64.release</code> to compile an executable.</li>
+<li>
+<code>./recompile-on-change.sh</code> can be used if inotify-tools are available</li>
+</ol><h3>Windows</h3>
+
+<ol>
+<li>Install GYP via <code>svn checkout --force http://gyp.googlecode.com/svn/trunk build/gyp --revision 1451</code>
+</li>
+<li>
+<code>python build/gyp_brutus</code> to generate the project files</li>
+<li>Open in Visual Studio 2012</li>
+</ol>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/joa">joa</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>

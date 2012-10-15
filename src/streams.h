@@ -32,7 +32,7 @@ namespace brutus {
         void updateBuffer();
 
         const FILE* m_file;
-        char m_buffer[0x100];
+        char m_buffer[0x800];
         size_t m_bufferIndex;
         size_t m_bufferLength;
     }; // class FileCharStream

@@ -16,6 +16,7 @@ namespace brutus {
         static const int ACC_PROTECTED = 1 << 3;
         static const int ACC_INTERNAL = 1 << 4;
         static const int ACC_NATIVE = 1 << 5;
+        static const int ACC_LAZY = 1 << 6;
 
         explicit Parser(Lexer* lexer, Arena* arena) : 
           m_lexer(lexer),
@@ -27,7 +28,6 @@ namespace brutus {
         ast::Node* parseDeclaration();
         ast::Node* parseFunction(unsigned int flags);
         ast::Node* parseClass(unsigned int flags);
-        ast::Node* parseTrait(unsigned int flags);
         void parseParameterList(ast::NodeList* list);
         ast::Node* parseParameter();
         ast::Node* parseExpression();

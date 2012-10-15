@@ -95,8 +95,6 @@ ast::Node* Parser::parseDeclaration() {
     return parseFunction(Parser::ACC_PUBLIC);
   } else if(peek(tok::CLASS)) {
     return parseClass(Parser::ACC_PUBLIC);
-  } else if(peek(tok::TRAIT)) {
-    return parseTrait(Parser::ACC_PUBLIC);
   } else if(peekVisibility()) {
     unsigned int flags = 0;
 
@@ -122,10 +120,8 @@ ast::Node* Parser::parseDeclaration() {
       return parseFunction(flags);
     } else if(peek(tok::CLASS)) {
       return parseClass(flags);
-    } else if(peek(tok::TRAIT)) {
-      return parseTrait(flags);
     } else {
-      return error("Expected 'def', 'class' or 'trait'.");
+      return error("Expected 'def' or 'class'.");
     }
   } else if(poll(tok::VIRTUAL)) {
     // "virtual class" is the same as "public virtual class"
@@ -139,10 +135,8 @@ ast::Node* Parser::parseDeclaration() {
       return parseFunction(flags);
     } else if(peek(tok::CLASS)) {
       return parseClass(flags);
-    } else if(peek(tok::TRAIT)) {
-      return parseTrait(flags);
     } else {
-      return error("Expected 'def', 'class' or 'trait'.");
+      return error("Expected 'def' or 'class'.");
     }
   } else {
     return nullptr;
@@ -211,11 +205,6 @@ ast::Node* Parser::parseClass(unsigned int flags) {
   result->init(name, flags);
 
   return result;
-}
-
-ast::Node* Parser::parseTrait(unsigned int flags) {
-  (void)flags;
-  return nullptr;
 }
 
 //

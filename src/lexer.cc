@@ -29,7 +29,8 @@ static const char* KeywordChars[] = {
   "private",
   "protected",
   "internal",
-  "native"
+  "native",
+  "force"
 };
 
 static const Token KeywordTokens[] = {
@@ -58,20 +59,9 @@ static const Token KeywordTokens[] = {
   PRIVATE,
   PROTECTED,
   INTERNAL,
-  NATIVE
+  NATIVE,
+  FORCE
 };
-
-static_assert(';' == 59, "';' must equal 59.");
-static_assert(',' == 44, "',' must equal 44.");
-static_assert('(' == 40, "'(' must equal 40.");
-static_assert(')' == 41, "')' must equal 41.");
-static_assert('[' == 91, "'[' must equal 91.");
-static_assert(']' == 93, "']' must equal 93.");
-static_assert('{' == 123, "'{' must equal 123.");
-static_assert('}' == 125, "'}' must equal 125.");
-static_assert('.' == 46, "'.' must equal 46.");
-static_assert(':' == 58, "':' must equal 58.");
-static_assert('#' == 35, "'#' must equal 35.");
 
 static const Token SingleCharacterTokens[] = {
   // 0-63
@@ -203,10 +193,21 @@ static const Token SingleCharacterTokens[] = {
   ERROR, //60
   RBRACE, //61 '}'
   ERROR, //62
-  ERROR, //63
+  ERROR //63
 };
 
 static_assert(NumberOfElements(SingleCharacterTokens) == 0x80, "Single character token table must have a size of 0x80.");
+static_assert(';' == 59, "';' must equal 59.");
+static_assert(',' == 44, "',' must equal 44.");
+static_assert('(' == 40, "'(' must equal 40.");
+static_assert(')' == 41, "')' must equal 41.");
+static_assert('[' == 91, "'[' must equal 91.");
+static_assert(']' == 93, "']' must equal 93.");
+static_assert('{' == 123, "'{' must equal 123.");
+static_assert('}' == 125, "'}' must equal 125.");
+static_assert('.' == 46, "'.' must equal 46.");
+static_assert(':' == 58, "':' must equal 58.");
+static_assert('#' == 35, "'#' must equal 35.");
 
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
 
@@ -231,7 +232,6 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(DOT, "DOT");
     TOKEN_TO_STRING_CASE(COLON, "COLON");
     TOKEN_TO_STRING_CASE(ASSIGN, "ASSIGN");
-    TOKEN_TO_STRING_CASE(EQUALS, "EQUALS");
     TOKEN_TO_STRING_CASE(HASH, "HASH");
     TOKEN_TO_STRING_CASE(THIS, "THIS");
     TOKEN_TO_STRING_CASE(VAL, "VAL");
@@ -255,6 +255,7 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(PROTECTED, "PROTECTED");
     TOKEN_TO_STRING_CASE(INTERNAL, "INTERNAL");
     TOKEN_TO_STRING_CASE(NATIVE, "NATIVE");
+    TOKEN_TO_STRING_CASE(FORCE, "FORCE");
     default: return "UNKNOWN";
   }
   #undef TOKEN_TO_STRING_CASE
@@ -299,50 +300,70 @@ tok::Token Lexer::nextToken() {
     auto currentChar = advance();
 
     if(isWhitespace(currentChar)) {
+      // The current character represents whitespace. We consume
+      // it until there is a character that is not considered
+      // whitespace.
+
       return resulting(
         [&](const char c) { return isWhitespace(c); },
         [&](const char) { return YES; },
         tok::WHITESPACE
       );
     } else if(isNewLine(currentChar)) {
+      // When a new line character is encountered we will simply
+      // update the position information and consume until there
+      // is a character that is not considered a new line.
+      //
+      // This also means that '\n' is considered equal to "\n\n"
+      // and allows people to use more new lines if they want to.
+      //
+      // It is important to note the side effect which resets the
+      // position information.
       ++m_line;
       m_column = 0;
       
       return resulting(
         [&](const char c) { return isNewLine(c); },
-        [&](const char) -> bool { ++m_line; return YES; },
+        [&](const char) -> bool {
+          ++m_line;
+          m_column = 0;
+
+          return YES;
+        },
         tok::NEWLINE
       );
     } else if(isNumberStart(currentChar)) {
       return continueWithNumberStart(currentChar);
     } else if(isIdentifierStart(currentChar)) {
-      return continueWithIdentifierStart(currentChar);
+      return continueWithIdentifierStart(currentChar, /*operatorMode=*/NO);
+    } else if('=' == currentChar) {
+      if(isOperator(advance())) {
+        rewind();
+        return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
+      } else {
+        rewind();
+        return tok::ASSIGN;
+      }
+    } else if('-' == currentChar) {
+      if(advance() == '>') {
+        // One could decide to allow operators like ->> but then again this becomes
+        // really confusing when looking at code like "x -> x ->> y" so the call is
+        // to disallow other operators that start with -> since this should be a rare
+        // case anyways.
+        return tok::RARROW;
+      } else {
+        rewind();
+        return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
+      }
     } else if('/' == currentChar) {
       return continueWithSlash(currentChar);
+    } else if(isOperator(currentChar)) {
+      // The generic operator handling comes after '=', '-' and '/'
+      return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
+    } else if(currentChar >= 0x00 && currentChar < 0x80) {
+      return tok::SingleCharacterTokens[currentChar];
     } else {
-      switch(currentChar) {
-        case '-': 
-          if(advance() == '>') {
-            return tok::RARROW;
-          } else {
-            rewind();
-            return continueWithIdentifierStart(currentChar);
-          }
-        case '=': 
-          if(advance() == '=') {
-            return tok::EQUALS;
-          } else {
-            rewind();
-            return tok::ASSIGN;
-          }
-
-        default:
-          if(currentChar >= 0x00 && currentChar < 0x80) {
-            return tok::SingleCharacterTokens[currentChar];
-          }
-
-          return tok::ERROR;
-      }
+      return tok::ERROR;
     }
   }
 
@@ -416,13 +437,21 @@ bool Lexer::isIdentifierStart(const char c) {
   return (c >= 'a' && c <= 'z')
       || (c >= 'A' && c <= 'Z')
       || ((unsigned char)c >= 0xC0)
-      || isObscureIdentifierStart(c);
+      || c == '_';
 }
 
-//TODO(joa): isObscureIdentifierStart will become isOperatorStart
-bool Lexer::isObscureIdentifierStart(const char c) {
+bool Lexer::isIdentifierPart(const char c) {
+  return isIdentifierStart(c)
+      || (c >= '0' && c <= '9')
+      || ((unsigned char)c >= 0x80);
+}
+
+bool Lexer::isDigit(const char c) {
+  return (c >= '0' && c <= '9');
+}
+
+bool Lexer::isOperator(const char c) {
   return c == '!'
-      || c == '#'
       || c == '$'
       || c == '%'
       || c == '&'
@@ -435,18 +464,9 @@ bool Lexer::isObscureIdentifierStart(const char c) {
       || c == '?'
       || c == '\\'
       || c == '^'
-      || c == '_'
       || c == '|'
-      || c == '~';
-}
-bool Lexer::isIdentifierPart(const char c) {
-  return isIdentifierStart(c)
-      || (c >= '0' && c <= '9')
-      || ((unsigned char)c >= 0x80);
-}
-
-bool Lexer::isDigit(const char c) {
-  return (c >= '0' && c <= '9');
+      || c == '~'
+      || c == '=';
 }
 
 //
@@ -490,19 +510,61 @@ tok::Token Lexer::continueWithNumberStart(const char currentChar) {
   return tok::NUMBER_LITERAL;
 }
 
-tok::Token Lexer::continueWithIdentifierStart(const char currentChar) {
+tok::Token Lexer::continueWithIdentifierStart(const char currentChar, bool operatorMode) {
+  enum {
+    IDENTIFIER_OR_OPERATOR,
+    OPERATOR_ONLY,
+    IDENTIFIER_ONLY
+  } state;
+
   beginBuffer(currentChar);
 
-  auto ident = resulting(
-    [&](const char c) { return isIdentifierPart(c); },
-    [&](const char c) { return continueBuffer(c); },
-    tok::IDENTIFIER
-  );
+  bool containsOperator = operatorMode;
 
-  if(ident == tok::IDENTIFIER) {
-    // If we really got an identifier we will check for a keyword.
+  if(operatorMode) {
+    state = OPERATOR_ONLY;
+  } else if(currentChar == '_') {
+    state = IDENTIFIER_OR_OPERATOR;
+  } else {
+    state = IDENTIFIER_ONLY;
+  }
 
-    //TODO(joa): optimize keyword lookup
+  while(canAdvance()) {
+    const auto nextChar = advance();
+
+    if(state == IDENTIFIER_OR_OPERATOR) {
+      if(isIdentifierPart(nextChar)) {
+        state = nextChar == '_' ? IDENTIFIER_OR_OPERATOR : IDENTIFIER_ONLY;
+      } else if(isOperator(nextChar)) {
+        state = OPERATOR_ONLY;
+        containsOperator = YES;
+      } else {
+        rewind();
+        break;
+      }
+    } else if(state == OPERATOR_ONLY) {
+      if(!isOperator(nextChar)) {
+        rewind();
+        break;
+      }
+    } else if(state == IDENTIFIER_ONLY) {
+      if(isIdentifierPart(nextChar)) {
+        state = nextChar == '_' ? IDENTIFIER_OR_OPERATOR : IDENTIFIER_ONLY;
+      } else {
+        rewind();
+        break;
+      }
+    }
+
+    if(!continueBuffer(nextChar)) {
+      return tok::ERROR;
+    }
+  }
+
+  //TODO(joa): optimize keyword lookup
+  if(!containsOperator) {
+    // No keyword contains an operator so we can skip the 
+    // check if the identifier contains an operator.
     for(size_t i = 0; i < tok::NUM_KEYWORDS; ++i) {
       if(0 == std::strcmp(tok::KeywordChars[i], m_buffer)) {
         return tok::KeywordTokens[i];
@@ -510,7 +572,7 @@ tok::Token Lexer::continueWithIdentifierStart(const char currentChar) {
     }
   }
 
-  return ident;
+  return tok::IDENTIFIER;
 }
 
 tok::Token Lexer::continueWithSlash(const char currentChar) {
@@ -565,7 +627,7 @@ tok::Token Lexer::continueWithSlash(const char currentChar) {
     return tok::COMMENT_MULTI;
   } else {
     rewind();
-    return continueWithIdentifierStart(currentChar);
+    return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
   }
 }
 

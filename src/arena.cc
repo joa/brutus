@@ -32,6 +32,7 @@ void* Arena::alloc(int size) {
   auto blockSize = aligned(m_blockSize);
 
   if(alignedSize > blockSize) {
+    //TODO(joa): could allocate an extra block of aligned size, add to used and return its offset
     std::cerr << "Cannot allocate " << size << " bytes at once.";
     return nullptr;
   }
@@ -48,7 +49,7 @@ void* Arena::alloc(int size) {
 
 #ifdef DEBUG
   if(m_position > blockSize) {
-    std::cerr << "Error: Internal error in area. Consumed more memory than block size allows." << std::endl;
+    std::cerr << "Error: Internal error in arena. Consumed more memory than block size allows." << std::endl;
   }
 #endif
 

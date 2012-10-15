@@ -1,10 +1,10 @@
 #ifndef BRUTUS_LEXER_H_
 #define BRUTUS_LEXER_H_
 
+#include <cstring> // For std::memset and std::strcmp
+
 #include "brutus.h"
 #include "streams.h"
-
-#include <cstring> //for std::memset and std::strcmp
 
 namespace brutus {
   namespace internal {
@@ -16,7 +16,6 @@ namespace brutus {
         WHITESPACE,
 
         IDENTIFIER,
-
         NUMBER_LITERAL,
         STRING_LITERAL,
 
@@ -24,8 +23,8 @@ namespace brutus {
         COMMENT_MULTI,
 
         // Control characters:
-        SEMICOLON,  //;
-        COMMA,      //,
+        SEMICOLON,  // ;
+        COMMA,      // ,
         LPAREN,     // (
         RPAREN,     // )
         LBRAC,      // [
@@ -35,7 +34,6 @@ namespace brutus {
         DOT,        // .
         COLON,      // :
         ASSIGN,     // =
-        EQUALS,     // ==
         LARROW,     // <- and ←
         RARROW,     // -> and →
         HASH,       // #
@@ -62,7 +60,8 @@ namespace brutus {
         PRIVATE,
         PROTECTED,
         INTERNAL,
-        NATIVE
+        NATIVE,
+        FORCE
       }; // enum Token
 
       const char* toString(const Token& token);
@@ -109,13 +108,13 @@ namespace brutus {
         bool isNewLine(const char c);
         bool isNumberStart(const char c);
         bool isDigit(const char c);
+        bool isOperator(const char c);
 
         bool isIdentifierStart(const char c);
-        bool isObscureIdentifierStart(const char c);
         bool isIdentifierPart(const char c);
 
         tok::Token continueWithNumberStart(const char currentChar);
-        tok::Token continueWithIdentifierStart(const char currentChar);
+        tok::Token continueWithIdentifierStart(const char currentChar, bool operatorMode);
         tok::Token continueWithSlash(const char currentChar);
 
         tok::Token resulting(

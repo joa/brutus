@@ -8,6 +8,7 @@ namespace brutus {
     static const int GigaByte = MegaByte * 1024;
 
     static const int Alignment = 8; //TODO(joa): jaja alignment check arch
+    static const int PageSize = 4 * KiloByte; //TODO(joa): also assuming 4kb page size
   }
 }
 #endif

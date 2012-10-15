@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   withTokenFile([&](FILE* fp) {
     auto arena = new brutus::internal::Arena(
       /*initialCapacity = */512 * brutus::consts::KiloByte,
-      /*blockSize = */128 * brutus::consts::KiloByte,
+      /*blockSize = */brutus::consts::PageSize,
       /*alignment = */brutus::consts::Alignment);
     arena->init();
     auto stream = new brutus::internal::FileCharStream(fp);
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
   withTokenFile([&](FILE* fp) {
     auto arena = new brutus::internal::Arena(
       /*initialCapacity = */512 * consts::KiloByte,
-      /*blockSize = */128 * consts::KiloByte,
+      /*blockSize = */brutus::consts::PageSize,
       /*alignment = */consts::Alignment);
     arena->init();
     auto stream = new brutus::internal::FileCharStream(fp);
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
   });
 #endif
 
-#if 0
+#if 1
   withTokenFile([&](FILE* fp) {
     auto stream = new brutus::internal::FileCharStream(fp);
     auto lexer = new brutus::internal::Lexer(stream);

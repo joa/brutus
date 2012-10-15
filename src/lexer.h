@@ -116,6 +116,8 @@ namespace brutus {
         tok::Token continueWithNumberStart(const char currentChar);
         tok::Token continueWithIdentifierStart(const char currentChar, bool operatorMode);
         tok::Token continueWithSlash(const char currentChar);
+        tok::Token continueWithBacktick();
+        tok::Token continueWithString();
 
         tok::Token resulting(
           std::function<bool(const char)> condition,

@@ -1,5 +1,10 @@
 #include "lexer.h"
 
+#define CONTINUE_BUFFER(x) \
+  if(!continueBuffer(x)) { \
+    return tok::ERROR; \
+  }
+
 namespace brutus {
 namespace internal {
 namespace tok {
@@ -293,8 +298,6 @@ tok::Token Lexer::resulting(
   return result;
 }
 
-//TODO(joa): the lexer is currently not smart enough. and a decision has to be made. is "a=123" a valid identifier? it shouldn't be...
-
 tok::Token Lexer::nextToken() {
   while(canAdvance()) {
     auto currentChar = advance();
@@ -334,6 +337,8 @@ tok::Token Lexer::nextToken() {
       );
     } else if(isNumberStart(currentChar)) {
       return continueWithNumberStart(currentChar);
+    } else if('"' == currentChar) {
+      return continueWithString();
     } else if(isIdentifierStart(currentChar)) {
       return continueWithIdentifierStart(currentChar, /*operatorMode=*/NO);
     } else if('=' == currentChar) {
@@ -357,6 +362,10 @@ tok::Token Lexer::nextToken() {
       }
     } else if('/' == currentChar) {
       return continueWithSlash(currentChar);
+    } else if('`' == currentChar) {
+      // Parse until `. No escaping allowed. The resulting identifier
+      // will contain the name sans ` characters.
+      return continueWithBacktick();
     } else if(isOperator(currentChar)) {
       // The generic operator handling comes after '=', '-' and '/'
       return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
@@ -391,6 +400,10 @@ bool Lexer::canAdvance() {
 }
 
 char Lexer::advance() {
+  if(!canAdvance()) {
+    return '\0';
+  }
+
   if(m_advanceWithLastChar) {
     m_advanceWithLastChar = NO;
   } else {
@@ -417,7 +430,13 @@ bool Lexer::isWhitespace(const char c) {
   // Note that we explicitly forbid \t in Brutus
   // source code so only space characters are treated
   // as whitespace.
-  return c == ' ';
+  //
+  // For completeness we should also check for the unicode 
+  // characters however they wont be matched here anyways.
+  //
+  // Instead we will have to do this once unicode
+  // character support has settled in the lexer.
+  return c == ' ' || c == '\xA0';// || c == '\x2007' || c == '\x202f';
 }
 
 bool Lexer::isNewLine(const char c) {
@@ -479,22 +498,80 @@ tok::Token Lexer::continueWithNumberStart(const char currentChar) {
 
   if(secondChar == 'x') {
     // Parse hexadecimal literal
+    
+    CONTINUE_BUFFER(secondChar);
+    
     while(canAdvance()) {
       const auto hexChar = advance();
 
       if(isDigit(hexChar) || (hexChar >= 'a' && hexChar <= 'f')) {
-
+        CONTINUE_BUFFER(hexChar);
       } else {
         rewind();
         break;
       }
     }
   } else if(isDigit(secondChar) || secondChar == 'e' || secondChar == '.') {
+    CONTINUE_BUFFER(secondChar);
+
+    bool eAllowed = secondChar != 'e';
+    bool dotAllowed = eAllowed && secondChar != '.';
+    
     // Parse a digit of one of the following forms:
     //
     // 12 ...
     // 1e ...
     // 1. ...
+
+    while(canAdvance()) {
+      const auto nextChar = advance();
+
+      if(isDigit(nextChar)) {
+        CONTINUE_BUFFER(nextChar);
+      } else if(eAllowed && nextChar == 'e') {
+        eAllowed = NO;
+        dotAllowed = NO;
+        
+        CONTINUE_BUFFER(nextChar);
+
+        const auto nextCharAfterE = advance();
+
+        if(nextCharAfterE == '-') {
+          // Special treatment for the '-' character:
+          // It is allowed immediately after the 'e'
+          // character but nowhere else.
+          //
+          // If we find a '-' character we need at least
+          // another digit or the literal is illegal.
+
+          CONTINUE_BUFFER(nextCharAfterE);
+
+          const auto nextCharAfterMinus = advance();
+
+          if(isDigit(nextCharAfterMinus)) {
+            CONTINUE_BUFFER(nextCharAfterMinus);
+          } else {
+            // This is an illegal number literal since we
+            // have something of the form "1e-" instead
+            // of "1e-1".
+            rewind();
+            return tok::ERROR;
+          }
+        } else if(isDigit(nextCharAfterE)) { 
+          CONTINUE_BUFFER(nextCharAfterE);
+        } else {
+          // We have a literal of the form "1e" instead of "1e1".
+          rewind();
+          return tok::ERROR;
+        }
+      } else if(dotAllowed && nextChar == '.') {
+        dotAllowed = false;
+        CONTINUE_BUFFER(nextChar);
+      } else {
+        rewind();
+        break;
+      }
+    }
   } else {
     // This was only a single digit.
     rewind();
@@ -556,9 +633,7 @@ tok::Token Lexer::continueWithIdentifierStart(const char currentChar, bool opera
       }
     }
 
-    if(!continueBuffer(nextChar)) {
-      return tok::ERROR;
-    }
+    CONTINUE_BUFFER(nextChar);
   }
 
   //TODO(joa): optimize keyword lookup
@@ -575,13 +650,156 @@ tok::Token Lexer::continueWithIdentifierStart(const char currentChar, bool opera
   return tok::IDENTIFIER;
 }
 
+tok::Token Lexer::continueWithBacktick() {
+  const auto currentChar = advance();
+
+  if(currentChar == '`') {
+    // No empty name is allowed.
+    return tok::ERROR;
+  }
+
+  beginBuffer(currentChar);
+
+  while(canAdvance()) {
+    const auto nextChar = advance();
+
+    if(nextChar == '`') {
+      // Reached the closing backtick so we have a valid
+      // identifier that is not empty.
+      return tok::IDENTIFIER;
+    } else {
+      // Found an arbitrary character we need to add to the buffer.
+      CONTINUE_BUFFER(nextChar);
+    }
+  }
+
+  // We reach this code only in case of a premature EOF.
+  return tok::ERROR;
+}
+
+tok::Token Lexer::continueWithString() {
+  // We already have one " character.
+  
+  if(!canAdvance()) {
+    // If we are at the EOF we have an open string
+    // literal lotering around.
+    return tok::ERROR;
+  }
+
+  const auto currentChar = advance();
+  
+  if('"' == currentChar) {
+    // We have two " characters.
+
+    if(!canAdvance()) {
+      // If we reach the EOF at this point we have an empty string.
+      return tok::STRING_LITERAL;
+    }
+
+    const auto possibleQuote = advance();
+
+    if('"' == possibleQuote) {
+      // We have three " characters. Go for a verbatim string literal.
+      //TODO(joa): implement verbatim string literal
+    } else {
+      // Empty string literal.
+      rewind();
+      resetBuffer();
+      return tok::STRING_LITERAL;
+    }
+  } else {
+    beginBuffer(currentChar);
+
+    bool isEscaped = NO;
+
+    while(canAdvance()) {
+      const auto nextChar = advance();
+
+      if('"' == nextChar) {
+        if(isEscaped) {
+          CONTINUE_BUFFER(nextChar);
+          isEscaped = NO;
+        } else {
+          return tok::STRING_LITERAL;
+        }
+      } else if('\\' == nextChar) {
+        if(isEscaped) {
+          CONTINUE_BUFFER(nextChar);
+          isEscaped = NO;
+        } else {
+          isEscaped = YES;
+        }
+      } else {
+        if(isEscaped) {
+          if(isDigit(nextChar)) {
+            char c = nextChar;
+
+            int i = 0;
+            int code = 0;
+
+            do {
+              int value = c - '0';
+
+              if(value > 7) {
+                // A value greater than 7 is not valid in
+                // octal notation
+                return tok::ERROR;
+              }
+
+              code = (code << 3) + value;
+
+              if(canAdvance()) {
+                c = advance();
+
+                if(!isDigit(c)) {
+                  rewind();
+                  break;
+                }
+              } else {
+                // String literal is not closed, got EOF
+                return tok::ERROR;
+              }
+            } while(++i < 3);
+
+            CONTINUE_BUFFER(static_cast<char>(code));
+          } else {
+            switch(nextChar) {
+              case '$': CONTINUE_BUFFER('$'); break;
+              case 'a': CONTINUE_BUFFER('\a'); break;
+              case 'b': CONTINUE_BUFFER('\b'); break;
+              case 'f': CONTINUE_BUFFER('\f'); break;
+              case 'n': CONTINUE_BUFFER('\n'); break;
+              case 'r': CONTINUE_BUFFER('\r'); break;
+              case 't': CONTINUE_BUFFER('\t'); break;
+              case 'v': CONTINUE_BUFFER('\v'); break;
+              case 'u':
+                //TODO(joa): implement \uXXXX ...
+                break;
+              default:
+                // Illegal escape sequence.
+                return tok::ERROR;
+            }
+          }
+
+          isEscaped = NO;
+        } else {
+          CONTINUE_BUFFER(nextChar);
+        }
+      }
+    }
+
+    // Reached premature EOF while in a string literal.
+    return tok::ERROR;
+  }
+}
+
 tok::Token Lexer::continueWithSlash(const char currentChar) {
   beginBuffer(currentChar);
 
   const auto nextChar = advance(); 
 
   if(nextChar == '/') {
-    continueBuffer(nextChar);
+    CONTINUE_BUFFER(nextChar);
 
     while(canAdvance()) {
       char singleLineChar = advance();
@@ -590,29 +808,34 @@ tok::Token Lexer::continueWithSlash(const char currentChar) {
         break;
       }
 
-      continueBuffer(singleLineChar);
+      CONTINUE_BUFFER(singleLineChar);
     }
 
     return tok::COMMENT_SINGLE;
   } else if(nextChar == '*') {
-    continueBuffer(nextChar);
+    CONTINUE_BUFFER(nextChar);
 
-    auto openComments = 1;
+    int openComments = 1;
     
     while(openComments > 0 && canAdvance()) {
       const auto commentChar = advance();
 
-      if(commentChar == '/') {
-        //TODO(joa): check for opening comment.
+      CONTINUE_BUFFER(commentChar);
 
+      if(commentChar == '/') {
+        if(advance() == '*') {
+          CONTINUE_BUFFER('*');
+          ++openComments;
+        } else {
+          rewind();
+        }
       } else if(commentChar == '*') {
         if(advance() == '/') {
+          CONTINUE_BUFFER('/');
           --openComments;
         } else {
           rewind();
         }
-      } else {
-        continueBuffer(commentChar);
       }
     }
 

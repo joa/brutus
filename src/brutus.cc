@@ -88,14 +88,14 @@ int main(int argc, char** argv) {
     auto stream = new brutus::internal::FileCharStream(fp);
     auto lexer = new brutus::internal::Lexer(stream);
 
-    brutus::tok::Token t;
+    brutus::internal::tok::Token t;
     auto numT = 0;
 
-    while((t = lexer->nextToken()) != brutus::tok::_EOF) {
+    while((t = lexer->nextToken()) != brutus::internal::tok::_EOF) {
       ++numT;
-      std::cout << '(' << lexer->posLine() << ':' << lexer->posColumn() << ')' << ' ' << brutus::tok::toString(t) << std::endl;
+      std::cout << '(' << lexer->posLine() << ':' << lexer->posColumn() << ')' << ' ' << brutus::internal::tok::toString(t) << std::endl;
 
-      if(brutus::tok::hasValue(t)) {
+      if(brutus::internal::tok::hasValue(t)) {
         std::cout << lexer->value() << std::endl;
       }
     }

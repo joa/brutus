@@ -1,8 +1,9 @@
 #ifndef BRUTUS_STOPWATCH_H_
 #define BRUTUS_STOPWATCH_H_
 
-#include "brutus.h"
 #include <chrono>
+
+#include "brutus.h"
 
 namespace brutus {
   namespace internal {

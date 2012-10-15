@@ -61,6 +61,153 @@ static const Token KeywordTokens[] = {
   NATIVE
 };
 
+static_assert(';' == 59, "';' must equal 59.");
+static_assert(',' == 44, "',' must equal 44.");
+static_assert('(' == 40, "'(' must equal 40.");
+static_assert(')' == 41, "')' must equal 41.");
+static_assert('[' == 91, "'[' must equal 91.");
+static_assert(']' == 93, "']' must equal 93.");
+static_assert('{' == 123, "'{' must equal 123.");
+static_assert('}' == 125, "'}' must equal 125.");
+static_assert('.' == 46, "'.' must equal 46.");
+static_assert(':' == 58, "':' must equal 58.");
+static_assert('#' == 35, "'#' must equal 35.");
+
+static const Token SingleCharacterTokens[] = {
+  // 0-63
+  ERROR, //0
+  ERROR, //1
+  ERROR, //2
+  ERROR, //3
+  ERROR, //4
+  ERROR, //5
+  ERROR, //6
+  ERROR, //7
+  ERROR, //8
+  ERROR, //9
+  ERROR, //10
+  ERROR, //11
+  ERROR, //12
+  ERROR, //13
+  ERROR, //14
+  ERROR, //15
+  ERROR, //16
+  ERROR, //17
+  ERROR, //18
+  ERROR, //19
+  ERROR, //20
+  ERROR, //21
+  ERROR, //22
+  ERROR, //23
+  ERROR, //24
+  ERROR, //25
+  ERROR, //26
+  ERROR, //27
+  ERROR, //28
+  ERROR, //29
+  ERROR, //30
+  ERROR, //31
+  ERROR, //32
+  ERROR, //33
+  ERROR, //34
+  HASH, //35 '#'
+  ERROR, //36
+  ERROR, //37
+  ERROR, //38
+  ERROR, //39
+  LPAREN, //40 '('
+  RPAREN, //41 ')'
+  ERROR, //42 
+  ERROR, //43
+  COMMA, //44 ','
+  ERROR, //45
+  DOT, //46 '.'
+  ERROR, //47
+  ERROR, //48
+  ERROR, //49
+  ERROR, //50
+  ERROR, //51
+  ERROR, //52
+  ERROR, //53
+  ERROR, //54
+  ERROR, //55
+  ERROR, //56
+  ERROR, //57
+  COLON, //58 ':'
+  SEMICOLON, //59 ';'
+  ERROR, //60
+  ERROR, //61
+  ERROR, //62
+  ERROR, //63
+  // 64-127
+  ERROR, //0
+  ERROR, //1
+  ERROR, //2
+  ERROR, //3
+  ERROR, //4
+  ERROR, //5
+  ERROR, //6
+  ERROR, //7
+  ERROR, //8
+  ERROR, //9
+  ERROR, //10
+  ERROR, //11
+  ERROR, //12
+  ERROR, //13
+  ERROR, //14
+  ERROR, //15
+  ERROR, //16
+  ERROR, //17
+  ERROR, //18
+  ERROR, //19
+  ERROR, //20
+  ERROR, //21
+  ERROR, //22
+  ERROR, //23
+  ERROR, //24
+  ERROR, //25
+  ERROR, //26
+  LBRAC, //27 '['
+  ERROR, //28
+  RBRAC, //29 ']'
+  ERROR, //30
+  ERROR, //31
+  ERROR, //32
+  ERROR, //33
+  ERROR, //34
+  ERROR, //35
+  ERROR, //36
+  ERROR, //37
+  ERROR, //38
+  ERROR, //39
+  ERROR, //40
+  ERROR, //41
+  ERROR, //42
+  ERROR, //43
+  ERROR, //44
+  ERROR, //45
+  ERROR, //46
+  ERROR, //47
+  ERROR, //48
+  ERROR, //49
+  ERROR, //50
+  ERROR, //51
+  ERROR, //52
+  ERROR, //53
+  ERROR, //54
+  ERROR, //55
+  ERROR, //56
+  ERROR, //57
+  ERROR, //58
+  LBRACE, //59 '{'
+  ERROR, //60
+  RBRACE, //61 '}'
+  ERROR, //62
+  ERROR, //63
+};
+
+static_assert(NumberOfElements(SingleCharacterTokens) == 0x80, "Single character token table must have a size of 0x80.");
+
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
 
 const char* toString(const Token& token) {
@@ -70,12 +217,9 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(ERROR, "ERROR");
     TOKEN_TO_STRING_CASE(NEWLINE, "NEWLINE");
     TOKEN_TO_STRING_CASE(WHITESPACE, "WHITESPACE");
-
     TOKEN_TO_STRING_CASE(IDENTIFIER, "IDENTIFIER");
-
     TOKEN_TO_STRING_CASE(NUMBER_LITERAL, "NUMBER_LITERAL");
     TOKEN_TO_STRING_CASE(STRING_LITERAL, "STRING_LITERAL");
-
     TOKEN_TO_STRING_CASE(SEMICOLON, "SEMICOLON");
     TOKEN_TO_STRING_CASE(COMMA, "COMMA");
     TOKEN_TO_STRING_CASE(LPAREN, "LPAREN");
@@ -89,7 +233,6 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(ASSIGN, "ASSIGN");
     TOKEN_TO_STRING_CASE(EQUALS, "EQUALS");
     TOKEN_TO_STRING_CASE(HASH, "HASH");
-
     TOKEN_TO_STRING_CASE(THIS, "THIS");
     TOKEN_TO_STRING_CASE(VAL, "VAL");
     TOKEN_TO_STRING_CASE(VAR, "VAR");
@@ -112,7 +255,6 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(PROTECTED, "PROTECTED");
     TOKEN_TO_STRING_CASE(INTERNAL, "INTERNAL");
     TOKEN_TO_STRING_CASE(NATIVE, "NATIVE");
-
     default: return "UNKNOWN";
   }
   #undef TOKEN_TO_STRING_CASE
@@ -179,17 +321,6 @@ tok::Token Lexer::nextToken() {
       return continueWithSlash(currentChar);
     } else {
       switch(currentChar) {
-        case ';': return tok::SEMICOLON;
-        case ',': return tok::COMMA;
-        case '(': return tok::LPAREN;
-        case ')': return tok::RPAREN;
-        case '[': return tok::LBRAC;
-        case ']': return tok::RBRAC;
-        case '{': return tok::LBRACE;
-        case '}': return tok::RBRACE;
-        case '.': return tok::DOT;
-        case ':': return tok::COLON;
-        case '#': return tok::HASH;
         case '-': 
           if(advance() == '>') {
             return tok::RARROW;
@@ -206,6 +337,10 @@ tok::Token Lexer::nextToken() {
           }
 
         default:
+          if(currentChar >= 0x00 && currentChar < 0x80) {
+            return tok::SingleCharacterTokens[currentChar];
+          }
+
           return tok::ERROR;
       }
     }
@@ -284,6 +419,7 @@ bool Lexer::isIdentifierStart(const char c) {
       || isObscureIdentifierStart(c);
 }
 
+//TODO(joa): isObscureIdentifierStart will become isOperatorStart
 bool Lexer::isObscureIdentifierStart(const char c) {
   return c == '!'
       || c == '#'

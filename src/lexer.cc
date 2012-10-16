@@ -226,6 +226,8 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(IDENTIFIER, "IDENTIFIER");
     TOKEN_TO_STRING_CASE(NUMBER_LITERAL, "NUMBER_LITERAL");
     TOKEN_TO_STRING_CASE(STRING_LITERAL, "STRING_LITERAL");
+    TOKEN_TO_STRING_CASE(COMMENT_MULTI, "COMMENT_MULTI");
+    TOKEN_TO_STRING_CASE(COMMENT_SINGLE, "COMMENT_SINGLE");
     TOKEN_TO_STRING_CASE(SEMICOLON, "SEMICOLON");
     TOKEN_TO_STRING_CASE(COMMA, "COMMA");
     TOKEN_TO_STRING_CASE(LPAREN, "LPAREN");
@@ -271,6 +273,8 @@ bool hasValue(const Token& token) {
     case IDENTIFIER:
     case NUMBER_LITERAL:
     case STRING_LITERAL:
+    case COMMENT_MULTI:
+    case COMMENT_SINGLE:
       return YES;
     default:
       return NO;
@@ -701,6 +705,7 @@ tok::Token Lexer::continueWithString() {
     if('"' == possibleQuote) {
       // We have three " characters. Go for a verbatim string literal.
       //TODO(joa): implement verbatim string literal
+      return tok::ERROR;
     } else {
       // Empty string literal.
       rewind();

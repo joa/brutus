@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
   });
 #endif
 
-#if 1
+#if 0
   withTokenFile([&](FILE* fp) {
     auto stream = new brutus::internal::FileCharStream(fp);
     auto lexer = new brutus::internal::Lexer(stream);

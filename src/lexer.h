@@ -86,7 +86,7 @@ namespace brutus {
       private:
         DISALLOW_COPY_AND_ASSIGN(Lexer);
 
-        static const size_t BUFFER_SIZE = 0x100;
+        static const size_t BUFFER_SIZE = 0x1000;
 
         CharStream* const m_stream;
         unsigned int m_line, m_column;

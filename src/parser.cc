@@ -273,6 +273,10 @@ ast::Node* Parser::parseFunction(unsigned int flags) {
     return error("Expected ':', '{' or '\n'.");
   }
 
+  if((flags & ACC_ABSTRACT) != 0 && block != nullptr) {
+    return error("Internal error.");
+  }
+
   result->init(name, type, block, flags);
 
   return result;
@@ -449,7 +453,9 @@ ast::Node* Parser::parseCall(ast::Node* callee) {
     if(!peek(tok::RPAREN)) {
       parseArgumentList(result->arguments());
     }
+    
     EXPECT(tok::RPAREN);
+
     result->init(callee);
   } else if(peek(tok::IDENTIFIER)) {
     auto name = parseIdentifier();

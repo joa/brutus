@@ -1,6 +1,14 @@
 #ifndef BRUTUS_GLOBAL_H_
 #define BRUTUS_GLOBAL_H_
 
+#if defined(__GNUC__) && __GNUC__ < 4
+#error "Building Brutus on Linux requires at least a GCC 4.x compatible compiler."
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER < 1700
+#error "Building Brutus on Windows requires at least Visual Studio 2012."
+#endif
+
 // Macro to disallow the invocation of copy constructor
 // and assignment operator.
 #ifdef __GNUC__
@@ -31,15 +39,20 @@
   #define u8
 #endif
 
+// More intuitive names for boolean literals
 #define YES true
 #define NO false
 
-#ifndef ALWAYS_INLINE
-  #ifdef __GNUC__
-    #define ALWAYS_INLINE __attribute__((always_inline))
-  #else
-    #define ALWAYS_INLINE __forceinline
-  #endif
+#ifdef __GNUC__
+  #define ALWAYS_INLINE __attribute__((always_inline))
+#else
+  #define ALWAYS_INLINE __forceinline
+#endif
+
+#ifdef __GNUC__
+  #define MUST_USE_RESULT __attribute__ ((warn_unused_result))
+#else
+  #define MUST_USE_RESULT
 #endif
 
 #if _MSC_VER
@@ -53,9 +66,13 @@
   }
 #endif
 
-// Preconditions for compiling Brutus
-static_assert(sizeof(char) == 1, "sizeof(char) must be one.");
+#define IS_POW_2(x) \
+  (((x) > 1) && (0 == ((x) & ((x) - 1))))
 
 #define ASSERT_POW2(x) \
-  static_assert(x > 1 && (0 == (x & (x - 1))), "Error: " #x " must be a power of two.")
+  static_assert(IS_POW_2(x), "Error: " #x " must be a power of two.")
+
+static const int kCharSize = sizeof(char);
+
+static_assert(kCharSize == 1, "sizeof(char) must be one.");
 #endif

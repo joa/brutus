@@ -59,7 +59,8 @@ namespace brutus {
         DISALLOW_COPY_AND_ASSIGN(Parser);
 
         Lexer* const m_lexer;
-        Arena* m_arena;
+        Arena* const m_arena;
+
         tok::Token m_currentToken;
 
         void advance();

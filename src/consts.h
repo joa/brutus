@@ -9,6 +9,9 @@ namespace brutus {
 
     static const int Alignment = 8; //TODO(joa): jaja alignment check arch
     static const int PageSize = 4 * KiloByte; //TODO(joa): also assuming 4kb page size
+
+    static const int MaxTupleArity = 32;
+    static const int MaxFunctionArity = 32;
   }
 }
 #endif

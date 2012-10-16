@@ -245,7 +245,9 @@ ast::Node* Parser::parseFunction(unsigned int flags) {
   EXPECT(tok::LPAREN);
   
   if(!peek(tok::RPAREN)) {
-    parseParameterList(result->parameters());
+    if(!parseParameterList(result->parameters())) {
+      return error("Function exceeds max arity.");
+    }
   }
   
   EXPECT(tok::RPAREN);
@@ -276,10 +278,19 @@ ast::Node* Parser::parseFunction(unsigned int flags) {
   return result;
 }
 
-void Parser::parseParameterList(ast::NodeList* list) {
+bool Parser::parseParameterList(ast::NodeList* list) {
+  int arity = 0;
+
   do {
     list->add(parseParameter(), m_arena);
+    ++arity;
+
+    if(arity > consts::MaxFunctionArity) {
+      return false;
+    }
   } while(poll(tok::COMMA));
+
+  return true;
 }
 
 ast::Node* Parser::parseParameter() {
@@ -303,6 +314,7 @@ ast::Node* Parser::parseParameter() {
 //
 // Expression
 //  : NEWLINE* '(' Expression ')'
+//  | NEWLINE* Tuple
 //  | NEWLINE* VariableExpression
 //  | NEWLINE* IfExpression
 //  | NEWLINE* Expression Select*
@@ -318,15 +330,38 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
 
   ast::Node* expression = nullptr;
 
+  bool isForced = poll(tok::FORCE);
+
   if(poll(tok::LPAREN)) {
     expression = parseExpression();
-    EXPECT(tok::RPAREN);
+    
+    if(peek(tok::COMMA)) {
+      int arity = 1;
+
+      do {
+        EXPECT(tok::COMMA);
+        
+        parseExpression();
+        
+        ++arity;
+
+        if(arity > consts::MaxTupleArity) {
+          return error("Tuple exceeds max arity.");
+        }
+      } while(!poll(tok::RPAREN));
+    } else {
+      EXPECT(tok::RPAREN);
+    }
   } else if(peek(tok::IF)) {
     expression = parseIfExpression();
   } else if(peek(tok::VAL) || peek(tok::VAR)) {
     expression =  parseVariableExpression();
   } else if(peekPrimaryExpression()) {
     expression = parsePrimaryExpression();
+  }
+
+  if(nullptr != expression) {
+    expression->force(isForced);
   }
 
   return continueWithExpression(expression, allowInfixCall);
@@ -658,19 +693,40 @@ ast::Node* Parser::parseVariableExpression() {
 // Type
 //  : Identifier ('[' Type ']')?
 //  | Type '->' Type
+//  | '(' Type (',' Type)+ ')'
 //
 ast::Node* Parser::parseType() {
   //TODO(joa): wrap in type, add attrib
-  auto name = parseIdentifier();
-  if(poll(tok::LBRAC)) {
-    parseType();
-    EXPECT(tok::RBRAC);
-  }
+  if(poll(tok::LPAREN)) {
+    int arity = 1;
 
-  if(poll(tok::RARROW)) {
     parseType();
+
+    do {
+      EXPECT(tok::COMMA);
+      parseType();
+      ++arity;
+
+      if(arity > consts::MaxTupleArity) {
+        return error("Tuple exceeds max arity.");
+      }
+    } while(!poll(tok::RPAREN));
+
+    return nullptr;
+  } else {
+    auto name = parseIdentifier();
+
+    if(poll(tok::LBRAC)) {
+      parseType();
+      EXPECT(tok::RBRAC);
+    }
+
+    if(poll(tok::RARROW)) {
+      parseType();
+    }
+
+    return name;
   }
-  return name;
 }
 
 //

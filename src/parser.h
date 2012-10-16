@@ -29,7 +29,7 @@ namespace brutus {
         ast::Node* parseDeclaration();
         ast::Node* parseFunction(unsigned int flags);
         ast::Node* parseClass(unsigned int flags);
-        void parseParameterList(ast::NodeList* list);
+        bool parseParameterList(ast::NodeList* list);
         ast::Node* parseParameter();
         ast::Node* parseExpression();
         ast::Node* parseExpression(bool allowInfixCall);

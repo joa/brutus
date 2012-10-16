@@ -37,15 +37,18 @@ namespace brutus {
           void* operator new(size_t size, Arena* arena) {
             return arena->alloc(size);
           }
-          Node() {}
+          Node() : m_force(false) {}
           virtual ~Node() {}
           virtual void print(std::ostream& out) const = 0;
           virtual void printDOT(std::ostream& out) const {
             out << NODE_NAME(this) << " [shape=box];" << std::endl;
           }
           virtual Kind kind() const = 0;
+          bool force() const { return m_force; }
+          void force(const bool& value) { m_force = value; }
         private:
           void* operator new(size_t size);
+          bool m_force;
           DISALLOW_COPY_AND_ASSIGN(Node);
       };
 

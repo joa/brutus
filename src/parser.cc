@@ -250,15 +250,28 @@ ast::Node* Parser::parseFunction(unsigned int flags) {
   
   EXPECT(tok::RPAREN);
   
+  ast::Node* block = nullptr;
+  ast::Node* type = nullptr;
+
   if(poll(tok::COLON)) {
-    auto type = parseType();
-    EXPECT(tok::ASSIGN);
-    auto block = parseBlock();
-    result->init(name, type, block, flags);
+    type = parseType();
+    
+    if(poll(tok::ASSIGN)) {
+      block = parseBlock();
+    } else if(peek(tok::NEWLINE)) {
+      flags |= ACC_ABSTRACT;
+    } else {
+      return error("Expected '=' or '\n'.");
+    }
   } else if(peek(tok::LBRACE)) {
-    auto block = parseBlock();
-    result->init(name, nullptr, block, flags);
+    block = parseBlock();
+  } else if(peek(tok::NEWLINE)) {
+    flags |= ACC_ABSTRACT;
+  } else {
+    return error("Expected ':', '{' or '\n'.");
   }
+
+  result->init(name, type, block, flags);
 
   return result;
 }

@@ -16,7 +16,8 @@ namespace brutus {
         static const int ACC_PROTECTED = 1 << 3;
         static const int ACC_INTERNAL = 1 << 4;
         static const int ACC_NATIVE = 1 << 5;
-        static const int ACC_LAZY = 1 << 6;
+        static const int ACC_FORCE = 1 << 6;
+        static const int ACC_ABSTRACT = 1 << 7;
 
         explicit Parser(Lexer* lexer, Arena* arena) : 
           m_lexer(lexer),

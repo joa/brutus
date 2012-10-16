@@ -525,23 +525,37 @@ namespace brutus {
 
           void print(std::ostream& out) const {
             out << "Function(";
+            
             if(nullptr == m_name) {
               out << "<anonymous>";
             } else {
               m_name->print(out);
             }
+            
             out << ',';
+            
             m_typeParameters.print(out, false);
+            
             out << ',';
+            
             m_parameters.print(out, false);
+            
             out << ',';
+            
             if(nullptr != m_type) {
               m_type->print(out);
             } else {
-              out << "null";
+              out << "NO TYPE";
             }
+            
             out << ',';
-            m_block->print(out);
+
+            if(nullptr == m_block) {
+              out << "ABSTRACT";
+            } else {
+              m_block->print(out);
+            }
+            
             out << ')';
           }
           

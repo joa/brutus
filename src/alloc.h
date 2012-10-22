@@ -1,9 +1,10 @@
 #ifndef BRUTUS_ALLOC_H_
 #define BRUTUS_ALLOC_H_
 
-#include "brutus.h"
 #include <cstdlib> //for std::free and std::malloc
 #include <cstring> //for std::memcpy
+
+#include "brutus.h"
 
 namespace brutus {
   namespace internal {
@@ -26,7 +27,8 @@ namespace brutus {
     // Type-safe array copy operation with no undefined behaviour
     // whether or not target is the same as source.
     template<typename T>
-    ALWAYS_INLINE static void ArrayCopy(T* target, const T* source, size_t length) {
+    ALWAYS_INLINE static void ArrayCopy(
+        T* target, const T* source, size_t length) {
       if(target == source) {
         std::memmove(target, source, length);
       } else {

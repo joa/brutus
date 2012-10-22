@@ -5,7 +5,10 @@ namespace internal {
 void Arena::init() {
 #ifdef DEBUG
   if(m_alignment < 2 || 0 != (m_alignment & (m_alignment - 1))) {
-    std::cerr << "Error: Given alignment " << m_alignment << " is not a power of two." << std::endl;
+    std::cerr 
+      << "Error: Given alignment "
+      << m_alignment 
+      << " is not a power of two." << std::endl;
   }
 #endif
 
@@ -49,7 +52,10 @@ void* Arena::alloc(int size) {
 
 #ifdef DEBUG
   if(m_position > blockSize) {
-    std::cerr << "Error: Internal error in arena. Consumed more memory than block size allows." << std::endl;
+    std::cerr << 
+      "Error: Internal error in area. "
+      "Consumed more memory than block size allows."
+      << std::endl;
   }
 #endif
 
@@ -73,7 +79,8 @@ void Arena::nextBlock() {
   } else {
     // There was no block in the free-list and this is
     // an internal error in the arena.
-    std::cerr << "Warning: Tried to advance to a non-existing block." << std::endl;
+    std::cerr << "Warning: Tried to advance to "
+      "a non-existing block." << std::endl;
   }
 }
 

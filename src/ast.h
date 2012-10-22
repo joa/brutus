@@ -32,25 +32,36 @@ namespace brutus {
       #define NODE_ID(x) (reinterpret_cast<intptr_t>(x))
       #define NODE_NAME(x) "n" << NODE_ID(x)
 
+      class ASTVisitor;
+
       class Node : public ArenaMember {
         public:
           void* operator new(size_t size, Arena* arena) {
             return arena->alloc(size);
           }
-          Node() : m_force(false) {}
+
+          Node() {}
           virtual ~Node() {}
-          virtual void print(std::ostream& out) const = 0;
-          virtual void printDOT(std::ostream& out) const {
-            out << NODE_NAME(this) << " [shape=box];" << std::endl;
-          }
+
+          virtual void accept(ASTVisitor visitor) const = 0;
           virtual Kind kind() const = 0;
-          bool force() const { return m_force; }
-          void force(const bool& value) { m_force = value; }
         private:
           void* operator new(size_t size);
           bool m_force;
           DISALLOW_COPY_AND_ASSIGN(Node);
       };
+
+      class Expr : public Node {
+        public:
+          Expr() : m_force(false) {}
+          bool force() const { return m_force; }
+          void force(const bool& value) { m_force = value; }
+        private:
+          bool m_force;
+      };
+
+      class ASTVisitor {
+      }
 
       class NodeWithValue : public Node {
         public:

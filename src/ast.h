@@ -431,6 +431,7 @@ namespace brutus {
       class ASTPrinter : public ASTVisitor {
         public:
           explicit ASTPrinter(std::ostream &output);
+          void print(Node* node);
           virtual void visit(Argument* node) override;
           virtual void visit(Block* node) override;
           virtual void visit(Call* node) override;

@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     auto ast = parser->parseProgram();
     auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
     
-    ast->accept(printer);
+    printer->print(ast);
     std::cout << std::endl;
 
     delete parser;

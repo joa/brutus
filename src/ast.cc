@@ -605,6 +605,10 @@ ASTPrinter::ASTPrinter(std::ostream& output) :
   m_indentLevel(0),
   m_wasNewLine(NO) {}
 
+void ASTPrinter::print(Node* node) {
+  node->accept(this);
+}
+
 void ASTPrinter::pushIndent() {
   ++m_indentLevel;
 
@@ -686,6 +690,10 @@ void ASTPrinter::visit(Call* node) {
 }
 
 void ASTPrinter::visit(Class* node) {
+  const int m = node->members()->size() - 1;
+  int i = 0;
+  
+
   print("class ");
   node->name()->accept(this);
   print('{');
@@ -694,7 +702,10 @@ void ASTPrinter::visit(Class* node) {
   node->members()->foreach([&](Node* node) {
     node->accept(this);
     nl();
-    nl();
+
+    if(i++ != m) {
+      nl();
+    }
   });
   popIndent();
   nl();

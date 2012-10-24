@@ -5,6 +5,7 @@
 #include "arena.h"
 #include "ast.h"
 #include "lexer.h"
+#include "name.h"
 
 namespace brutus {
   namespace internal {
@@ -19,8 +20,9 @@ namespace brutus {
         static const int ACC_FORCE = 1 << 6;
         static const int ACC_ABSTRACT = 1 << 7;
 
-        explicit Parser(Lexer* lexer, Arena* arena)
+        explicit Parser(Lexer* lexer, NameTable* names, Arena* arena)
             :  m_lexer(lexer),
+               m_names(names),
                m_arena(arena) {}
 
         ast::Node* parseProgram();
@@ -59,6 +61,7 @@ namespace brutus {
         
       private:
         Lexer* const m_lexer;
+        NameTable* const m_names;
         Arena* const m_arena;
         tok::Token m_currentToken;
 

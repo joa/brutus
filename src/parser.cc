@@ -33,12 +33,21 @@ namespace internal {
 // Macro to expect a certain token type. If no such token is found
 // the ast::Error token is returned.
 
+#ifdef _MSC_VER
+#define EXPECT(t) if(!poll(t)) { \
+  auto buf = m_arena->newArray<char>(0x100); \
+  _snprintf(buf, 0x100, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, \
+    __LINE__, tok::toString(t), tok::toString(m_currentToken)); \
+  return error(buf); \
+}
+#else
 #define EXPECT(t) if(!poll(t)) { \
   auto buf = m_arena->newArray<char>(0x100); \
   snprintf(buf, 0x100, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, \
     __LINE__, tok::toString(t), tok::toString(m_currentToken)); \
   return error(buf); \
 }
+#endif
 
 //
 // Program
@@ -810,12 +819,9 @@ T* Parser::allocWithValue() {
   // character.
 
   auto result = alloc<T>();
-  auto length = m_lexer->valueLength();
-  auto value = m_arena->newArray<char>(length + 1);
-  value[length] = '\0';
+  auto name = m_names->get(m_lexer->value(), m_lexer->valueLength(), /*copyValue=*/YES);
 
-  ArrayCopy(value, m_lexer->value(), kCharSize * length);
-  result->init(value, length);
+  result->init(name);
 
   return result;
 }

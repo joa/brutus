@@ -37,8 +37,7 @@ unsigned int Error::column() const {
 //
 
 Identifier::Identifier() : 
-  m_value(nullptr),
-  m_length(0) {}
+  m_name(nullptr) {}
 
 void Identifier::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -48,24 +47,18 @@ Kind Identifier::kind() const {
   return IDENTIFIER;
 }
 
-void Identifier::init(char* value, int length) {
-  m_value = value;
-  m_length = length;
+void Identifier::init(Name* name) {
+  m_name = name;
 }
 
-char* Identifier::value() const {
-  return m_value;
-}
-
-int Identifier::length() const {
-  return m_length;
+Name* Identifier::name() const {
+  return m_name;
 }
 
 //
 
 Number::Number() : 
-  m_value(nullptr),
-  m_length(0) {}
+  m_name(nullptr) {}
 
 void Number::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -75,24 +68,18 @@ Kind Number::kind() const {
   return NUMBER;
 }
 
-void Number::init(char* value, int length) {
-  m_value = value;
-  m_length = length;
+void Number::init(Name* name) {
+  m_name = name;
 }
 
-char* Number::value() const {
-  return m_value;
-}
-
-int Number::length() const {
-  return m_length;
+Name* Number::name() const {
+  return m_name;
 }
 
 //
 
 String::String() : 
-  m_value(nullptr),
-  m_length(0) {}
+  m_name(nullptr) {}
 
 void String::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -102,17 +89,12 @@ Kind String::kind() const {
   return STRING;
 }
 
-void String::init(char* value, int length) {
-  m_value = value;
-  m_length = length;
+void String::init(Name* name) {
+  m_name = name;
 }
 
-char* String::value() const {
-  return m_value;
-}
-
-int String::length() const {
-  return m_length;
+Name* String::name() const {
+  return m_name;
 }
 
 //
@@ -790,7 +772,7 @@ void ASTPrinter::visit(Function* node) {
 }
 
 void ASTPrinter::visit(Identifier* node) {
-  print(node->value());
+  print(node->name()->value());
 }
 
 void ASTPrinter::visit(If* node) {
@@ -817,7 +799,7 @@ void ASTPrinter::visit(IfCase* node) {
 }
 
 void ASTPrinter::visit(Number* node) {
-  print(node->value());
+  print(node->name()->value());
 }
 
 void ASTPrinter::visit(Parameter* node) {
@@ -838,7 +820,7 @@ void ASTPrinter::visit(Select* node) {
 void ASTPrinter::visit(String* node) {
   print('"');
   //TODO(joa): escape
-  print(node->value());
+  print(node->name()->value());
   print('"');
 }
 

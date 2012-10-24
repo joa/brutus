@@ -74,4 +74,16 @@
 
 #define ASSERT_POW2(x) \
   static_assert(IS_POW_2(x), "Error: " #x " must be a power of two.")
+
+ALWAYS_INLINE int NextPow2(int x) {
+  --x;
+	x |= x >> 0x01;
+	x |= x >> 0x02;
+	x |= x >> 0x04;
+	x |= x >> 0x08;
+	x |= x >> 0x10;
+	++x;
+
+	return x;
+}
 #endif

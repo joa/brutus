@@ -12,6 +12,7 @@
         'ast.cc',
         'brutus.cc',
         'lexer.cc',
+        'name.cc',
         'parser.cc',
         'stopwatch.cc',
         'streams.cc',

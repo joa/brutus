@@ -72,7 +72,7 @@ namespace brutus {
       public:
         explicit Lexer(CharStream* charStream);
         tok::Token nextToken();
-        const char* value();
+        char* value();
         size_t valueLength();
         unsigned int posLine();
         unsigned int posColumn();

@@ -396,12 +396,12 @@ tok::Token Lexer::nextToken() {
   return tok::_EOF;
 }
 
-const char* Lexer::value() {
+char* Lexer::value() {
   return m_buffer;
 }
 
 size_t Lexer::valueLength() {
-  return m_bufferIndex;
+  return m_bufferIndex + 1;
 }
 
 unsigned int Lexer::posLine() {

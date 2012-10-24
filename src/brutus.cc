@@ -2,6 +2,7 @@
 
 #include "arena.h"
 #include "ast.h"
+#include "name.h"
 #include "lexer.h"
 #include "parser.h"
 #include "stopwatch.h"
@@ -45,36 +46,14 @@ int main(int argc, char** argv) {
       /*alignment = */brutus::consts::Alignment);
     arena->init();
     auto stream = new brutus::internal::FileCharStream(fp);
+    auto names = new brutus::internal::NameTable(arena);
     auto lexer = new brutus::internal::Lexer(stream); 
-    auto parser = new brutus::internal::Parser(lexer, arena);
+    auto parser = new brutus::internal::Parser(lexer, names, arena);
     auto ast = parser->parseProgram();
     auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
     
     printer->print(ast);
     std::cout << std::endl;
-
-    delete parser;
-    delete lexer;
-    delete stream;
-    delete arena;
-  });
-#endif
-
-#if 0
-  withTokenFile([&](FILE* fp) {
-    auto arena = new brutus::internal::Arena(
-      /*initialCapacity = */512 * consts::KiloByte,
-      /*blockSize = */brutus::consts::PageSize,
-      /*alignment = */consts::Alignment);
-    arena->init();
-    auto stream = new brutus::internal::FileCharStream(fp);
-    auto lexer = new brutus::internal::Lexer(stream); 
-    auto parser = new brutus::internal::Parser(lexer, arena);
-    auto ast = parser->parseProgram();
-    
-    std::cout << "digraph {" << std::endl;
-    ast->printDOT(std::cout);
-    std::cout << "}" << std::endl << std::endl;
 
     delete parser;
     delete lexer;

@@ -5,6 +5,10 @@
 #include "arena.h"
 #include "lexer.h"
 
+#define NODE_OVERRIDES() \
+  void accept(ASTVisitor* visitor) override final; \
+  Kind kind() const override final
+
 namespace brutus {
   namespace internal {
     namespace ast {
@@ -29,11 +33,8 @@ namespace brutus {
         CLASS
       }; //enum Kind
 
-      #define NODE_ID(x) (reinterpret_cast<intptr_t>(x))
-      #define NODE_NAME(x) "n" << NODE_ID(x)
-
       class ASTVisitor;
-
+      
       class Node : public ArenaMember {
         public:
           void* operator new(size_t size, Arena* arena) {
@@ -43,654 +44,431 @@ namespace brutus {
           Node() {}
           virtual ~Node() {}
 
-          virtual void accept(ASTVisitor visitor) const = 0;
+          virtual void accept(ASTVisitor* visitor) = 0;
           virtual Kind kind() const = 0;
+
         private:
           void* operator new(size_t size);
           bool m_force;
           DISALLOW_COPY_AND_ASSIGN(Node);
       };
 
+      class NodeList {
+        public:
+          explicit NodeList();
+
+          void add(Node* node, Arena* arena);
+          int size() const;
+          Node* get(const int& index);
+          Node** nodes() const;
+          bool nonEmpty() const;
+
+          void foreach(std::function<void(Node*)> f);
+          bool forall(std::function<bool(Node*)> f);
+        private:
+          DISALLOW_COPY_AND_ASSIGN(NodeList);
+          Node** m_nodes;
+          int m_nodesSize, m_nodesIndex;
+      };
+
       class Expr : public Node {
         public:
-          Expr() : m_force(false) {}
+          explicit Expr() : m_force(false) {}
+
           bool force() const { return m_force; }
           void force(const bool& value) { m_force = value; }
+
         private:
           bool m_force;
       };
 
-      class ASTVisitor {
-      }
-
-      class NodeWithValue : public Node {
+      class Declaration : public Node {
         public:
-          explicit NodeWithValue() : m_value(nullptr), m_length(0) {}
+          explicit Declaration() {}
 
-          void copyValue(Lexer* lexer, Arena* arena) {
-            // Allocate a buffer with the given value's length.
-            // We add +1 to that length to store a terminating 0
-            // character.
-
-            m_length = lexer->valueLength();
-            m_value = arena->newArray<char>(m_length + 1);
-            m_value[m_length] = '\0';
-
-            ArrayCopy(m_value, lexer->value(), sizeof(char) * m_length);
-          }
-
-          char* value() const { return m_value; }
-          size_t length() const { return m_length; }
         private:
-          DISALLOW_COPY_AND_ASSIGN(NodeWithValue);
-        protected:
-          char* m_value;
-          size_t m_length;
-      };
-
-      class NodeList {
-        public:
-          explicit NodeList() {
-            m_nodesIndex = 0;
-            m_nodesSize = 0;
-            m_nodes = nullptr;
-          }
-
-          void add(ast::Node* node, Arena* arena) {
-            if(m_nodesIndex == m_nodesSize) {
-              auto newSize = m_nodesSize == 0 ? 8 : m_nodesSize << 1;
-              auto newNodes = arena->newArray<Node*>(newSize);
-
-              if(m_nodes != nullptr) {
-                // The nodes array is only null if the NodeList is fresh
-                // and no node has been added yet.
-                ArrayCopy(newNodes, m_nodes, sizeof(ast::Node*) * m_nodesSize);
-              }
-
-              m_nodes = newNodes;
-              m_nodesSize = newSize;
-            }
-
-            m_nodes[m_nodesIndex] = node;
-            ++m_nodesIndex;
-          }
-
-          void print(std::ostream& out, bool newLine) const { 
-            out << '['; 
-            if(m_nodesIndex > 0) {
-              auto ptr = m_nodes;
-              auto n = *ptr++;
-
-              if(nullptr == n) {
-                out << "null";
-              } else {
-                n->print(out);
-              }
-
-              for(size_t i = 1; i < m_nodesIndex; ++i) {
-                out << ',';
-
-                if(newLine) {
-                  out << std::endl;
-                }
-
-                n = *ptr++;
-
-                if(nullptr == n) {
-                  out << "null";
-                } else {
-                  n->print(out);
-                }
-              }
-            }
-            out << ']';
-          }
-
-          void printDOT(std::ostream& out) const {
-            if(m_nodesIndex > 0) {
-              auto ptr = m_nodes;
-              auto n = *ptr++;
-
-              if(nullptr != n) {
-                n->printDOT(out);
-              }
-
-              for(size_t i = 1; i < m_nodesIndex; ++i) {
-                n = *ptr++;
-
-                if(nullptr != n) {
-                  n->printDOT(out);
-                }
-              }
-            }
-          }
-
-          template<class T>
-          void printDOTConnections(std::ostream& out, T* fromNode) const {
-            if(m_nodesIndex > 0) {
-              auto ptr = m_nodes;
-              auto n = *ptr++;
-
-              if(nullptr != n) {
-                out << NODE_NAME(fromNode) << " -> " NODE_NAME(n) << ';' << std::endl;
-              }
-
-              for(size_t i = 1; i < m_nodesIndex; ++i) {
-                n = *ptr++;
-
-                if(nullptr != n) {
-                  out << NODE_NAME(fromNode) << " -> " NODE_NAME(n) << ';' << std::endl;
-                }
-              }
-            }
-          }
-
-          size_t size() const { 
-            return m_nodesIndex;
-          }
-
-          Node** nodes() const {
-            return m_nodes;
-          }
-
-          bool nonEmpty() const {
-            return m_nodesIndex > 0;
-          }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(NodeList);
-          Node** m_nodes;
-          size_t m_nodesSize, m_nodesIndex;
+          DISALLOW_COPY_AND_ASSIGN(Declaration);
       };
 
       class Error : public Node {
         public:
-          explicit Error() : m_value(nullptr), m_line(0), m_column(0) {}
+          explicit Error();
 
-          void init(const char* value, unsigned int line, unsigned int column) {
-            m_value = value;
-            m_line = line;
-            m_column = column;
-          }
+          void init(const char* value, unsigned int line, unsigned int column);
+          const char* value() const;
+          unsigned int line() const;
+          unsigned int column() const;
 
-          void print(std::ostream& out) const {
-            out << "Error(" << m_value << " (line " << m_line << ", col " << m_column << "))";
-          }
+          NODE_OVERRIDES();
 
-          void printDOT(std::ostream& out) const {
-            out << NODE_NAME(this) << " [shape=box, label=\"Error\"];" << std::endl;
-          }
-
-          Kind kind() const { return ERROR; }
         private:
           DISALLOW_COPY_AND_ASSIGN(Error);
+
           const char* m_value;
           unsigned int m_line;
           unsigned int m_column;
       };
 
-      class Identifier : public NodeWithValue {
+      class Identifier : public Expr {
         public:
-          explicit Identifier() {}
-          void print(std::ostream& out) const { out << "Identifier(" << m_value << ')'; }
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=\"Identifier(" << m_value << ")\"];" << std::endl; }
-          Kind kind() const { return IDENTIFIER; }
+          explicit Identifier();
+
+          void init(char* value, int length);
+          char* value() const;
+          int length() const;
+
+          NODE_OVERRIDES();
+
         private:
           DISALLOW_COPY_AND_ASSIGN(Identifier);
+
+          char* m_value;
+          int m_length;
       };
 
-      class Number : public NodeWithValue {
+      //TODO(joa): split into type based?
+      class Number : public Expr {
         public:
-          explicit Number() {}
-          void print(std::ostream& out) const { out << "Number(" << m_value << ')'; }
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=\"Number(" << m_value << ")\"];" << std::endl; }
-          Kind kind() const { return NUMBER; }
+          explicit Number();
+
+          void init(char* value, int length);
+          char* value() const;
+          int length() const;
+
+          NODE_OVERRIDES();
+
         private:
           DISALLOW_COPY_AND_ASSIGN(Number);
+
+          char* m_value;
+          int m_length;
       };
 
-      class String : public NodeWithValue {
+      class String : public Expr {
         public:
-          explicit String() {}
-          void print(std::ostream& out) const { out << "String(" << m_value << ')'; }
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=\"String(" << m_value << ")\"];" << std::endl; }
-          Kind kind() const { return STRING; }
+          explicit String();
+
+          void init(char* value, int length);
+          char* value() const;
+          int length() const;
+
+          NODE_OVERRIDES();
+
         private:
           DISALLOW_COPY_AND_ASSIGN(String);
+
+          char* m_value;
+          int m_length;
       };
 
-      class This : public Node {
+      class This : public Expr {
         public:
-          explicit This() {}
-          void print(std::ostream& out) const { out << "This"; }
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << "[shape=box, label=This];" << std::endl; }
-          Kind kind() const { return THIS; }
+          explicit This();
+
+          NODE_OVERRIDES();
+
         private:
           DISALLOW_COPY_AND_ASSIGN(This);
       };
 
-      class Block : public Node {
+      class Block : public Expr {
         public:
-          explicit Block() {}
+          explicit Block();
 
-          size_t size() const { 
-            return m_list.size();
-          }
+          NodeList* expressions();
 
-          void add(ast::Node* node, Arena* arena) {
-            m_list.add(node, arena);
-          }
+          NODE_OVERRIDES();
 
-          void print(std::ostream& out) const {
-            out << "Block(";
-            m_list.print(out, true);
-            out << ')';
-          }
-
-          void printDOT(std::ostream& out) const {
-            out << NODE_NAME(this) << " [shape=box, label=Block];" << std::endl;
-            m_list.printDOT(out);
-            m_list.printDOTConnections(out, this);
-          }
-
-          Kind kind() const { return BLOCK; }
         private:
           DISALLOW_COPY_AND_ASSIGN(Block);
-          NodeList m_list;
+
+          NodeList m_expressions;
       };
 
-      class Variable : public Node {
+      class True : public Expr {
         public:
-          explicit Variable() : m_isModifiable(NO), m_name(nullptr), m_type(nullptr), m_init(nullptr) {}
+          explicit True();
           
-          void init(bool isModifiable, Node* name, Node* type, Node* init) {
-            m_isModifiable = isModifiable;
-            m_name = name;
-            m_type = type;
-            m_init = init;
-          }
+          NODE_OVERRIDES();
 
-          void print(std::ostream& out) const {
-            out << "Variable(" << (m_isModifiable ? "VAR" : "VAL") << ',';
-            m_name->print(out);
-            out << ',';
-            
-            if(nullptr != m_type) {
-              m_type->print(out);
-              out << ',';
-            } else {
-              out << "NO TYPE,";
-            }
+        private:
+          DISALLOW_COPY_AND_ASSIGN(True);
+        };
 
-            if(nullptr != m_init) {
-              m_init->print(out);
-              out << ')';
-            } else {
-              out << "NO INIT)";
-            }
-          }
+      class False : public Expr {
+        public:
+          explicit False();
+          
+          NODE_OVERRIDES();
 
-          void printDOT(std::ostream& out) const {
-            out << NODE_NAME(this) << " [shape=box, label=Variable];" << std::endl;
+        private:
+          DISALLOW_COPY_AND_ASSIGN(False);
+      };
 
-            if(nullptr != m_type) {
-              m_type->printDOT(out);
-              out << NODE_NAME(this) << " -> " << NODE_NAME(m_type) << "[label=Type];" << std::endl;
-            }
+      class Select : public Expr {
+        public: 
+          explicit Select();
 
-            if(nullptr != m_init) {
-              m_init->printDOT(out);
-              out << NODE_NAME(this) << " -> " << NODE_NAME(m_init) << "[label=Init];" << std::endl;
-            }
-          }
+          void init(Node* object, Node* qualifier);
+          Node* object() const;
+          Node* qualifier() const;
 
-          Kind kind() const { return VARIABLE; }
+          NODE_OVERRIDES();
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(Select);
+
+          Node* m_object;
+          Node* m_qualifier;
+      };
+
+      class If : public Expr {
+        public:
+          explicit If();
+
+          NodeList* cases();
+
+          NODE_OVERRIDES();
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(If);
+
+          NodeList m_cases;
+      };
+
+      class IfCase : public Node {
+        public:
+          explicit IfCase();
+          
+          void init(Node* condition, Node* expr);
+          
+          Node* condition() const;
+          Node* expr() const;
+
+          NODE_OVERRIDES();
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(IfCase);
+
+          Node* m_condition;
+          Node* m_expr;
+      };
+
+      class Call : public Expr {
+        public: 
+          explicit Call();
+
+          void init(Node* callee);
+          Node* callee() const;
+          NodeList* arguments();
+                    
+          NODE_OVERRIDES();
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(Call);
+
+          Node* m_callee;
+          NodeList m_arguments;
+      };
+
+      class Argument : public Expr {
+        public:
+          explicit Argument();
+
+          void init(Node* name, Node* value);
+          bool hasName() const;
+          Node* name() const;
+          Node* value() const;
+
+          NODE_OVERRIDES();
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(Argument);
+
+          Node* m_name;
+          Node* m_value;
+      };
+
+      class Variable : public Declaration {
+        public:
+          explicit Variable();
+          
+          void init(bool isModifiable, Node* name, Node* type, Node* init);
+          bool isModifiable() const;
+          bool hasInit() const;
+          bool hasType() const;
+          Node* name() const;
+          Node* type() const;
+          Node* init() const;
+
+          NODE_OVERRIDES();
+
         private:
           DISALLOW_COPY_AND_ASSIGN(Variable);
+
           bool m_isModifiable;
           Node* m_name;
           Node* m_type;
           Node* m_init;
       };
 
-      class True : public Node {
+      class Function : public Declaration {
         public:
-          explicit True() {}
-          void print(std::ostream& out) const { out << "True"; }
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=True];" << std::endl; }
-          Kind kind() const { return TRUE_; }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(True);
-        };
+          explicit Function();
 
-        class False : public Node {
-        public:
-          explicit False() {}
-          void print(std::ostream& out) const { out << "False"; }
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=False];" << std::endl; }
-          Kind kind() const { return FALSE_; }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(False);
-      };
+          void init(Node* name, Node* type, Node* expr, unsigned int flags);
+          Node* name() const;
+          Node* type() const;
+          Node* expr() const;
+          unsigned int flags() const;
+          NodeList* parameters();
+          NodeList* typeParameters();
+          bool isAnonymous() const;
+          bool hasType() const;
+          bool isAbstract() const;
 
-      class Select : public Node {
-        public: 
-          explicit Select() : m_object(nullptr), m_qualifier(nullptr) {}
-          void init(Node* object, Node* qualifier) {
-            m_object = object;
-            m_qualifier = qualifier;
-          }
-          void print(std::ostream& out) const {
-            out << "Select(";
-            m_object->print(out);
-            out << ',';
-            m_qualifier->print(out);
-            out << ')';
-          }
-          void printDOT(std::ostream& out) const {
-            out << NODE_NAME(this) << " [shape=box, label=Select];" << std::endl;
-            m_object->printDOT(out);
-            m_qualifier->printDOT(out);
-            out << NODE_NAME(this) << " -> " << NODE_NAME(m_object) << " [label=Object];" << std::endl;
-            out << NODE_NAME(this) << " -> " << NODE_NAME(m_qualifier) << " [label=Qualifier];" << std::endl;
-          }
-          Kind kind() const { return SELECT; }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(Select);
-          Node* m_object;
-          Node* m_qualifier;
-      };
+          NODE_OVERRIDES();
 
-      class If : public Node {
-        public:
-          explicit If() {}
-
-          NodeList* cases() {
-            return &m_cases;
-          }
-
-          void print(std::ostream& out) const {
-            out << "If(";
-            m_cases.print(out, true);
-            out << ")";
-          }
-          void printDOT(std::ostream& out) const {
-            out << NODE_NAME(this) << " [shape=box, label=If];" << std::endl;
-            m_cases.printDOT(out);
-            m_cases.printDOTConnections(out, this);
-          }
-          Kind kind() const { return IF; }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(If);
-          NodeList m_cases;
-      };
-
-      class IfCase : public Node {
-        public:
-          explicit IfCase() : m_condition(nullptr), m_block(nullptr) {}
-          
-          void init(Node* condition, Node* block) {
-            m_condition = condition;
-            m_block = block;
-          }
-
-          void print(std::ostream& out) const {
-            out << "IfCase(";
-            m_condition->print(out);
-            out << ',';
-            m_block->print(out);
-            out << ")";
-          }
-          
-          void printDOT(std::ostream& out) const {
-            out << NODE_NAME(this) << " [shape=box, label=IfCase];" << std::endl;
-            m_condition->printDOT(out);
-            m_block->printDOT(out);
-            out << NODE_NAME(this) << " -> " << NODE_NAME(m_condition) << " [label=Condition];" << std::endl;
-            out << NODE_NAME(this) << " -> " << NODE_NAME(m_block) << " [label=Block];" << std::endl;
-          }
-
-          Kind kind() const { return IF_CASE; }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(IfCase);
-          Node* m_condition;
-          Node* m_block;
-      };
-
-      class Call : public Node {
-        public: 
-          explicit Call() : m_callee(nullptr) {}
-          void init(Node* callee) {
-            m_callee = callee;
-          }
-
-          NodeList* arguments() {
-            return &m_arguments;
-          }
-
-          void print(std::ostream& out) const {
-            out << "Call(";
-            m_callee->print(out);
-            out << ',';
-            m_arguments.print(out, false);
-            out << ')';
-          }
-
-          void printDOT(std::ostream& out) const {
-            m_callee->printDOT(out);
-            out << NODE_NAME(this) << " [shape=box, label=Call];" << std::endl;
-            out << NODE_NAME(this) << " -> " NODE_NAME(m_callee) << " [label=Callee];" << std::endl;
-            m_arguments.printDOT(out);
-            m_arguments.printDOTConnections(out, this);
-          }
-          
-          Kind kind() const { return CALL; }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(Call);
-          Node* m_callee;
-          NodeList m_arguments;
-      };
-
-      class Argument : public Node {
-        public:
-          explicit Argument() : m_name(nullptr), m_value(nullptr) {}
-
-          void init(Node* name, Node* value) {
-            m_name = name;
-            m_value = value;
-          }
-
-          void print(std::ostream& out) const {
-            out << "Argument(";
-            if(nullptr != m_name) {
-              m_name->print(out);
-              out << '=';
-            }
-            m_value->print(out);
-            out << ')';
-          }
-
-          void printDOT(std::ostream& out) const { 
-            out << NODE_NAME(this) << " [shape=box, label=Argument];" << std::endl;
-            if(nullptr != m_name) {
-              m_name->printDOT(out);
-              out << NODE_NAME(this) << " -> " << NODE_NAME(m_name) << " [label=Name];" << std::endl;
-            }
-            m_value->printDOT(out);
-            out << NODE_NAME(this) << " -> " << NODE_NAME(m_value) << " [label=Value]" << std::endl;
-          }
-
-          Kind kind() const { return ARGUMENT; }
-        private:
-          DISALLOW_COPY_AND_ASSIGN(Argument);
-          Node* m_name;
-          Node* m_value;
-      };
-
-      class Function : public Node {
-        public:
-          explicit Function() : m_name(nullptr), m_type(nullptr), m_block(nullptr), m_flags(0) {}
-
-          void init(Node* name, Node* type, Node* block, unsigned int flags) {
-            m_name = name;
-            m_type = type;
-            m_block = block;
-            m_flags = flags;
-          }
-
-          void print(std::ostream& out) const {
-            out << "Function(";
-            
-            if(nullptr == m_name) {
-              out << "<anonymous>";
-            } else {
-              m_name->print(out);
-            }
-            
-            out << ',';
-            
-            m_typeParameters.print(out, false);
-            
-            out << ',';
-            
-            m_parameters.print(out, false);
-            
-            out << ',';
-            
-            if(nullptr != m_type) {
-              m_type->print(out);
-            } else {
-              out << "NO TYPE";
-            }
-            
-            out << ',';
-
-            if(nullptr == m_block) {
-              out << "ABSTRACT";
-            } else {
-              m_block->print(out);
-            }
-            
-            out << ')';
-          }
-          
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=Function];" << std::endl; }
-          
-          NodeList* parameters() {
-            return &m_parameters;
-          }
-
-          NodeList* typeParameters() {
-            return &m_typeParameters;
-          }
-
-          Kind kind() const { return FUNCTION; }
         private:
           DISALLOW_COPY_AND_ASSIGN(Function);
+
           Node* m_name;
           Node* m_type;
-          Node* m_block;
+          Node* m_expr;
           unsigned int m_flags;
           NodeList m_typeParameters;
           NodeList m_parameters;
       };
 
-      class Parameter : public Node {
+      class Parameter : public Declaration {
         public:
-          explicit Parameter() : m_name(nullptr), m_type(nullptr) {}
+          explicit Parameter();
           
-          void init(Node* name, Node* type) {
-            m_name = name;
-            m_type = type;
-          }
+          void init(Node* name, Node* type);
+          Node* name() const;
+          Node* type() const;
+          bool hasType() const;
 
-          void print(std::ostream& out) const {
-            out << "Parameter(";
-            m_name->print(out);
-            if(nullptr != m_type) {
-              out << ',';
-              m_type->print(out);
-            }
-            out << ')';
-          }
+          NODE_OVERRIDES();
 
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=Parameter];" << std::endl; }
-
-          Kind kind() const { return PARAMETER; }
         private:
           DISALLOW_COPY_AND_ASSIGN(Parameter);
+
           Node* m_name;
           Node* m_type;
       };
 
-      class TypeParameter : public Node  {
+      class TypeParameter : public Declaration  {
         public:
-          explicit TypeParameter() : m_name(nullptr), m_bound(nullptr), m_boundType(0) {}
+          explicit TypeParameter();
 
-          void init(Node* name, Node* bound, unsigned int boundType) {
-            m_name = name;
-            m_bound = bound;
-            m_boundType = boundType;
-          }
+          void init(Node* name, Node* bound, unsigned int boundType);
+          Node* name() const;
+          Node* bound() const;
+          unsigned int boundType() const;
 
-          void print(std::ostream& out) const {
-            out << "TypeParameter(";
-            m_name->print(out);
-            if(m_boundType != 0) {
-              out << ',';
-              m_bound->print(out);
-              out << ',' << m_boundType;
-            }
-            out << ')';
-          }
-          
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=TypeParameter];" << std::endl; }
+          NODE_OVERRIDES();
 
-          Kind kind() const { return TYPE_PARAMETER; }
         private:
           DISALLOW_COPY_AND_ASSIGN(TypeParameter);
+
           Node* m_name;
           Node* m_bound;
           unsigned int m_boundType;
       };
 
-      class Class : public Node {
+      class Class : public Declaration {
         public:
-          explicit Class() : m_name(nullptr), m_flags(0) {}
+          explicit Class();
 
-          void init(Node* name, unsigned int flags) {
-            m_name = name;
-            m_flags = flags;
-          }
+          void init(Node* name, unsigned int flags);
+          Node* name() const;
+          unsigned int flags() const;
+          NodeList* typeParameters();
+          NodeList* members();
 
-          void print(std::ostream& out) const {
-            out << "Class(";
-            m_name->print(out);
-            out << ',';
-            m_typeParameters.print(out, false);
-            out << ',';
-            m_members.print(out, true);
-            out << ')';
-          }
-          
-          void printDOT(std::ostream& out) const { out << NODE_NAME(this) << " [shape=box, label=Class];" << std::endl; }
+          NODE_OVERRIDES();
 
-          NodeList* typeParameters() {
-            return &m_typeParameters;
-          }
-
-          NodeList* members() {
-            return &m_members;
-          }
-
-          Kind kind() const { return CLASS; }
         private:
           DISALLOW_COPY_AND_ASSIGN(Class);
+
           Node* m_name;
           unsigned int m_flags;
           NodeList m_typeParameters;
           NodeList m_members;
       };
-      #undef NODE_ID
+
+      class ASTVisitor {
+        public:
+          explicit ASTVisitor();
+
+          virtual void visit(Argument* node);
+          virtual void visit(Block* node);
+          virtual void visit(Call* node);
+          virtual void visit(Class* node);
+          virtual void visit(Error* node);
+          virtual void visit(False* node);
+          virtual void visit(Function* node);
+          virtual void visit(Identifier* node);
+          virtual void visit(If* node);
+          virtual void visit(IfCase* node);
+          virtual void visit(Number* node);
+          virtual void visit(Parameter* node);
+          virtual void visit(Select* node);
+          virtual void visit(String* node);
+          virtual void visit(This* node);
+          virtual void visit(True* node);
+          virtual void visit(TypeParameter* node);
+          virtual void visit(Variable* node);
+
+        protected:
+          virtual void acceptAll(NodeList* list);
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(ASTVisitor);
+      };
+
+      class ASTPrinter : public ASTVisitor {
+        public:
+          explicit ASTPrinter(std::ostream &output);
+          virtual void visit(Argument* node) override;
+          virtual void visit(Block* node) override;
+          virtual void visit(Call* node) override;
+          virtual void visit(Class* node) override;
+          virtual void visit(Error* node) override;
+          virtual void visit(False* node) override;
+          virtual void visit(Function* node) override;
+          virtual void visit(Identifier* node) override;
+          virtual void visit(If* node) override;
+          virtual void visit(IfCase* node) override;
+          virtual void visit(Number* node) override;
+          virtual void visit(Parameter* node) override;
+          virtual void visit(Select* node) override;
+          virtual void visit(String* node) override;
+          virtual void visit(This* node) override;
+          virtual void visit(True* node) override;
+          virtual void visit(TypeParameter* node) override;
+          virtual void visit(Variable* node) override;
+      private:
+        DISALLOW_COPY_AND_ASSIGN(ASTPrinter);
+        
+        void pushIndent();
+        void popIndent();
+        
+        template<typename T>
+        void print(T value);
+        
+        template<typename T>
+        void println(T value);
+
+        void nl();
+        void maybeIndent();
+        void printAll(NodeList* nodes, const char* separatorChars);
+
+        std::ostream& m_output;
+        int m_indentLevel;
+        bool m_wasNewLine;
+      };
     } //namespace ast
   } //namespace internal
 } //namespace brutus

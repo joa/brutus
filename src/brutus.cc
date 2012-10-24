@@ -48,9 +48,9 @@ int main(int argc, char** argv) {
     auto lexer = new brutus::internal::Lexer(stream); 
     auto parser = new brutus::internal::Parser(lexer, arena);
     auto ast = parser->parseProgram();
+    auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
     
-    ast->print(std::cout);
-
+    ast->accept(printer);
     std::cout << std::endl;
 
     delete parser;

@@ -63,9 +63,10 @@ ast::Node* Parser::parseBlock() {
   if(poll(tok::LBRACE)) {
     EXPECT(tok::NEWLINE);
     auto block = alloc<ast::Block>();
+    auto expressions = block->expressions();
 
     do {
-      block->add(parseBlock(), m_arena);
+      expressions->add(parseBlock(), m_arena);
       EXPECT(tok::NEWLINE);
     } while(!peek(tok::RBRACE));
 
@@ -364,9 +365,9 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
     expression = parsePrimaryExpression();
   }
 
-  if(nullptr != expression) {
-    expression->force(isForced);
-  }
+  //if(nullptr != expression) {
+  //  expression->force(isForced);
+  //}
 
   return continueWithExpression(expression, allowInfixCall);
 }
@@ -792,8 +793,18 @@ T* Parser::alloc() {
 
 template<class T>
 T* Parser::allocWithValue() {
+  // Allocate a buffer with the given value's length.
+  // We add +1 to that length to store a terminating 0
+  // character.
+
   auto result = alloc<T>();
-  result->copyValue(m_lexer, m_arena);
+  auto length = m_lexer->valueLength();
+  auto value = m_arena->newArray<char>(length + 1);
+  value[length] = '\0';
+
+  ArrayCopy(value, m_lexer->value(), sizeof(char) * length);
+  result->init(value, length);
+
   return result;
 }
 

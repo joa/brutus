@@ -19,9 +19,9 @@ namespace brutus {
         static const int ACC_FORCE = 1 << 6;
         static const int ACC_ABSTRACT = 1 << 7;
 
-        explicit Parser(Lexer* lexer, Arena* arena) : 
-          m_lexer(lexer),
-          m_arena(arena) {}
+        explicit Parser(Lexer* lexer, Arena* arena)
+            :  m_lexer(lexer),
+               m_arena(arena) {}
 
         ast::Node* parseProgram();
         ast::Node* parseBlock();
@@ -35,7 +35,8 @@ namespace brutus {
         ast::Node* parseExpression(bool allowInfixCall);
         ast::Node* parsePrimaryExpression();
         bool peekPrimaryExpression();
-        ast::Node* continueWithExpression(ast::Node* expression, bool allowInfixCall);
+        ast::Node* continueWithExpression(
+          ast::Node* expression, bool allowInfixCall);
         ast::Node* parseSelect(ast::Node* object);
         ast::Node* parseCall(ast::Node* callee);
         void parseArgumentList(ast::NodeList* list);
@@ -55,12 +56,10 @@ namespace brutus {
         ast::Node* parseTypeParameterList(ast::NodeList* list);
         ast::Node* parseTypeParameter();
         ast::Node* parseIdentifier();
+        
       private:
-        DISALLOW_COPY_AND_ASSIGN(Parser);
-
         Lexer* const m_lexer;
         Arena* const m_arena;
-
         tok::Token m_currentToken;
 
         void advance();
@@ -68,12 +67,14 @@ namespace brutus {
         bool peek(const tok::Token& token);
         bool poll(const tok::Token& token);
         void pollAll(const tok::Token& token);
-        ast::Node* consume(const tok::Token& token, std::function<ast::Node*()> f);
-
+        ast::Node* consume(
+          const tok::Token& token,
+          std::function<ast::Node*()> f); //NOLINT
         template<class T> T* alloc();
         template<class T> T* allocWithValue();
-
         ast::Node* error(const char* value);
+
+        DISALLOW_COPY_AND_ASSIGN(Parser);
     }; //class Parser
   } //namespace internal
 } //namespace brutus

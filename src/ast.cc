@@ -161,8 +161,8 @@ False::False() {}
 
 void False::accept(ASTVisitor* visitor) {
   visitor->visit(this);
-
 }
+
 Kind False::kind() const {
   return FALSE_;
 }
@@ -213,9 +213,9 @@ NodeList* If::cases() {
 
 //
 
-IfCase::IfCase() :
-  m_condition(nullptr),
-  m_expr(nullptr) {}
+IfCase::IfCase()
+    : m_condition(nullptr),
+      m_expr(nullptr) {}
 
 void IfCase::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -240,8 +240,8 @@ Node* IfCase::expr() const {
 
 //
 
-Call::Call() : 
-  m_callee(nullptr) {}
+Call::Call()
+    : m_callee(nullptr) {}
 
 void Call::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -265,9 +265,9 @@ NodeList* Call::arguments() {
 
 //
 
-Argument::Argument() :
-  m_name(nullptr),
-  m_value(nullptr) {}
+Argument::Argument()
+    : m_name(nullptr),
+      m_value(nullptr) {}
 
 void Argument::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -296,11 +296,11 @@ Node* Argument::value() const {
 
 //
 
-Variable::Variable() :
-  m_isModifiable(NO),
-  m_name(nullptr),
-  m_type(nullptr),
-  m_init(nullptr) {}
+Variable::Variable()
+    : m_isModifiable(NO),
+      m_name(nullptr),
+      m_type(nullptr),
+      m_init(nullptr) {}
 
 void Variable::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -343,11 +343,11 @@ Node* Variable::init() const {
 
 //
 
-Function::Function() : 
-  m_name(nullptr), 
-  m_type(nullptr), 
-  m_expr(nullptr), 
-  m_flags(0) {}
+Function::Function()
+    : m_name(nullptr), 
+      m_type(nullptr), 
+      m_expr(nullptr), 
+      m_flags(0) {}
 
 void Function::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -398,9 +398,9 @@ bool Function::isAbstract() const {
 
 //
 
-Parameter::Parameter() :
-  m_name(nullptr),
-  m_type(nullptr) {}
+Parameter::Parameter()
+    : m_name(nullptr),
+      m_type(nullptr) {}
 
 void Parameter::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -429,10 +429,10 @@ bool Parameter::hasType() const {
 
 //
 
-TypeParameter::TypeParameter() :
-  m_name(nullptr), 
-  m_bound(nullptr), 
-  m_boundType(0) {}
+TypeParameter::TypeParameter()
+    : m_name(nullptr), 
+      m_bound(nullptr), 
+      m_boundType(0) {}
 
 void TypeParameter::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -522,9 +522,13 @@ void ASTVisitor::visit(Class* node) {
   acceptAll(node->members());
 }
 
-void ASTVisitor::visit(Error* node) {}
+void ASTVisitor::visit(Error* node) {
+  UNUSED(node);
+}
 
-void ASTVisitor::visit(False* node) {}
+void ASTVisitor::visit(False* node) {
+  UNUSED(node);
+}
 
 void ASTVisitor::visit(Function* node) {
   if(!node->isAnonymous()) {
@@ -540,7 +544,9 @@ void ASTVisitor::visit(Function* node) {
   node->expr()->accept(this);
 }
 
-void ASTVisitor::visit(Identifier* node) {}
+void ASTVisitor::visit(Identifier* node) {
+  UNUSED(node);
+}
 
 void ASTVisitor::visit(If* node) {
   acceptAll(node->cases());
@@ -551,7 +557,9 @@ void ASTVisitor::visit(IfCase* node) {
   node->expr()->accept(this);
 }
 
-void ASTVisitor::visit(Number* node) {}
+void ASTVisitor::visit(Number* node) {
+  UNUSED(node);
+}
 
 void ASTVisitor::visit(Parameter* node) {
   node->name()->accept(this);
@@ -566,11 +574,17 @@ void ASTVisitor::visit(Select* node) {
   node->qualifier()->accept(this);
 }
 
-void ASTVisitor::visit(String* node) {}
+void ASTVisitor::visit(String* node) {
+  UNUSED(node);
+}
 
-void ASTVisitor::visit(This* node) {}
+void ASTVisitor::visit(This* node) {
+  UNUSED(node);
+}
 
-void ASTVisitor::visit(True* node) {}
+void ASTVisitor::visit(True* node) {
+  UNUSED(node);
+}
 
 void ASTVisitor::visit(TypeParameter* node) {
   node->name()->accept(this);
@@ -597,13 +611,22 @@ void ASTVisitor::acceptAll(NodeList* list) {
 
 //
 
-static const char* Indentation[] = { "", "  ", "    ", "      ", "        ", "          ", "            " };
+static const char* Indentation[] = {
+  "",
+  "  ",
+  "    ",
+  "      ",
+  "        ",
+  "          ",
+  "            "
+};
+
 static const int MaxIndentation = NumberOfElements(Indentation);
 
-ASTPrinter::ASTPrinter(std::ostream& output) : 
-  m_output(output), 
-  m_indentLevel(0),
-  m_wasNewLine(NO) {}
+ASTPrinter::ASTPrinter(std::ostream& output)  //NOLINT
+    : m_output(output), 
+      m_indentLevel(0),
+      m_wasNewLine(NO) {}
 
 void ASTPrinter::print(Node* node) {
   node->accept(this);
@@ -715,7 +738,7 @@ void ASTPrinter::visit(Class* node) {
 void ASTPrinter::visit(Error* node) {
   print("<<error(");
   print(node->value());
-  print(', ');
+  print(", ");
   print(node->line());
   print(':');
   print(node->column());
@@ -723,6 +746,7 @@ void ASTPrinter::visit(Error* node) {
 }
 
 void ASTPrinter::visit(False* node) {
+  UNUSED(node);
   print("false");
 }
 
@@ -733,7 +757,7 @@ void ASTPrinter::visit(Function* node) {
     printAll(node->parameters(), ", ");
     print(" -> ");
     node->expr()->accept(this);
-    print('}');
+    print(" }");
   } else {
     print("def ");
     node->name()->accept(this);
@@ -819,10 +843,12 @@ void ASTPrinter::visit(String* node) {
 }
 
 void ASTPrinter::visit(This* node) {
+  UNUSED(node);
   print("this");
 }
 
 void ASTPrinter::visit(True* node) {
+  UNUSED(node);
   print("true");
 }
 
@@ -858,19 +884,20 @@ void ASTPrinter::visit(Variable* node) {
 // 
 
 NodeList::NodeList() : 
-  m_nodesIndex(0), 
+  m_nodes(nullptr),
   m_nodesSize(0),
-  m_nodes(nullptr) {}
+  m_nodesIndex(0) {}
 
 void NodeList::add(Node* node, Arena* arena) {
   if(m_nodesIndex == m_nodesSize) {
-    auto newSize = m_nodesSize == 0 ? 8 : m_nodesSize << 1;
+    static const size_t kNodePointerSize = sizeof(Node*); //NOLINT
+    auto newSize = m_nodesSize == 0 ? 1 : m_nodesSize << 1;
     auto newNodes = arena->newArray<Node*>(newSize);
 
     if(m_nodes != nullptr) {
       // The nodes array is only null if the NodeList is fresh
       // and no node has been added yet.
-      ArrayCopy(newNodes, m_nodes, sizeof(Node*) * m_nodesSize);
+      ArrayCopy(newNodes, m_nodes, kNodePointerSize * m_nodesSize);
     }
 
     m_nodes = newNodes;
@@ -888,7 +915,8 @@ int NodeList::size() const {
 Node* NodeList::get(const int& index) {
   if(index >= m_nodesIndex || index < 0) {
 #ifdef DEBUG
-    std::cerr << "Warning: Array element " << index << " is out of bounds." << std::endl;
+    std::cerr << "Warning: Array element " << 
+        index << " is out of bounds." << std::endl;
 #endif
     return nullptr;
   }
@@ -904,7 +932,7 @@ bool NodeList::nonEmpty() const {
   return m_nodesIndex > 0;
 }
 
-void NodeList::foreach(std::function<void(Node*)> f) {
+void NodeList::foreach(std::function<void(Node*)> f) { //NOLINT
   const auto n = m_nodesIndex;
   auto nodes = m_nodes;
 
@@ -917,7 +945,7 @@ void NodeList::foreach(std::function<void(Node*)> f) {
   }
 }
 
-bool NodeList::forall(std::function<bool(Node*)> f) {
+bool NodeList::forall(std::function<bool(Node*)> f) { //NOLINT
   const auto n = m_nodesIndex;
   auto nodes = m_nodes;
 

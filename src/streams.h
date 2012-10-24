@@ -11,7 +11,7 @@ namespace brutus {
         virtual ~CharStream() {}
         virtual bool hasNext() = 0;
         virtual char next() = 0;
-        virtual void foreach(std::function<void(char)> f) = 0;
+        virtual void foreach(std::function<void(char)> f) = 0; //NOLINT
 
       private:
         DISALLOW_COPY_AND_ASSIGN(CharStream);
@@ -25,16 +25,17 @@ namespace brutus {
           m_bufferLength(0) {}
         bool hasNext();
         char next();
-        void foreach(std::function<void(char)> f);
+        void foreach(std::function<void(char)> f); //NOLINT
 
       private:
-        DISALLOW_COPY_AND_ASSIGN(FileCharStream);
-        void updateBuffer();
-
         const FILE* m_file;
         char m_buffer[0x1000];
         size_t m_bufferIndex;
         size_t m_bufferLength;
+
+        void updateBuffer();
+
+        DISALLOW_COPY_AND_ASSIGN(FileCharStream);
     }; // class FileCharStream
   } //namespace internal
 } //namespace brutus

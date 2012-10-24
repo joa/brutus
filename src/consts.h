@@ -8,10 +8,14 @@ namespace brutus {
     static const int GigaByte = MegaByte * 1024;
 
     static const int Alignment = 8; //TODO(joa): jaja alignment check arch
-    static const int PageSize = 4 * KiloByte; //TODO(joa): also assuming 4kb page size
+    static const int PageSize = 
+      4 * KiloByte; //TODO(joa): also assuming 4kb page size
 
     static const int MaxTupleArity = 32;
     static const int MaxFunctionArity = 32;
   }
+
+  static const size_t kCharSize = sizeof(char); //NOLINT
+  static_assert(kCharSize == 1, "kCharSize must be one.");
 }
 #endif

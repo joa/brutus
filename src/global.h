@@ -2,7 +2,7 @@
 #define BRUTUS_GLOBAL_H_
 
 #if defined(__GNUC__) && __GNUC__ < 4
-#error "Building Brutus on Linux requires at least a GCC 4.x compatible compiler."
+#error "Building Brutus on Linux requires a GCC 4.x compatible compiler."
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1700
@@ -66,13 +66,12 @@
   }
 #endif
 
+#define UNUSED(x) \
+  ((void)(x))
+
 #define IS_POW_2(x) \
   (((x) > 1) && (0 == ((x) & ((x) - 1))))
 
 #define ASSERT_POW2(x) \
   static_assert(IS_POW_2(x), "Error: " #x " must be a power of two.")
-
-static const int kCharSize = sizeof(char);
-
-static_assert(kCharSize == 1, "sizeof(char) must be one.");
 #endif

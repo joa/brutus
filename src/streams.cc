@@ -26,7 +26,7 @@ void FileCharStream::updateBuffer() {
   auto numCharsRead =
     fread(
       &m_buffer,
-      sizeof(char),
+      kCharSize,
       sizeof(m_buffer),
       const_cast<FILE*>(m_file));
 
@@ -34,7 +34,8 @@ void FileCharStream::updateBuffer() {
   m_bufferLength = numCharsRead;
 }
 
-void FileCharStream::foreach(std::function<void(char)> f) {
+void FileCharStream::foreach(
+    std::function<void(char)> f) { //NOLINT
   while(hasNext()) {
     f(next());
   }

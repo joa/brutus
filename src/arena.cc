@@ -35,7 +35,8 @@ void* Arena::alloc(int size) {
   auto blockSize = aligned(m_blockSize);
 
   if(alignedSize > blockSize) {
-    //TODO(joa): could allocate an extra block of aligned size, add to used and return its offset
+    //TODO(joa): could allocate an extra block of aligned size, add to 
+    // used and return its offset
     std::cerr << "Cannot allocate " << size << " bytes at once.";
     return nullptr;
   }

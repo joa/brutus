@@ -24,8 +24,8 @@ namespace internal {
 // The Block production rule is read as following:
 //
 // There are two cases. The first is LBRACE followed by the Expression rule.
-// Then there are 0 ore more repitions of a newline token followed by an Expression.
-// This is followed by a final RBRACE token.
+// Then there are 0 ore more repitions of a newline token followed by an 
+// Expression. This is followed by a final RBRACE token.
 //
 // The second case is just a single Expression.
 //
@@ -35,7 +35,8 @@ namespace internal {
 
 #define EXPECT(t) if(!poll(t)) { \
   auto buf = m_arena->newArray<char>(0x100); \
-  sprintf(buf, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, __LINE__,tok::toString(t), tok::toString(m_currentToken)); \
+  snprintf(buf, 0x100, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, \
+    __LINE__, tok::toString(t), tok::toString(m_currentToken)); \
   return error(buf); \
 }
 
@@ -161,7 +162,8 @@ bool Parser::peekVisibility() {
 
 //
 // Class
-//  : Visibility? 'virtual'? 'native'? 'class' Identifier TypeParameter? Constructor Extends? '{' NEWLINE (Definition NEWLINE)* '}' 
+//  : Visibility? 'virtual'? 'native'? 'class' Identifier TypeParameter? 
+//      Constructor Extends? '{' NEWLINE (Definition NEWLINE)* '}' 
 //
 ast::Node* Parser::parseClass(unsigned int flags) {
   if(0 == flags) {
@@ -335,7 +337,7 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
 
   ast::Node* expression = nullptr;
 
-  bool isForced = poll(tok::FORCE);
+  //bool isForced = poll(tok::FORCE);
 
   if(poll(tok::LPAREN)) {
     expression = parseExpression();
@@ -385,7 +387,8 @@ ast::Node* Parser::parsePrimaryExpression() {
     return parseIdentifier();
   } else if(peek(tok::NUMBER_LITERAL)) {
     return parseNumberLiteral();
-  } else if(peek(tok::TRUE_) || peek(tok::YES_) || peek(tok::FALSE_) || peek(tok::NO_)) {
+  } else if(peek(tok::TRUE_) || peek(tok::YES_) || 
+            peek(tok::FALSE_) || peek(tok::NO_)) {
     return parseBooleanLiteral();
   } else if(peek(tok::STRING_LITERAL)) {
     return parseStringLiteral();
@@ -407,7 +410,8 @@ bool Parser::peekPrimaryExpression() {
       || peek(tok::THIS);
 }
 
-ast::Node* Parser::continueWithExpression(ast::Node* expression, bool allowInfixCall) {
+ast::Node* Parser::continueWithExpression(
+    ast::Node* expression, bool allowInfixCall) {
   if(nullptr == expression) {
     return error("Expected expression.");
   } else {
@@ -415,7 +419,8 @@ ast::Node* Parser::continueWithExpression(ast::Node* expression, bool allowInfix
       if(peek(tok::DOT)) {
         auto select = parseSelect(expression);
         expression = select;
-      } else if(peek(tok::LPAREN) || (allowInfixCall && peek(tok::IDENTIFIER))) {
+      } else if(peek(tok::LPAREN) || 
+          (allowInfixCall && peek(tok::IDENTIFIER))) {
         auto call = parseCall(expression);
         expression = call;
       } else {
@@ -535,7 +540,8 @@ ast::Node* Parser::parseSingleArgument() {
 
 //
 // AnonymousFunctionExpression
-//  : '{' NEWLINE* AnonymousFunctionParameterList (':' Type?) ->' Block NEWLINE* '}'
+//  : '{' NEWLINE* AnonymousFunctionParameterList 
+//    (':' Type?) ->' Block NEWLINE* '}'
 //
 ast::Node* Parser::parseAnonymousFunctionExpression() {
   EXPECT(tok::LBRACE);
@@ -609,7 +615,9 @@ ast::Node* Parser::parseBooleanLiteral() {
 //  : NUMBER_LITERAL
 //
 ast::Node* Parser::parseNumberLiteral() {
-  return consume(tok::NUMBER_LITERAL, [&]() { return allocWithValue<ast::Number>(); });
+  return consume(tok::NUMBER_LITERAL, [&]() {
+    return allocWithValue<ast::Number>();
+  });
 }
 
 //
@@ -617,7 +625,9 @@ ast::Node* Parser::parseNumberLiteral() {
 //  : STRING_LITERAL
 //
 ast::Node* Parser::parseStringLiteral() {
-  return consume(tok::STRING_LITERAL, [&]() { return allocWithValue<ast::String>(); });
+  return consume(tok::STRING_LITERAL, [&]() {
+    return allocWithValue<ast::String>();
+  });
 }
 
 //
@@ -780,7 +790,9 @@ ast::Node* Parser::parseTypeParameter() {
 //  : IDENTIFIER
 //
 ast::Node* Parser::parseIdentifier() {
-  return consume(tok::IDENTIFIER, [&]() { return allocWithValue<ast::Identifier>(); });
+  return consume(tok::IDENTIFIER, [&]() {
+    return allocWithValue<ast::Identifier>();
+  });
 }
 
 // Utility methods for the parser
@@ -802,7 +814,7 @@ T* Parser::allocWithValue() {
   auto value = m_arena->newArray<char>(length + 1);
   value[length] = '\0';
 
-  ArrayCopy(value, m_lexer->value(), sizeof(char) * length);
+  ArrayCopy(value, m_lexer->value(), kCharSize * length);
   result->init(value, length);
 
   return result;
@@ -814,11 +826,11 @@ ast::Node* Parser::error(const char* value) {
   return result;
 }
 
-ALWAYS_INLINE bool Parser::peek(const tok::Token& token) {
+inline bool Parser::peek(const tok::Token& token) {
   return m_currentToken == token;
 }
 
-ALWAYS_INLINE bool Parser::poll(const tok::Token& token) {
+inline bool Parser::poll(const tok::Token& token) {
   if(peek(token)) {
     advance();
     return YES;
@@ -831,7 +843,9 @@ void Parser::pollAll(const tok::Token& token) {
   while(poll(token));
 }
 
-ast::Node* Parser::consume(const tok::Token& token, std::function<ast::Node*()> f) {
+ast::Node* Parser::consume(
+    const tok::Token& token,
+    std::function<ast::Node*()> f) { //NOLINT
   if(peek(token)) {
     auto result = f();
     advance();

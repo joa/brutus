@@ -16,9 +16,9 @@ namespace brutus {
         void stopAndLog();
 
     private:
-      DISALLOW_COPY_AND_ASSIGN(Stopwatch);
       std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
       std::chrono::time_point<std::chrono::high_resolution_clock> m_end;
+      DISALLOW_COPY_AND_ASSIGN(Stopwatch);
     }; //class Stopwatch
   } //namespace internal
 } //namespace brutus

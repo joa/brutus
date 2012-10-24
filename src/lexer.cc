@@ -201,7 +201,9 @@ static const Token SingleCharacterTokens[] = {
   ERROR //63
 };
 
-static_assert(NumberOfElements(SingleCharacterTokens) == 0x80, "Single character token table must have a size of 0x80.");
+static_assert(
+  NumberOfElements(SingleCharacterTokens) == 0x80,
+  "Single character token table must have a size of 0x80.");
 static_assert(';' == 59, "';' must equal 59.");
 static_assert(',' == 44, "',' must equal 44.");
 static_assert('(' == 40, "'(' must equal 40.");
@@ -282,9 +284,16 @@ bool hasValue(const Token& token) {
 }
 } //namespace tok
 
+Lexer::Lexer(CharStream* charStream)
+    : m_stream(charStream),
+      m_line(0),
+      m_column(0),
+      m_currentChar('\0'),
+      m_advanceWithLastChar(false) {}
+
 tok::Token Lexer::resulting(
-    std::function<bool(const char)> condition,
-    std::function<bool(const char)> sideEffect,
+    std::function<bool(const char)> condition, //NOLINT
+    std::function<bool(const char)> sideEffect, //NOLINT
     tok::Token result) {
   while(canAdvance()) {
     const auto nextChar = advance();
@@ -355,10 +364,10 @@ tok::Token Lexer::nextToken() {
       }
     } else if('-' == currentChar) {
       if(advance() == '>') {
-        // One could decide to allow operators like ->> but then again this becomes
-        // really confusing when looking at code like "x -> x ->> y" so the call is
-        // to disallow other operators that start with -> since this should be a rare
-        // case anyways.
+        // One could decide to allow operators like ->> but then again this 
+        // becomes really confusing when looking at code like "x -> x ->> y" so 
+        // the call is to disallow other operators that start with -> since this
+        // should be a rare case anyways.
         return tok::RARROW;
       } else {
         rewind();
@@ -373,10 +382,14 @@ tok::Token Lexer::nextToken() {
     } else if(isOperator(currentChar)) {
       // The generic operator handling comes after '=', '-' and '/'
       return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
-    } else if(currentChar >= 0x00 && currentChar < 0x80) {
-      return tok::SingleCharacterTokens[currentChar];
     } else {
-      return tok::ERROR;
+      auto charCode = static_cast<int>(currentChar);
+
+      if(charCode >= 0x00 && charCode <= 0x80) {
+        return tok::SingleCharacterTokens[charCode];
+      } else {
+        return tok::ERROR;
+      }
     }
   }
 
@@ -591,7 +604,9 @@ tok::Token Lexer::continueWithNumberStart(const char currentChar) {
   return tok::NUMBER_LITERAL;
 }
 
-tok::Token Lexer::continueWithIdentifierStart(const char currentChar, bool operatorMode) {
+tok::Token Lexer::continueWithIdentifierStart(
+    const char currentChar,
+    bool operatorMode) {
   enum {
     IDENTIFIER_OR_OPERATOR,
     OPERATOR_ONLY,

@@ -70,13 +70,7 @@ namespace brutus {
     
     class Lexer {
       public:
-        explicit Lexer(CharStream* charStream) : 
-          m_stream(charStream),
-          m_line(0),
-          m_column(0),
-          m_currentChar('\0'),
-          m_advanceWithLastChar(false) {}
-
+        explicit Lexer(CharStream* charStream);
         tok::Token nextToken();
         const char* value();
         size_t valueLength();
@@ -84,8 +78,6 @@ namespace brutus {
         unsigned int posColumn();
 
       private:
-        DISALLOW_COPY_AND_ASSIGN(Lexer);
-
         static const size_t BUFFER_SIZE = 0x1000;
 
         CharStream* const m_stream;
@@ -114,15 +106,18 @@ namespace brutus {
         bool isIdentifierPart(const char c);
 
         tok::Token continueWithNumberStart(const char currentChar);
-        tok::Token continueWithIdentifierStart(const char currentChar, bool operatorMode);
+        tok::Token continueWithIdentifierStart(
+            const char currentChar, bool operatorMode);
         tok::Token continueWithSlash(const char currentChar);
         tok::Token continueWithBacktick();
         tok::Token continueWithString();
 
         tok::Token resulting(
-          std::function<bool(const char)> condition,
-          std::function<bool(const char)> sideEffect,
+          std::function<bool(const char)> condition, //NOLINT
+          std::function<bool(const char)> sideEffect, //NOLINT
           tok::Token result);
+
+        DISALLOW_COPY_AND_ASSIGN(Lexer);
     }; //class Lexer
   } //namespace internal
 } //namespace brutus

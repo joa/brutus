@@ -27,7 +27,7 @@ namespace brutus {
     // Type-safe array copy operation with no undefined behaviour
     // whether or not target is the same as source.
     template<typename T>
-    ALWAYS_INLINE static void ArrayCopy(
+    inline static void ArrayCopy(
         T* target, const T* source, size_t length) {
       if(target == source) {
         std::memmove(target, source, length);

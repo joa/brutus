@@ -32,14 +32,11 @@ namespace brutus {
         void deleteAll();
 
       private:
-        DISALLOW_COPY_AND_ASSIGN(Arena);
-
         class ArenaBlock {
-          #define SIZE_OF_BYTE sizeof(char)
-
           public:
             explicit ArenaBlock(int size, ArenaBlock* next) : m_next(next) {
-              m_block = reinterpret_cast<char*>(Malloc::New(size * SIZE_OF_BYTE));
+              m_block = 
+                reinterpret_cast<char*>(Malloc::New(size * kCharSize));
             }
 
             ~ArenaBlock() {
@@ -56,15 +53,13 @@ namespace brutus {
             }
 
             ALWAYS_INLINE char* offset(int size) const {
-              return m_block + size * SIZE_OF_BYTE;
+              return m_block + size * kCharSize;
             }
 
           private:
-            DISALLOW_COPY_AND_ASSIGN(ArenaBlock);
             ArenaBlock* m_next;
             char* m_block;
-
-          #undef SIZE_OF_BYTE
+            DISALLOW_COPY_AND_ASSIGN(ArenaBlock);
         };
 
         void grow(int size);
@@ -84,6 +79,8 @@ namespace brutus {
         ArenaBlock* m_currentBlock;
         ArenaBlock* m_freeBlocks;
         ArenaBlock* m_usedBlocks;
+
+        DISALLOW_COPY_AND_ASSIGN(Arena);
     }; //class Arena
 
     class ArenaMember {

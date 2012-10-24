@@ -53,7 +53,9 @@ int main(int argc, char** argv) {
     auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
     
     printer->print(ast);
+    
     std::cout << std::endl;
+    std::cout << "Names: " << names->size() << std::endl;
 
     delete parser;
     delete lexer;

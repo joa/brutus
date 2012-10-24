@@ -35,6 +35,44 @@ namespace brutus {
 
       class ASTVisitor;
       
+      class Name : public ArenaMember {
+        public:
+          void* operator new(size_t size, Arena* arena) {
+            return arena->alloc(size);
+          }
+
+          Name(const char* value, const int& length, Name* next)
+              : m_value(value),
+                m_length(length),
+                m_next(next) {}
+
+          ALWAYS_INLINE const char* value() const {
+            return m_value;
+          }
+
+          ALWAYS_INLINE int length() const {
+            return m_length;
+          }
+
+          int hashCode() const {
+            int sum = 23;
+            const char* c = m_value;
+
+            for(int i = 0; i < m_length; ++i) {
+              sum += 31 * static_cast<int>(*c++);
+            }
+
+            return sum;
+          }
+
+        private:
+          void* operator new(size_t size);
+          const char* m_value;
+          const int m_length;
+          Name* m_next;
+          DISALLOW_COPY_AND_ASSIGN(Name);
+      };
+      
       class Node : public ArenaMember {
         public:
           void* operator new(size_t size, Arena* arena) {

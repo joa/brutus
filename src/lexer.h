@@ -63,7 +63,9 @@ namespace brutus {
         NATIVE,
         FORCE,
         MODULE,
-        REQUIRE
+        REQUIRE,
+        PURE,
+        IMMUTABLE
       }; // enum Token
 
       const char* toString(const Token& token);

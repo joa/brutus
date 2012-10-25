@@ -19,6 +19,8 @@ namespace brutus {
         static const int ACC_NATIVE = 1 << 5;
         static const int ACC_FORCE = 1 << 6;
         static const int ACC_ABSTRACT = 1 << 7;
+        static const int ACC_PURE = 1 << 8;
+        static const int ACC_IMMUTABLE = 1 << 9;
 
         explicit Parser(Lexer* lexer, NameTable* names, Arena* arena)
             :  m_lexer(lexer),
@@ -34,6 +36,7 @@ namespace brutus {
         ast::Node* parseDeclaration();
         ast::Node* parseFunction(unsigned int flags);
         ast::Node* parseClass(unsigned int flags);
+        ast::Node* parseVariable(unsigned int flags);
         bool parseParameterList(ast::NodeList* list);
         ast::Node* parseParameter();
         ast::Node* parseExpression();
@@ -56,7 +59,6 @@ namespace brutus {
         ast::Node* parseStringLiteral();
         ast::Node* parseIfExpression();
         ast::Node* parseIfCase();
-        ast::Node* parseVariableExpression();
         ast::Node* parseType();
         ast::Node* parseTypeParameterList(ast::NodeList* list);
         ast::Node* parseTypeParameter();

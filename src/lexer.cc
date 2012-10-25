@@ -37,7 +37,9 @@ static const char* KeywordChars[] = {
   "native",
   "force",
   "module",
-  "require"
+  "require",
+  "pure",
+  "immutable"
 };
 
 static const Token KeywordTokens[] = {
@@ -69,7 +71,9 @@ static const Token KeywordTokens[] = {
   NATIVE,
   FORCE,
   MODULE,
-  REQUIRE
+  REQUIRE,
+  PURE,
+  IMMUTABLE
 };
 
 static const Token SingleCharacterTokens[] = {

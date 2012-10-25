@@ -256,14 +256,18 @@ ast::Node* Parser::parseBlock() {
 // Declaration
 //  : Function
 //  | Class
-//  | Trait
+//  | Variable
 //  ;
 //
 ast::Node* Parser::parseDeclaration() {
+  pollAll(tok::NEWLINE);
+
   if(peek(tok::DEF)) {
     return parseFunction(Parser::ACC_PUBLIC);
   } else if(peek(tok::CLASS)) {
     return parseClass(Parser::ACC_PUBLIC);
+  } else if(peek(tok::VAL) || peek(tok::VAR)) {
+    return parseVariable(Parser::ACC_PUBLIC);
   } else if(peekVisibility()) {
     unsigned int flags = 0;
 
@@ -277,6 +281,66 @@ ast::Node* Parser::parseDeclaration() {
       flags |= Parser::ACC_INTERNAL;
     }
 
+    if(poll(tok::IMMUTABLE)) {
+      flags |= Parser::ACC_IMMUTABLE;
+    }
+
+    if(poll(tok::PURE)) {
+      flags |= Parser::ACC_PURE;
+    }
+
+    if(poll(tok::VIRTUAL)) {
+      flags |= Parser::ACC_VIRTUAL;
+    }
+
+    if(poll(tok::NATIVE)) {
+      flags |= Parser::ACC_NATIVE;
+    }
+
+    if(peek(tok::DEF)) {
+      if((flags & Parser::ACC_IMMUTABLE) != 0) {
+        return error("Function may not be marked immutable.");
+      }
+
+      return parseFunction(flags);
+    } else if(peek(tok::CLASS)) {
+      if((flags & Parser::ACC_PURE) != 0) {
+        return error("Class may not be marked pure.");
+      }
+
+      return parseClass(flags);
+    } else if(peek(tok::VAL) || peek(tok::VAR)) {
+      if((flags & Parser::ACC_IMMUTABLE) != 0) {
+        return error("Variable may not be marked immutable.");
+      }
+
+      if((flags & Parser::ACC_PURE) != 0) {
+        return error("Variable may not be marked pure.");
+      }
+
+      return parseVariable(flags);
+    } else {
+      return error("Expected 'def', 'var', 'val' or 'class'.");
+    }
+  } else if(poll(tok::IMMUTABLE)) {
+    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_IMMUTABLE; 
+
+    if(poll(tok::VIRTUAL)) {
+      flags |= Parser::ACC_VIRTUAL;
+    }
+
+    if(poll(tok::NATIVE)) {
+      flags |= Parser::ACC_NATIVE;
+    }
+
+    if(peek(tok::CLASS)) {
+      return parseClass(flags);
+    } else {
+      return error("Expected 'class'.");
+    }
+  } else if(poll(tok::PURE)) {
+    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_PURE; 
+
     if(poll(tok::VIRTUAL)) {
       flags |= Parser::ACC_VIRTUAL;
     }
@@ -287,10 +351,8 @@ ast::Node* Parser::parseDeclaration() {
 
     if(peek(tok::DEF)) {
       return parseFunction(flags);
-    } else if(peek(tok::CLASS)) {
-      return parseClass(flags);
     } else {
-      return error("Expected 'def' or 'class'.");
+      return error("Expected 'def'.");
     }
   } else if(poll(tok::VIRTUAL)) {
     // "virtual class" is the same as "public virtual class"
@@ -304,8 +366,10 @@ ast::Node* Parser::parseDeclaration() {
       return parseFunction(flags);
     } else if(peek(tok::CLASS)) {
       return parseClass(flags);
+    } else if(peek(tok::VAL) || peek(tok::VAR)) {
+      return parseVariable(flags);
     } else {
-      return error("Expected 'def' or 'class'.");
+      return error("Expected 'def', 'val', 'var' or 'class'.");
     }
   } else {
     return nullptr;
@@ -489,7 +553,6 @@ ast::Node* Parser::parseParameter() {
 // Expression
 //  : NEWLINE* '(' Expression ')'
 //  | NEWLINE* Tuple
-//  | NEWLINE* VariableExpression
 //  | NEWLINE* IfExpression
 //  | NEWLINE* Expression Select*
 //  | NEWLINE* Expression Call*
@@ -528,8 +591,6 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
     }
   } else if(peek(tok::IF)) {
     expression = parseIfExpression();
-  } else if(peek(tok::VAL) || peek(tok::VAR)) {
-    expression =  parseVariableExpression();
   } else if(peekPrimaryExpression()) {
     expression = parsePrimaryExpression();
   }
@@ -834,10 +895,12 @@ ast::Node* Parser::parseIfCase() {
 }
 
 //
-// VariableExpression
+// Variable
 //  : ('val' | 'var') Identifier (((':' Type)? '=' Expression) | ':' Type)
 //
-ast::Node* Parser::parseVariableExpression() {
+ast::Node* Parser::parseVariable(unsigned int flags) {
+  UNUSED(flags);
+
   bool modifiable = NO;
 
   if(poll(tok::VAR)) {

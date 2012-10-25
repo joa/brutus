@@ -420,7 +420,7 @@ ast::Node* Parser::parseClass(unsigned int flags) {
   }
 
 
-  if(poll(tok::COLON)) {
+  if(poll(tok::COLON)) { //TODO(joa): extends not colon
     //...
   }
 
@@ -939,10 +939,13 @@ ast::Node* Parser::parseVariable(unsigned int flags) {
 //
 // Type
 //  : Identifier ('[' Type ']')?
+//  | '-> Type
 //  | Type '->' Type
 //  | '(' Type (',' Type)+ ')'
 //
 ast::Node* Parser::parseType() {
+  auto mustBeImmutable = poll(tok::IMMUTABLE);
+
   //TODO(joa): wrap in type, add attrib
   if(poll(tok::LPAREN)) {
     int arity = 1;
@@ -960,12 +963,17 @@ ast::Node* Parser::parseType() {
     } while(!poll(tok::RPAREN));
 
     return nullptr;
+  } else if(poll(tok::RARROW)) {
+    parseType();
+    return nullptr;
   } else {
     auto name = parseIdentifier();
 
     if(poll(tok::LBRAC)) {
-      parseType();
-      EXPECT(tok::RBRAC);
+      do {
+        parseType();
+      } while(poll(tok::COMMA));
+      EXPECT(tok::RBRACE);
     }
 
     if(poll(tok::RARROW)) {

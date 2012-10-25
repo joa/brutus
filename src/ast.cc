@@ -793,10 +793,9 @@ void ASTPrinter::visit(Class* node) {
   const int m = node->members()->size() - 1;
   int i = 0;
   
-
   print("class ");
   node->name()->accept(this);
-  print('{');
+  print(" {");
   nl();
   pushIndent();
   node->members()->foreach([&](Node* node) {
@@ -808,7 +807,6 @@ void ASTPrinter::visit(Class* node) {
     }
   });
   popIndent();
-  nl();
   print('}');
 }
 
@@ -896,7 +894,19 @@ void ASTPrinter::visit(IfCase* node) {
 void ASTPrinter::visit(Module* node) {
   print("module ");
   node->name()->accept(this);
-  print(" {");
+
+  //TODO(joa): fix this!
+  if(node->name()->kind() == ast::IDENTIFIER) {
+    ast::Identifier* name = static_cast<ast::Identifier*>(node->name());
+
+    if(name->name()->length() > 0) {
+      print(" {");
+    } else {
+      print('{');
+    }
+  } else {
+    print(" {");
+  }
   nl();
   pushIndent();
   
@@ -909,9 +919,16 @@ void ASTPrinter::visit(Module* node) {
     nl();
   }
   
+  const int m = node->declarations()->size() - 1;
+  int i = 0;
+
   node->declarations()->foreach([&](Node* node) {
     node->accept(this);
     nl();
+
+    if(i++ != m) {
+      nl();
+    }
   }); 
 
   popIndent();

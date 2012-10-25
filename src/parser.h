@@ -26,6 +26,9 @@ namespace brutus {
                m_arena(arena) {}
 
         ast::Node* parseProgram();
+        ast::Node* parseModule();
+        ast::Node* parseModuleDependency();
+        ast::Node* parseModuleVersion();
         ast::Node* parseBlock();
         bool peekVisibility();
         ast::Node* parseDeclaration();

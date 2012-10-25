@@ -479,6 +479,82 @@ NodeList* Class::members() {
 
 //
 
+Module::Module()
+    : m_name(nullptr) {}
+
+void Module::accept(ASTVisitor* visitor) {
+  visitor->visit(this);
+}
+
+Kind Module::kind() const {
+  return MODULE;
+}
+
+void Module::init(Node* name) {
+  m_name = name;
+}
+
+Node* Module::name() const {
+  return m_name;
+}
+
+NodeList* Module::declarations() {
+  return &m_declarations;
+}
+
+NodeList* Module::dependencies() {
+  return &m_dependencies;
+}
+
+//
+
+ModuleDependency::ModuleDependency() 
+    : m_name(nullptr),
+      m_version(nullptr) {}
+
+void ModuleDependency::accept(ASTVisitor* visitor) {
+  visitor->visit(this);
+}
+
+Kind ModuleDependency::kind() const {
+  return MODULE_DEPENDENCY;
+}
+
+void ModuleDependency::init(Node* name, Node* version) {
+  m_name = name;
+  m_version = m_version;
+}
+
+Node* ModuleDependency::name() const {
+  return m_name;
+}
+
+Node* ModuleDependency::version() const {
+  return m_version;
+}
+
+bool ModuleDependency::hasVersion() const {
+  return m_version != nullptr;
+}
+
+//
+
+Program::Program() {}
+
+void Program::accept(ASTVisitor* visitor) {
+  visitor->visit(this);
+}
+
+Kind Program::kind() const {
+  return PROGRAM;
+}
+
+NodeList* Program::modules() {
+  return &m_modules;
+}
+
+//
+
 ASTVisitor::ASTVisitor() {}
 
 void ASTVisitor::visit(Argument* node) {
@@ -539,6 +615,20 @@ void ASTVisitor::visit(IfCase* node) {
   node->expr()->accept(this);
 }
 
+void ASTVisitor::visit(Module* node) {
+  node->name()->accept(this);
+  acceptAll(node->declarations());
+  acceptAll(node->dependencies());
+}
+
+void ASTVisitor::visit(ModuleDependency* node) {
+  node->name()->accept(this);
+
+  if(node->hasVersion()) {
+    node->version()->accept(this);
+  }
+}
+
 void ASTVisitor::visit(Number* node) {
   UNUSED(node);
 }
@@ -549,6 +639,11 @@ void ASTVisitor::visit(Parameter* node) {
   if(node->hasType()) {
     node->type()->accept(this);
   }
+}
+
+
+void ASTVisitor::visit(Program* node) {
+  acceptAll(node->modules());
 }
 
 void ASTVisitor::visit(Select* node) {
@@ -798,6 +893,42 @@ void ASTPrinter::visit(IfCase* node) {
   node->expr()->accept(this);
 }
 
+void ASTPrinter::visit(Module* node) {
+  print("module ");
+  node->name()->accept(this);
+  print(" {");
+  nl();
+  pushIndent();
+  
+  node->dependencies()->foreach([&](Node* node) {
+    node->accept(this);
+    nl();
+  });
+  
+  if(node->dependencies()->nonEmpty()) {
+    nl();
+  }
+  
+  node->declarations()->foreach([&](Node* node) {
+    node->accept(this);
+    nl();
+  }); 
+
+  popIndent();
+  print('}');
+  nl();
+}
+
+void ASTPrinter::visit(ModuleDependency* node) {
+  print("require ");
+  node->name()->accept(this);
+
+  if(node->hasVersion()) {
+    print(": ");
+    node->version()->accept(this);
+  }
+}
+
 void ASTPrinter::visit(Number* node) {
   print(node->name()->value());
 }
@@ -809,6 +940,13 @@ void ASTPrinter::visit(Parameter* node) {
     print(": ");
     node->type()->accept(this);
   }
+}
+
+void ASTPrinter::visit(Program* node) {
+  node->modules()->foreach([&](Node* node) {
+    node->accept(this);
+    nl();
+  });
 }
 
 void ASTPrinter::visit(Select* node) {

@@ -69,7 +69,15 @@ namespace brutus {
         ALWAYS_INLINE int indexOf(int hash, int length) {
           // Same as "return hash % length" given that length is
           // a power of two.
-          return hash & (length - 1);
+          int result = hash & (length - 1);
+
+#ifdef DEBUG
+          if(result < 0) {
+            std::cerr << "Error: NameTable index is less than zero." << std::endl;
+          }
+#endif
+
+          return result;
         }
 
         DISALLOW_COPY_AND_ASSIGN(NameTable);

@@ -46,6 +46,8 @@ void Stopwatch::log() const {
 
   std::cout
     << "Elapsed Time: "
+    << (deltaNs.count() / 1000000)
+    << "ms, "
     << deltaNs.count() 
     << "ns"
     << std::endl;

@@ -35,7 +35,9 @@ static const char* KeywordChars[] = {
   "protected",
   "internal",
   "native",
-  "force"
+  "force",
+  "module",
+  "require"
 };
 
 static const Token KeywordTokens[] = {
@@ -65,7 +67,9 @@ static const Token KeywordTokens[] = {
   PROTECTED,
   INTERNAL,
   NATIVE,
-  FORCE
+  FORCE,
+  MODULE,
+  REQUIRE
 };
 
 static const Token SingleCharacterTokens[] = {
@@ -265,6 +269,8 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(INTERNAL, "INTERNAL");
     TOKEN_TO_STRING_CASE(NATIVE, "NATIVE");
     TOKEN_TO_STRING_CASE(FORCE, "FORCE");
+    TOKEN_TO_STRING_CASE(MODULE, "MODULE");
+    TOKEN_TO_STRING_CASE(REQUIRE, "REQUIRE");
     default: return "UNKNOWN";
   }
   #undef TOKEN_TO_STRING_CASE

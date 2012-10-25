@@ -14,24 +14,27 @@ namespace brutus {
   namespace internal {
     namespace ast {
       enum Kind {
-        ERROR,
-        BLOCK,
-        IDENTIFIER,
-        NUMBER,
-        STRING,
-        THIS,
-        VARIABLE,
-        TRUE_,
-        FALSE_,
-        SELECT,
-        CALL,
         ARGUMENT,
+        BLOCK,
+        CALL,
+        CLASS,
+        ERROR,
+        FALSE_,
+        FUNCTION,
+        IDENTIFIER,
         IF,
         IF_CASE,
-        FUNCTION,
+        MODULE,
+        MODULE_DEPENDENCY,
+        NUMBER,
         PARAMETER,
+        PROGRAM,
+        SELECT,
+        STRING,
+        THIS,
+        TRUE_,
         TYPE_PARAMETER,
-        CLASS
+        VARIABLE,       
       }; //enum Kind
 
       class ASTVisitor;
@@ -41,14 +44,15 @@ namespace brutus {
           void* operator new(size_t size, Arena* arena) {
             return arena->alloc(size);
           }
+
           Node() {}
           virtual ~Node() {}
+          
           virtual void accept(ASTVisitor* visitor) = 0;
           virtual Kind kind() const = 0;
 
         private:
           void* operator new(size_t size);
-          bool m_force;
 
           DISALLOW_COPY_AND_ASSIGN(Node);
       };
@@ -74,12 +78,10 @@ namespace brutus {
 
       class Expr : public Node {
         public:
-          explicit Expr() : m_force(false) {}
-          bool force() const { return m_force; }
-          void force(const bool& value) { m_force = value; }
+          explicit Expr() {}
 
         private:
-          bool m_force;
+          DISALLOW_COPY_AND_ASSIGN(Expr);
       };
 
       class Declaration : public Node {
@@ -105,6 +107,49 @@ namespace brutus {
           unsigned int m_column;
 
           DISALLOW_COPY_AND_ASSIGN(Error);
+      };
+
+      class Program : public Node {
+        public:
+          explicit Program();
+          NodeList* modules();
+          NODE_OVERRIDES();
+
+        private:
+          NodeList m_modules;
+
+          DISALLOW_COPY_AND_ASSIGN(Program);
+      };
+
+      class Module : public Declaration {
+        public:
+          explicit Module();
+          void init(Node* name);
+          Node* name() const;
+          NodeList* declarations();
+          NodeList* dependencies();
+          NODE_OVERRIDES();
+
+        private:
+          Node* m_name;
+          NodeList m_declarations;
+          NodeList m_dependencies;
+          DISALLOW_COPY_AND_ASSIGN(Module);
+      };
+
+      class ModuleDependency : public Declaration {
+        public:
+          explicit ModuleDependency();
+          void init(Node* name, Node* version);
+          Node* name() const;
+          Node* version() const;
+          bool hasVersion() const;
+          NODE_OVERRIDES();
+
+        private:
+          Node* m_name;
+          Node* m_version;
+          DISALLOW_COPY_AND_ASSIGN(ModuleDependency);
       };
 
       class Identifier : public Expr {
@@ -371,8 +416,11 @@ namespace brutus {
           virtual void visit(Identifier* node);
           virtual void visit(If* node);
           virtual void visit(IfCase* node);
+          virtual void visit(Module* node);
+          virtual void visit(ModuleDependency* node);
           virtual void visit(Number* node);
           virtual void visit(Parameter* node);
+          virtual void visit(Program* node);
           virtual void visit(Select* node);
           virtual void visit(String* node);
           virtual void visit(This* node);
@@ -401,8 +449,11 @@ namespace brutus {
           virtual void visit(Identifier* node) override;
           virtual void visit(If* node) override;
           virtual void visit(IfCase* node) override;
+          virtual void visit(Module* node) override;
+          virtual void visit(ModuleDependency* node) override;
           virtual void visit(Number* node) override;
           virtual void visit(Parameter* node) override;
+          virtual void visit(Program* node) override;
           virtual void visit(Select* node) override;
           virtual void visit(String* node) override;
           virtual void visit(This* node) override;

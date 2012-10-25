@@ -51,15 +51,173 @@ namespace internal {
 
 //
 // Program
-//  : Block NEWLINE
+//  : (Module NEWLINE)*
 //
 ast::Node* Parser::parseProgram() {
   advance();
 
-  auto result = parseBlock();
-  EXPECT(tok::NEWLINE);
+  auto result = alloc<ast::Program>();
+  auto modules = result->modules();
+
+  while(peek(tok::MODULE)) {
+    modules->add(parseModule(), m_arena);
+    EXPECT(tok::NEWLINE);
+  }
 
   return result;
+}
+
+
+//
+// Module
+//  : 'module' ActorName '{' NEWLINE (ModuleDeclaration NEWLINE)* '}' 
+//  ;
+//
+
+//
+// ModuleDeclaration
+//  : ModuleDependency
+//  | Declaration
+//  | Expression
+//  ;
+//
+ast::Node* Parser::parseModule() {
+  EXPECT(tok::MODULE);
+
+  auto result = alloc<ast::Module>();
+  ast::Node* name = nullptr;
+
+  if(peek(tok::IDENTIFIER)) {
+     name = parseIdentifier(); //TODO(joa): parseActorName()
+  } else {
+    auto emptyName = alloc<ast::Identifier>();
+    emptyName->init(m_names->get("", 0, /*copyValue=*/false));
+
+    name = emptyName;
+  }
+
+  result->init(name);
+
+  EXPECT(tok::LBRACE);
+  EXPECT(tok::NEWLINE);
+
+  auto dependencies = result->dependencies();
+  auto declarations = result->declarations();
+
+  do {
+    // ModuleDeclaration
+    if(peek(tok::REQUIRE)) {
+      dependencies->add(parseModuleDependency(), m_arena);
+    } else {
+      ast::Node* declaration = parseDeclaration();
+    
+      if(nullptr == declaration) {
+        declarations->add(parseExpression(), m_arena);
+      } else {
+        declarations->add(declaration, m_arena);
+      }
+    }
+    EXPECT(tok::NEWLINE);
+  } while(!peek(tok::RBRACE));
+
+  EXPECT(tok::RBRACE);
+
+  return result;
+}
+
+//
+// ModuleDependency
+//  : 'require' ActorName ModuleVersion?
+//  ;
+
+ast::Node* Parser::parseModuleDependency() {
+  EXPECT(tok::REQUIRE);
+
+  auto result = alloc<ast::ModuleDependency>();
+  auto name = parseIdentifier(); //TODO(joa): parseActorName()
+
+  //TODO(joa):
+  result->init(name, peek(tok::COLON) ? parseModuleVersion() : nullptr);
+
+  return result;
+}
+
+//
+// ModuleVersion
+//  : ':' ModuleVersionRange
+//
+
+//
+// ModuleVersionRange
+//  : ModuleVersionRange (',' ModuleVersionRange)*
+//  | NumberLiteral
+//  | '[' NumberLiteral ']'
+//  | ('[' | '(') NumberLiteral ',' NumberLiteral? (']' | ')')
+//  | ('[' | '(') NumberLiteral? ',' NumberLiteral (']' | ')')
+//
+
+ast::Node* Parser::parseModuleVersion() {
+  EXPECT(tok::COLON);
+
+  bool isBracket;
+
+  if(poll(tok::LBRAC)) {
+    isBracket = YES;
+  } else if(poll(tok::LPAREN)) {
+    isBracket = NO;
+  } else {
+    auto number = parseNumberLiteral();
+    //TODO(joa): NumberLiteral
+    return error("TODO NumberLiteral");
+  }
+
+  if(poll(tok::COMMA)) {
+    // ?,
+    auto x = parseNumberLiteral();
+
+    if(poll(tok::RBRAC)) {
+      //?,x]
+      return error("TODO ?,x]");
+    } else if(poll(tok::RPAREN)) {
+      //?,x)
+      return error("TODO ?,x)");
+    } else {
+      return error("Expected ']' or ')'");
+    }
+  } else {
+    // ?x
+    auto x = parseNumberLiteral();
+
+    if(poll(tok::COMMA)) {
+      //[x,
+      if(poll(tok::RBRAC)) {
+        // [x,]
+        return error("TODO ?x,]");
+      } else if(poll(tok::RPAREN)) {
+        // [x,)
+        return error("TODO ?x,)");
+      } else {
+        //[x,y
+        auto y = parseNumberLiteral();
+
+        if(poll(tok::RBRAC)) {
+          //[x,y]
+          return error("TODO ?x,y]");
+        } else if(poll(tok::RPAREN)) {
+          //[x,y)
+          return error("TODO ?x,y)");
+        } else {
+          return error("Expected ']' or ')'");
+        }
+      }
+    } else if(isBracket && poll(tok::RBRAC)) {
+      //[x]
+      //return
+      return error("TODO [x]");
+    } else {
+      return error("Expected ',' or ']'");
+    }
+  }
 }
 
 //

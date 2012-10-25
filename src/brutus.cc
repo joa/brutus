@@ -8,8 +8,9 @@
 #include "stopwatch.h"
 #include "streams.h"
 
+//#define PERF_TEST
 const auto numIterations = 100000000;
-const auto numTrials = 3;
+const auto numTrials = 10000;
 
 void perf_test(std::function<int()> f) {
   brutus::internal::Stopwatch stopwatch;    
@@ -39,29 +40,42 @@ int main(int argc, char** argv) {
   (void)argv;
 
 #if 1
-  withTokenFile([&](FILE* fp) {
-    auto arena = new brutus::internal::Arena(
-      /*initialCapacity = */512 * brutus::consts::KiloByte,
-      /*blockSize = */brutus::consts::PageSize,
-      /*alignment = */brutus::consts::Alignment);
-    arena->init();
-    auto stream = new brutus::internal::FileCharStream(fp);
-    auto names = new brutus::internal::NameTable(arena);
-    auto lexer = new brutus::internal::Lexer(stream); 
-    auto parser = new brutus::internal::Parser(lexer, names, arena);
-    auto ast = parser->parseProgram();
-    auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
-    
-    printer->print(ast);
-    
-    std::cout << std::endl;
-    std::cout << "Names: " << names->size() << std::endl;
+#ifdef PERF_TEST
+  perf_test([&]() -> int {
+    int size;
+#endif
+    withTokenFile([&](FILE* fp) {
+      auto arena = new brutus::internal::Arena(
+        /*initialCapacity = */512 * brutus::consts::KiloByte,
+        /*blockSize = */brutus::consts::PageSize,
+        /*alignment = */brutus::consts::Alignment);
+      arena->init();
+      auto stream = new brutus::internal::FileCharStream(fp);
+      auto names = new brutus::internal::NameTable(arena);
+      auto lexer = new brutus::internal::Lexer(stream); 
+      auto parser = new brutus::internal::Parser(lexer, names, arena);
+      auto ast = parser->parseProgram();
+      auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
+      
+#ifndef PERF_TEST
+      printer->print(ast);
+      std::cout << std::endl;
+      std::cout << "Names: " << names->size() << std::endl;
+#else
+      size = names->size();
+#endif
 
-    delete parser;
-    delete lexer;
-    delete stream;
-    delete arena;
+      delete printer;
+      delete parser;
+      delete lexer;
+      delete names;
+      delete stream;
+      delete arena;
+    });
+#ifdef PERF_TEST
+    return size;
   });
+#endif
 #endif
 
 #if 0
@@ -82,50 +96,12 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Tokens: " << numT << std::endl;
+
+    delete lexer;
+    delete stream;
   });
 #endif
 
-  return 0;
-}
-
-int main2(int argc, char** argv) {
-  (void)argc;
-  (void)argv;
-  
-  auto test0 = [&]() -> int {
-    auto sum = 0;
-   
-    for(auto i = 0; i < numIterations; ++i) {
-      sum += i;
-    }
-
-    return sum;
-  };
-
-  auto test1 = [&]() -> int {
-    auto sum = 0;
-    auto i = 0;
-
-    auto add = [&]() {
-      sum += i;
-    };
-
-    for(; i < numIterations; ++i) {
-      add();
-    }
-
-    return sum;
-  };
-
-  std::cout << "Test with normal loop:" << std::endl;
-
-  perf_test(test0);
-
-  std::cout << "Test with anonymous function:" << std::endl;
-
-  perf_test(test1);
-
-  std::cout << "Complete." << std::endl;
-
+  system("PAUSE");
   return 0;
 }

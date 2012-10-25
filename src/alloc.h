@@ -27,13 +27,23 @@ namespace brutus {
     // Type-safe array copy operation with no undefined behaviour
     // whether or not target is the same as source.
     template<typename T>
-    inline static void ArrayCopy(
-        T* target, const T* source, size_t length) {
+    ALWAYS_INLINE static void ArrayCopy(
+        T* target, const T* source, int length) {
       if(target == source) {
         std::memmove(target, source, length);
       } else {
         std::memcpy(target, source, length);
       }
+    }
+
+    // Memset for Malloced arrays.
+    template<typename T>
+    ALWAYS_INLINE static void ArrayFill(T* target, int value, int length) {
+      std::memset(
+        target,
+        value,
+        sizeof(T) * length //NOLINT
+      );
     }
 
     class Malloc {

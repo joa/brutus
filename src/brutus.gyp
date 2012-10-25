@@ -16,6 +16,7 @@
         'parser.cc',
         'stopwatch.cc',
         'streams.cc',
+        'symbols.cc'
       ],
       'conditions': [
         ['OS=="linux"', {

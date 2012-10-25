@@ -10,7 +10,7 @@ NameTable::NameTable(int initialCapacity, float loadFactor, Arena* arena) : m_ar
   m_threshold = static_cast<int>(static_cast<float>(capacity) * loadFactor);
   m_tableSize = capacity;
   m_table = arena->newArray<Name*>(m_tableSize);
-  std::memset(m_table, 0, sizeof(Name*) * m_tableSize);
+  ArrayFill(m_table, 0, m_tableSize);
 }
 
 NameTable::NameTable(Arena* arena) : m_arena(arena), m_size(0) {
@@ -18,7 +18,7 @@ NameTable::NameTable(Arena* arena) : m_arena(arena), m_size(0) {
   m_threshold = static_cast<int>(static_cast<float>(DefaultCapacity) * DefaultLoadFactor);
   m_tableSize = DefaultCapacity;
   m_table = arena->newArray<Name*>(m_tableSize);
-  std::memset(m_table, 0, sizeof(Name*) * m_tableSize);
+  ArrayFill(m_table, 0, m_tableSize);
 }
 
 Name* NameTable::get(const char* value, int length, bool copyValue) {
@@ -111,7 +111,7 @@ void NameTable::resize(int newSize) {
   }
 
   Name** newTable = m_arena->newArray<Name*>(newSize);
-  std::memset(newTable, 0, sizeof(Name*));
+  ArrayFill(newTable, 0, newSize);
   transfer(oldTable, oldSize, newTable, newSize);
 
   m_table = newTable;
@@ -121,7 +121,7 @@ void NameTable::resize(int newSize) {
 
 void NameTable::transfer(Name** src, int srcSize, Name** dst, int dstSize) {
   for (int i = 0; i < srcSize; i++) {
-    Name* name = *src++;
+    Name* name = src[i];
 
     if (name != nullptr) {
       do {
@@ -136,7 +136,7 @@ void NameTable::transfer(Name** src, int srcSize, Name** dst, int dstSize) {
     }
   }
 
-  std::memset(src, 0, sizeof(Name*) * srcSize);
+  ArrayFill(src, 0, srcSize);
 }
 } //namespace internal
 } //namespace brutus

@@ -20,13 +20,13 @@ Scope::Scope(Arena* arena)
     : m_arena(arena),
       m_size(0),
       m_parent(nullptr),
-      m_kind(scopeKind::kUnknown) {
+      m_kind(ScopeKind::kUnknown) {
   m_loadFactor = DefaultLoadFactor;
   m_threshold = static_cast<int>(static_cast<float>(DefaultCapacity) * DefaultLoadFactor);
   m_tableSize = DefaultCapacity;
 }
 
-void Scope::init(Scope* parent, scopeKind::Value kind) {
+void Scope::init(Scope* parent, ScopeKind kind) {
   m_parent = parent;
   m_kind = kind;
   initTable();
@@ -92,7 +92,7 @@ void Scope::putOrOverload(Name* name, Symbol* symbol) {
   
   while(next != nullptr) {
     if(next->m_name == name) {
-      if(next->kind() == symbolKind::kOverload) {
+      if(next->kind() == SymbolKind::kOverload) {
         //OverloadSymbol* overload = nullptr;
         //overload->add(symbol);
       } else {

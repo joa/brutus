@@ -12,15 +12,13 @@ namespace brutus {
     namespace syms {
       class Symbol;
 
-      namespace scopeKind {
-        enum Value {
-          kUnknown,
-          kBlock,
-          kClass,
-          kFunction,
-          kModule
-        };
-      }
+      enum class ScopeKind {
+        kUnknown,
+        kBlock,
+        kClass,
+        kFunction,
+        kModule
+      };
 
       class Scope : public ArenaMember {
         public:
@@ -35,7 +33,7 @@ namespace brutus {
           Scope(int initialCapacity, float loadFactor, Arena* arena);
           Scope(Arena* arena);
           virtual ~Scope() {}
-          virtual scopeKind::Value kind() const = 0;
+          virtual ScopeKind kind() const = 0;
 
           // true if it has been added, false otherwise
           bool put(Name* name, Symbol* symbol);
@@ -47,7 +45,7 @@ namespace brutus {
           // true if present, false otherwise
           bool contains(Name* name);
 
-          void init(Scope* parent, scopeKind::Value kind);
+          void init(Scope* parent, ScopeKind kind);
 
         private:
           void* operator new(size_t size);
@@ -59,7 +57,7 @@ namespace brutus {
           int m_threshold;
           float m_loadFactor;
           Scope* m_parent;
-          scopeKind::Value m_kind;
+          ScopeKind m_kind;
 
           void initTable();
           int hashCodeOf(const char* value, int length);

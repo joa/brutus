@@ -3,22 +3,22 @@
 namespace brutus {
 namespace internal {
 namespace syms {
-template<symbolKind::Value K>
+template<SymbolKind K>
 DeclarativeSymbol<K>::DeclarativeSymbol()
   : m_declarations(nullptr) {}
 
-template<symbolKind::Value K>
-symbolKind::Value DeclarativeSymbol<K>::kind() const {
+template<SymbolKind K>
+SymbolKind DeclarativeSymbol<K>::kind() const {
   return K;
 }
 
-template<symbolKind::Value K>
+template<SymbolKind K>
 void DeclarativeSymbol<K>::init(Name* name, Symbol* parent, ast::Node* ast, Scope* scope) {
   Symbol::init(name, parent, ast);
   m_declarations = scope;
 }
 
-template<symbolKind::Value K>
+template<SymbolKind K>
 Scope* DeclarativeSymbol<K>::declarations() const {
   return m_declarations;
 }
@@ -26,18 +26,18 @@ Scope* DeclarativeSymbol<K>::declarations() const {
 //
 
 ErrorSymbol::ErrorSymbol() 
-    : m_reason(errorReason::kUnknown) {}
+    : m_reason(ErrorReason::kUnknown) {}
 
-symbolKind::Value ErrorSymbol::kind() const {
-  return symbolKind::kError;
+SymbolKind ErrorSymbol::kind() const {
+  return SymbolKind::kError;
 }
 
-void ErrorSymbol::init(Name* name, Symbol* parent, ast::Node* ast, errorReason::Value reason) {
+void ErrorSymbol::init(Name* name, Symbol* parent, ast::Node* ast, ErrorReason reason) {
   Symbol::init(name, parent, ast);
   m_reason = reason;
 }
 
-errorReason::Value ErrorSymbol::reason() const {
+ErrorReason ErrorSymbol::reason() const {
   return m_reason;
 }
 
@@ -46,8 +46,8 @@ errorReason::Value ErrorSymbol::reason() const {
 OverloadSymbol::OverloadSymbol() 
     : m_first(nullptr) {}
 
-symbolKind::Value OverloadSymbol::kind() const {
-  return symbolKind::kOverload;
+SymbolKind OverloadSymbol::kind() const {
+  return SymbolKind::kOverload;
 }
 
 void OverloadSymbol::init(Name* name, Symbol* parent, ast::Node* ast) {
@@ -63,8 +63,8 @@ void OverloadSymbol::add(Symbol* symbol) {
 
 VariableSymbol::VariableSymbol() {}
 
-symbolKind::Value VariableSymbol::kind() const {
-  return symbolKind::kVariable;
+SymbolKind VariableSymbol::kind() const {
+  return SymbolKind::kVariable;
 }
 
 void VariableSymbol::init(Name* name, Symbol* parent, ast::Node* ast) {

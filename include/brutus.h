@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <functional>
+#include <cstdint>
 
 namespace brutus {
   //TODO(joa): public api

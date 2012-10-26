@@ -18,8 +18,8 @@ void Error::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Error::kind() const {
-  return ERROR;
+NodeKind Error::kind() const {
+  return NodeKind::kError;
 }
 
 const char* Error::value() const {
@@ -43,8 +43,8 @@ void Identifier::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Identifier::kind() const {
-  return IDENTIFIER;
+NodeKind Identifier::kind() const {
+  return NodeKind::kIdentifier;
 }
 
 void Identifier::init(Name* name) {
@@ -64,8 +64,8 @@ void Number::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Number::kind() const {
-  return NUMBER;
+NodeKind Number::kind() const {
+  return NodeKind::kNumber;
 }
 
 void Number::init(Name* name) {
@@ -85,8 +85,8 @@ void String::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind String::kind() const {
-  return STRING;
+NodeKind String::kind() const {
+  return NodeKind::kString;
 }
 
 void String::init(Name* name) {
@@ -105,8 +105,8 @@ void This::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind This::kind() const {
-  return THIS;
+NodeKind This::kind() const {
+  return NodeKind::kThis;
 }
 
 //
@@ -117,8 +117,8 @@ void Block::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Block::kind() const {
-  return BLOCK;
+NodeKind Block::kind() const {
+  return NodeKind::kBlock;
 }
 
 NodeList* Block::expressions() {
@@ -133,8 +133,8 @@ void True::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind True::kind() const {
-  return TRUE_;
+NodeKind True::kind() const {
+  return NodeKind::kTrue;
 }
 
 //
@@ -145,8 +145,8 @@ void False::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind False::kind() const {
-  return FALSE_;
+NodeKind False::kind() const {
+  return NodeKind::kFalse;
 }
 
 //
@@ -159,8 +159,8 @@ void Select::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Select::kind() const {
-  return SELECT;
+NodeKind Select::kind() const {
+  return NodeKind::kSelect;
 }
 
 void Select::init(Node* object, Node* qualifier) {
@@ -184,8 +184,8 @@ void If::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind If::kind() const {
-  return IF;
+NodeKind If::kind() const {
+  return NodeKind::kIf;
 }
 
 NodeList* If::cases() {
@@ -203,8 +203,8 @@ void IfCase::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind IfCase::kind() const {
-  return IF_CASE;
+NodeKind IfCase::kind() const {
+  return NodeKind::kIfCase;
 }
 
 void IfCase::init(Node* condition, Node* expr) {
@@ -229,8 +229,8 @@ void Call::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Call::kind() const {
-  return CALL;
+NodeKind Call::kind() const {
+  return NodeKind::kCall;
 }
 
 void Call::init(Node* callee) {
@@ -255,8 +255,8 @@ void Argument::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Argument::kind() const {
-  return ARGUMENT;
+NodeKind Argument::kind() const {
+  return NodeKind::kArgument;
 }
 
 void Argument::init(Node* name, Node* value)  {
@@ -287,8 +287,8 @@ void Assign::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Assign::kind() const {
-  return ASSIGN;
+NodeKind Assign::kind() const {
+  return NodeKind::kAssign;
 }
 
 void Assign::init(Node* target, Node* value, bool force) {
@@ -322,8 +322,8 @@ void Variable::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Variable::kind() const {
-  return VARIABLE;
+NodeKind Variable::kind() const {
+  return NodeKind::kVariable;
 }
 
 void Variable::init(bool isModifiable, Node* name, Node* type, Node* init, bool force) {
@@ -374,8 +374,8 @@ void Function::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Function::kind() const {
-  return FUNCTION;
+NodeKind Function::kind() const {
+  return NodeKind::kFunction;
 }
 
 void Function::init(Node* name, Node* type, Node* expr, unsigned int flags) {
@@ -427,8 +427,8 @@ void Parameter::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Parameter::kind() const {
-  return PARAMETER;
+NodeKind Parameter::kind() const {
+  return NodeKind::kParameter;
 }
 
 void Parameter::init(Node* name, Node* type) {
@@ -459,8 +459,8 @@ void TypeParameter::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind TypeParameter::kind() const {
-  return TYPE_PARAMETER;
+NodeKind TypeParameter::kind() const {
+  return NodeKind::kTypeParameter;
 }
 
 void TypeParameter::init(Node* name, Node* bound, unsigned int boundType) {
@@ -491,8 +491,8 @@ void Class::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Class::kind() const {
-  return CLASS;
+NodeKind Class::kind() const {
+  return NodeKind::kClass;
 }
 
 void Class::init(Node* name, unsigned int flags) {
@@ -525,8 +525,8 @@ void Module::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Module::kind() const {
-  return MODULE;
+NodeKind Module::kind() const {
+  return NodeKind::kModule;
 }
 
 void Module::init(Node* name) {
@@ -555,8 +555,8 @@ void ModuleDependency::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind ModuleDependency::kind() const {
-  return MODULE_DEPENDENCY;
+NodeKind ModuleDependency::kind() const {
+  return NodeKind::kModuleDependency;
 }
 
 void ModuleDependency::init(Node* name, Node* version) {
@@ -584,8 +584,8 @@ void Program::accept(ASTVisitor* visitor) {
   visitor->visit(this);
 }
 
-Kind Program::kind() const {
-  return PROGRAM;
+NodeKind Program::kind() const {
+  return NodeKind::kProgram;
 }
 
 NodeList* Program::modules() {
@@ -951,7 +951,7 @@ void ASTPrinter::visit(Module* node) {
   node->name()->accept(this);
 
   //TODO(joa): fix this!
-  if(node->name()->kind() == ast::IDENTIFIER) {
+  if(node->name()->kind() == NodeKind::kIdentifier) {
     ast::Identifier* name = static_cast<ast::Identifier*>(node->name());
 
     if(name->name()->length() > 0) {

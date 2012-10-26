@@ -8,34 +8,34 @@
 
 #define NODE_OVERRIDES() \
   void accept(ASTVisitor* visitor) override final; \
-  Kind kind() const override final
+  NodeKind kind() const override final
 
 namespace brutus {
   namespace internal {
     namespace ast {
-      enum Kind {
-        ARGUMENT,
-        ASSIGN,
-        BLOCK,
-        CALL,
-        CLASS,
-        ERROR,
-        FALSE_,
-        FUNCTION,
-        IDENTIFIER,
-        IF,
-        IF_CASE,
-        MODULE,
-        MODULE_DEPENDENCY,
-        NUMBER,
-        PARAMETER,
-        PROGRAM,
-        SELECT,
-        STRING,
-        THIS,
-        TRUE_,
-        TYPE_PARAMETER,
-        VARIABLE,       
+      enum class NodeKind {
+        kArgument,
+        kAssign,
+        kBlock,
+        kCall,
+        kClass,
+        kError,
+        kFalse,
+        kFunction,
+        kIdentifier,
+        kIf,
+        kIfCase,
+        kModule,
+        kModuleDependency,
+        kNumber,
+        kParameter,
+        kProgram,
+        kSelect,
+        kString,
+        kThis,
+        kTrue,
+        kTypeParameter,
+        kVariable
       }; //enum Kind
 
       class ASTVisitor;
@@ -50,7 +50,7 @@ namespace brutus {
           virtual ~Node() {}
           
           virtual void accept(ASTVisitor* visitor) = 0;
-          virtual Kind kind() const = 0;
+          virtual NodeKind kind() const = 0;
 
         private:
           void* operator new(size_t size);

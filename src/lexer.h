@@ -8,6 +8,7 @@
 
 namespace brutus {
   namespace internal {
+    //TODO(joa): get rid of namespace and use enum class
     namespace tok {
       enum Token {
         _EOF,

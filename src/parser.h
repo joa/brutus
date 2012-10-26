@@ -46,6 +46,7 @@ namespace brutus {
         ast::Node* continueWithExpression(
           ast::Node* expression, bool allowInfixCall);
         ast::Node* parseSelect(ast::Node* object);
+        ast::Node* parseAssign(ast::Node* target);
         ast::Node* parseCall(ast::Node* callee);
         void parseArgumentList(ast::NodeList* list);
         ast::Node* parseArgument();

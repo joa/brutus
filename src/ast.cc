@@ -278,8 +278,42 @@ Node* Argument::value() const {
 
 //
 
+Assign::Assign()
+    : m_target(nullptr),
+      m_value(nullptr),
+      m_force(NO) {}
+
+void Assign::accept(ASTVisitor* visitor) {
+  visitor->visit(this);
+}
+
+Kind Assign::kind() const {
+  return ASSIGN;
+}
+
+void Assign::init(Node* target, Node* value, bool force) {
+  m_target = target;
+  m_value = value;
+  m_force = force;
+}
+
+Node* Assign::target() const {
+  return m_target;
+}
+
+Node* Assign::value() const {
+  return m_value;
+}
+
+bool Assign::force() const {
+  return m_force;
+}
+
+//
+
 Variable::Variable()
     : m_isModifiable(NO),
+      m_force(NO),
       m_name(nullptr),
       m_type(nullptr),
       m_init(nullptr) {}
@@ -292,15 +326,20 @@ Kind Variable::kind() const {
   return VARIABLE;
 }
 
-void Variable::init(bool isModifiable, Node* name, Node* type, Node* init) {
+void Variable::init(bool isModifiable, Node* name, Node* type, Node* init, bool force) {
   m_isModifiable = isModifiable;
   m_name = name;
   m_type = type;
   m_init = init;
+  m_force = force;
 }
 
 bool Variable::isModifiable() const {
   return m_isModifiable;
+}
+
+bool Variable::force() const {
+  return m_force;
 }
 
 bool Variable::hasInit() const {
@@ -565,6 +604,11 @@ void ASTVisitor::visit(Argument* node) {
   node->value()->accept(this);
 }
 
+void ASTVisitor::visit(Assign* node) {
+  node->target()->accept(this);
+  node->value()->accept(this);
+}
+
 void ASTVisitor::visit(Block* node) {
   acceptAll(node->expressions());
 }
@@ -765,6 +809,17 @@ void ASTPrinter::visit(Argument* node) {
   if(node->hasName()) {
     node->name()->accept(this);
     print(" = ");
+  }
+
+  node->value()->accept(this);
+}
+
+void ASTPrinter::visit(Assign* node) {
+  node->target()->accept(this);
+  
+  print(" = ");
+  if(node->force()) {
+    print("force ");
   }
 
   node->value()->accept(this);
@@ -1014,6 +1069,11 @@ void ASTPrinter::visit(Variable* node) {
 
   if(node->hasInit()) {
     print(" = ");
+    
+    if(node->force()) {
+      print("force ");
+    }
+
     node->init()->accept(this);
   }
 }

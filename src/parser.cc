@@ -34,20 +34,18 @@ namespace internal {
 // the ast::Error token is returned.
 
 #ifdef _MSC_VER
-#define EXPECT(t) if(!poll(t)) { \
-  auto buf = m_arena->newArray<char>(0x100); \
-  _snprintf(buf, 0x100, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, \
-    __LINE__, tok::toString(t), tok::toString(m_currentToken)); \
-  return error(buf); \
-}
+#define SNPRINTF _snprintf
 #else
-#define EXPECT(t) if(!poll(t)) { \
-  auto buf = m_arena->newArray<char>(0x100); \
-  snprintf(buf, 0x100, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, \
-    __LINE__, tok::toString(t), tok::toString(m_currentToken)); \
-  return error(buf); \
-}
+#define SNPRINTF snprintf
 #endif
+
+#define EXPECT(t) \
+  if(!poll(t)) { \
+    auto buf = m_arena->newArray<char>(0x100); \
+    SNPRINTF(buf, 0x100, "%s:%d Invalid syntax. Expected %s, got %s.", __FILE__, \
+      __LINE__, tok::toString(t), tok::toString(m_currentToken)); \
+    return error(buf); \
+  }
 
 //
 // Program
@@ -567,8 +565,6 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
 
   ast::Node* expression = nullptr;
 
-  //bool isForced = poll(tok::FORCE);
-
   if(poll(tok::LPAREN)) {
     expression = parseExpression();
     
@@ -589,15 +585,13 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
     } else {
       EXPECT(tok::RPAREN);
     }
+  } else if(peek(tok::LBRACE)) {
+    expression = parseBlock();
   } else if(peek(tok::IF)) {
     expression = parseIfExpression();
   } else if(peekPrimaryExpression()) {
     expression = parsePrimaryExpression();
   }
-
-  //if(nullptr != expression) {
-  //  expression->force(isForced);
-  //}
 
   return continueWithExpression(expression, allowInfixCall);
 }
@@ -651,6 +645,9 @@ ast::Node* Parser::continueWithExpression(
           (allowInfixCall && peek(tok::IDENTIFIER))) {
         auto call = parseCall(expression);
         expression = call;
+      } else if(peek(tok::ASSIGN)) {
+        auto assign = parseAssign(expression);
+        expression = assign;
       } else {
         break;
       }
@@ -671,6 +668,22 @@ ast::Node* Parser::parseSelect(ast::Node* object) {
   auto result = alloc<ast::Select>();
   
   result->init(object, qualifier);
+
+  return result;
+}
+
+//
+// Assign
+//  : Expression '=' 'force'? Expression
+//
+//
+ast::Node* Parser::parseAssign(ast::Node* target) {
+  EXPECT(tok::ASSIGN);
+
+  auto result = alloc<ast::Assign>();
+  auto isForced = poll(tok::FORCE);
+
+  result->init(target, parseExpression(), isForced);
 
   return result;
 }
@@ -902,6 +915,7 @@ ast::Node* Parser::parseVariable(unsigned int flags) {
   UNUSED(flags);
 
   bool modifiable = NO;
+  bool isForced = NO;
 
   if(poll(tok::VAR)) {
     modifiable = YES;
@@ -922,6 +936,7 @@ ast::Node* Parser::parseVariable(unsigned int flags) {
   ast::Node* init = nullptr;
 
   if(poll(tok::ASSIGN)) {
+    isForced = poll(tok::FORCE);
     init = parseExpression();
   }
 
@@ -931,7 +946,7 @@ ast::Node* Parser::parseVariable(unsigned int flags) {
 
   auto result = alloc<ast::Variable>();
   
-  result->init(modifiable, name, type, init);
+  result->init(modifiable, name, type, init, isForced);
 
   return result;
 }

@@ -15,6 +15,7 @@ namespace brutus {
     namespace ast {
       enum Kind {
         ARGUMENT,
+        ASSIGN,
         BLOCK,
         CALL,
         CLASS,
@@ -303,20 +304,39 @@ namespace brutus {
           DISALLOW_COPY_AND_ASSIGN(Argument);
       };
 
+      class Assign : public Expr {
+        public:
+          explicit Assign();
+          void init(Node* target, Node* value, bool force);
+          Node* target() const;
+          Node* value() const;
+          bool force() const;
+          NODE_OVERRIDES();
+
+        private:
+          Node* m_target;
+          Node* m_value;
+          bool m_force;
+
+          DISALLOW_COPY_AND_ASSIGN(Assign);
+      };
+
       class Variable : public Declaration {
         public:
           explicit Variable();
-          void init(bool isModifiable, Node* name, Node* type, Node* init);
+          void init(bool isModifiable, Node* name, Node* type, Node* init, bool force);
           bool isModifiable() const;
           bool hasInit() const;
           bool hasType() const;
           Node* name() const;
           Node* type() const;
           Node* init() const;
+          bool force() const;
           NODE_OVERRIDES();
 
         private:
           bool m_isModifiable;
+          bool m_force;
           Node* m_name;
           Node* m_type;
           Node* m_init;
@@ -407,6 +427,7 @@ namespace brutus {
           explicit ASTVisitor();
           virtual ~ASTVisitor() {}
           virtual void visit(Argument* node);
+          virtual void visit(Assign* node);
           virtual void visit(Block* node);
           virtual void visit(Call* node);
           virtual void visit(Class* node);
@@ -440,6 +461,7 @@ namespace brutus {
           explicit ASTPrinter(std::ostream &output); //NOLINT
           void print(Node* node);
           virtual void visit(Argument* node) override;
+          virtual void visit(Assign* node) override;
           virtual void visit(Block* node) override;
           virtual void visit(Call* node) override;
           virtual void visit(Class* node) override;

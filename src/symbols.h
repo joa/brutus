@@ -4,17 +4,33 @@
 #include "brutus.h"
 #include "arena.h"
 #include "ast.h"
+#include "name.h"
+#include "scopes.h"
+
+#define SYMBOL_OVERRIDES() \
+  symbolKind::Value kind() const override final
 
 namespace brutus {
   namespace internal {
     namespace syms {
-      enum Kind {
-        CLASS,
-        ERROR,
-        FUNCTION,
-        MODULE,
-        VARIABLE
-      }; //enum Kind
+      namespace symbolKind {
+        enum Value {        
+          kClass,
+          kError,
+          kFunction,
+          kModule,
+          kOverload,
+          kVariable
+        }; //enum SymbolKind
+      }
+
+      namespace errorReason {
+        enum Value {
+          kUnknown
+        };
+      }
+
+      class OverloadSymbol;
 
       class Symbol : public ArenaMember {
         public:
@@ -22,6 +38,10 @@ namespace brutus {
             return arena->alloc(size);
           }
           
+          ALWAYS_INLINE Name* name() const {
+            return m_name;
+          }
+
           ALWAYS_INLINE Symbol* parent() const {
             return m_parent;
           }
@@ -30,35 +50,100 @@ namespace brutus {
             return m_ast;
           }
 
-          Symbol() : m_parent(nullptr), m_ast(nullptr) {}
+          explicit Symbol() 
+              : m_name(nullptr), 
+                m_parent(nullptr), 
+                m_ast(nullptr), 
+                m_next(nullptr) {}
+
           virtual ~Symbol() {}
-          virtual Kind kind() const = 0;
+          virtual symbolKind::Value kind() const = 0;
 
         protected:
-          ALWAYS_INLINE void init(Symbol* parent, ast::Node* ast) {
+          ALWAYS_INLINE void init(Name* name, Symbol* parent, ast::Node* ast) {
+            m_name = name;
             m_parent = parent;
             m_ast = ast;
           }
 
+          Name* m_name;
           Symbol* m_parent;
           ast::Node* m_ast;
           //type?
           //used?
           //flags?
-
+         
         private:
+          Symbol* m_next;
           void* operator new(size_t size);
 
-          DISALLOW_COPY_AND_ASSIGN(Symbol);
-      };
+          // for access to m_next
+          friend class Scope;
+          friend class OverloadSymbol;
 
-      class ClassSymbol : public Symbol {
+          DISALLOW_COPY_AND_ASSIGN(Symbol);
+      }; //class Symbol
+
+      template<symbolKind::Value K>
+      class DeclarativeSymbol : public Symbol {
         public:
-          ClassSymbol();
+          DeclarativeSymbol();
+          void init(Name* name, Symbol* parent, ast::Node* ast, Scope* scope);
+          Scope* declarations() const;
+          SYMBOL_OVERRIDES();
 
         private:
-          DISALLOW_COPY_AND_ASSIGN(ClassSymbol);
-      };
+          Scope* m_declarations;
+
+          DISALLOW_COPY_AND_ASSIGN(DeclarativeSymbol);
+      }; //class DeclarativeSymbol
+
+      // Because ClassSymbol, FunctionSymbol and ModuleSymbol all share
+      // the same code (currently), we forward their type to DeclarativeSymbol<K>
+      // with K being the kind of the symbol.
+      //
+      // This is useful because we can make ClassSymbol its own class in
+      // the future and we do not pay the price for inheriting from
+      // some stupid base class just to save a couple lines of code.
+      typedef DeclarativeSymbol<symbolKind::kClass> ClassSymbol;     
+      typedef DeclarativeSymbol<symbolKind::kFunction> FunctionSymbol;
+      typedef DeclarativeSymbol<symbolKind::kModule> ModuleSymbol;     
+
+      class ErrorSymbol : public Symbol {
+        public:
+          ErrorSymbol();
+          void init(Name* name, Symbol* parent, ast::Node* ast, errorReason::Value reason);
+          errorReason::Value reason() const;
+          SYMBOL_OVERRIDES();
+
+        private:
+          errorReason::Value m_reason;
+
+          DISALLOW_COPY_AND_ASSIGN(ErrorSymbol);
+      }; //class ErrorSymbol
+
+      class OverloadSymbol : public Symbol {
+        public:
+          OverloadSymbol();
+          void init(Name* name, Symbol* parent, ast::Node* ast);
+          void add(Symbol* symbol);
+          SYMBOL_OVERRIDES();
+
+        private:
+          Symbol* m_first;
+
+          DISALLOW_COPY_AND_ASSIGN(OverloadSymbol);
+      }; //class OverloadSymbol
+
+      class VariableSymbol : public Symbol {
+        public:
+          VariableSymbol();
+          void init(Name* name, Symbol* parent, ast::Node* ast);
+          SYMBOL_OVERRIDES();
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(VariableSymbol);
+      }; //class VariableSymbol
     } //namespace syms
   } //namespace internal
 } //namespace brutus

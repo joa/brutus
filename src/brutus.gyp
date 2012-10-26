@@ -14,6 +14,7 @@
         'lexer.cc',
         'name.cc',
         'parser.cc',
+        'scopes.cc',
         'stopwatch.cc',
         'streams.cc',
         'symbols.cc'

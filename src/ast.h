@@ -46,7 +46,7 @@ namespace brutus {
             return arena->alloc(size);
           }
 
-          Node() {}
+          explicit Node() {}
           virtual ~Node() {}
           
           virtual void accept(ASTVisitor* visitor) = 0;

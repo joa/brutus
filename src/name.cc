@@ -9,15 +9,18 @@ NameTable::NameTable(int initialCapacity, float loadFactor, Arena* arena) : m_ar
   m_loadFactor = loadFactor;
   m_threshold = static_cast<int>(static_cast<float>(capacity) * loadFactor);
   m_tableSize = capacity;
-  m_table = arena->newArray<Name*>(m_tableSize);
-  ArrayFill(m_table, 0, m_tableSize);
+  init();
 }
 
 NameTable::NameTable(Arena* arena) : m_arena(arena), m_size(0) {
   m_loadFactor = DefaultLoadFactor;
   m_threshold = static_cast<int>(static_cast<float>(DefaultCapacity) * DefaultLoadFactor);
   m_tableSize = DefaultCapacity;
-  m_table = arena->newArray<Name*>(m_tableSize);
+  init();
+}
+
+void NameTable::init() {
+  m_table = m_arena->newArray<Name*>(m_tableSize);
   ArrayFill(m_table, 0, m_tableSize);
 }
 

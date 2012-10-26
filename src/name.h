@@ -9,6 +9,8 @@
 namespace brutus {
   namespace internal {  
     class NameTable;
+    
+    namespace syms { class Scope; }
 
     class Name : public ArenaMember {
       public:
@@ -16,7 +18,7 @@ namespace brutus {
           return arena->alloc(size);
         }
 
-        Name(const int& hashCode, const char* value, const int& length, Name* next)
+        explicit Name(const int& hashCode, const char* value, const int& length, Name* next)
             : m_hashCode(hashCode),
               m_value(value),
               m_length(length),
@@ -37,6 +39,7 @@ namespace brutus {
         Name* m_next;
 
         friend class NameTable;
+        friend class syms::Scope;
 
         DISALLOW_COPY_AND_ASSIGN(Name);
     }; //class Name
@@ -62,6 +65,7 @@ namespace brutus {
         int m_threshold;
         float m_loadFactor;
 
+        void init();
         int hashCodeOf(const char* value, int length);
         void resize(int newCapacity);
         void transfer(Name** src, int srcSize, Name** dst, int dstSize);

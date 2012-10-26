@@ -8,67 +8,66 @@
 
 namespace brutus {
   namespace internal {
-    //TODO(joa): get rid of namespace and use enum class
+    enum class Token {
+      kEof,
+      kError,
+      kNewLine,
+      kWhitespace,
+
+      kIdentifier,
+      kNumberLiteral,
+      kStringLiteral,
+
+      kCommentSingle,
+      kCommentMulti,
+
+      // Control characters:
+      kSemicolon,  // ;
+      kComma,      // ,
+      kLParen,     // (
+      kRParen,     // )
+      kLBrac,      // [
+      kRBrac,      // ]
+      kLBrace,     // {
+      kRBrace,     // }
+      kDot,        // .
+      kColon,      // :
+      kAssign,     // =
+      kLArrow,     // <- and ←
+      kRArrow,     // -> and →
+      kHash,       // #
+
+      // Keywords:
+      kThis,
+      kVal,
+      kVar,
+      kDef,
+      kFor,
+      kWhile,
+      kYield,
+      kTrue,
+      kFalse,
+      kYes,
+      kNo,
+      kIf,
+      kNew,
+      kOn,
+      kClass,
+      kTrait,
+      kVirtual,
+      kPublic,
+      kPrivate,
+      kProtected,
+      kInternal,
+      kNative,
+      kForce,
+      kModule,
+      kRequire,
+      kPure,
+      kImmutable
+    }; // enum Token
+
     namespace tok {
-      enum Token {
-        _EOF,
-        ERROR,
-        NEWLINE,
-        WHITESPACE,
-
-        IDENTIFIER,
-        NUMBER_LITERAL,
-        STRING_LITERAL,
-
-        COMMENT_SINGLE,
-        COMMENT_MULTI,
-
-        // Control characters:
-        SEMICOLON,  // ;
-        COMMA,      // ,
-        LPAREN,     // (
-        RPAREN,     // )
-        LBRAC,      // [
-        RBRAC,      // ]
-        LBRACE,     // {
-        RBRACE,     // }
-        DOT,        // .
-        COLON,      // :
-        ASSIGN,     // =
-        LARROW,     // <- and ←
-        RARROW,     // -> and →
-        HASH,       // #
-
-        // Keywords:
-        THIS,
-        VAL,
-        VAR,
-        DEF,
-        FOR,
-        WHILE,
-        YIELD,
-        TRUE_,
-        FALSE_,
-        YES_,
-        NO_,
-        IF,
-        NEW,
-        ON,
-        CLASS,
-        TRAIT,
-        VIRTUAL,
-        PUBLIC,
-        PRIVATE,
-        PROTECTED,
-        INTERNAL,
-        NATIVE,
-        FORCE,
-        MODULE,
-        REQUIRE,
-        PURE,
-        IMMUTABLE
-      }; // enum Token
-
       const char* toString(const Token& token);
       bool hasValue(const Token& token);
     } //namespace tok
@@ -76,7 +75,7 @@ namespace brutus {
     class Lexer {
       public:
         explicit Lexer(CharStream* charStream);
-        tok::Token nextToken();
+        Token nextToken();
         char* value();
         size_t valueLength();
         unsigned int posLine();
@@ -110,17 +109,17 @@ namespace brutus {
         bool isIdentifierStart(const char c);
         bool isIdentifierPart(const char c);
 
-        tok::Token continueWithNumberStart(const char currentChar);
-        tok::Token continueWithIdentifierStart(
+        Token continueWithNumberStart(const char currentChar);
+        Token continueWithIdentifierStart(
             const char currentChar, bool operatorMode);
-        tok::Token continueWithSlash(const char currentChar);
-        tok::Token continueWithBacktick();
-        tok::Token continueWithString();
+        Token continueWithSlash(const char currentChar);
+        Token continueWithBacktick();
+        Token continueWithString();
 
-        tok::Token resulting(
+        Token resulting(
           std::function<bool(const char)> condition, //NOLINT
           std::function<bool(const char)> sideEffect, //NOLINT
-          tok::Token result);
+          Token result);
 
         DISALLOW_COPY_AND_ASSIGN(Lexer);
     }; //class Lexer

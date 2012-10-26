@@ -2,7 +2,7 @@
 
 #define CONTINUE_BUFFER(x) \
   if(!continueBuffer(x)) { \
-    return tok::ERROR; \
+    return Token::kError; \
   }
 
 namespace brutus {
@@ -43,170 +43,170 @@ static const char* KeywordChars[] = {
 };
 
 static const Token KeywordTokens[] = {
-  THIS,
-  VAL,
-  VAR,
-  DEF,
-  FOR,
-  WHILE,
-  YIELD,
-  TRUE_,
-  FALSE_,
-  YES_,
-  NO_,
-  LARROW,
-  LARROW,
-  RARROW,
-  RARROW,
-  IF,
-  NEW,
-  ON,
-  CLASS,
-  TRAIT,
-  VIRTUAL,
-  PUBLIC,
-  PRIVATE,
-  PROTECTED,
-  INTERNAL,
-  NATIVE,
-  FORCE,
-  MODULE,
-  REQUIRE,
-  PURE,
-  IMMUTABLE
+  Token::kThis,
+  Token::kVal,
+  Token::kVar,
+  Token::kDef,
+  Token::kFor,
+  Token::kWhile,
+  Token::kYield,
+  Token::kTrue,
+  Token::kFalse,
+  Token::kYes,
+  Token::kNo,
+  Token::kLArrow,
+  Token::kLArrow,
+  Token::kRArrow,
+  Token::kRArrow,
+  Token::kIf,
+  Token::kNew,
+  Token::kOn,
+  Token::kClass,
+  Token::kTrait,
+  Token::kVirtual,
+  Token::kPublic,
+  Token::kPrivate,
+  Token::kProtected,
+  Token::kInternal,
+  Token::kNative,
+  Token::kForce,
+  Token::kModule,
+  Token::kRequire,
+  Token::kPure,
+  Token::kImmutable
 };
 
 static const Token SingleCharacterTokens[] = {
   // 0-63
-  ERROR, //0
-  ERROR, //1
-  ERROR, //2
-  ERROR, //3
-  ERROR, //4
-  ERROR, //5
-  ERROR, //6
-  ERROR, //7
-  ERROR, //8
-  ERROR, //9
-  ERROR, //10
-  ERROR, //11
-  ERROR, //12
-  ERROR, //13
-  ERROR, //14
-  ERROR, //15
-  ERROR, //16
-  ERROR, //17
-  ERROR, //18
-  ERROR, //19
-  ERROR, //20
-  ERROR, //21
-  ERROR, //22
-  ERROR, //23
-  ERROR, //24
-  ERROR, //25
-  ERROR, //26
-  ERROR, //27
-  ERROR, //28
-  ERROR, //29
-  ERROR, //30
-  ERROR, //31
-  ERROR, //32
-  ERROR, //33
-  ERROR, //34
-  HASH, //35 '#'
-  ERROR, //36
-  ERROR, //37
-  ERROR, //38
-  ERROR, //39
-  LPAREN, //40 '('
-  RPAREN, //41 ')'
-  ERROR, //42 
-  ERROR, //43
-  COMMA, //44 ','
-  ERROR, //45
-  DOT, //46 '.'
-  ERROR, //47
-  ERROR, //48
-  ERROR, //49
-  ERROR, //50
-  ERROR, //51
-  ERROR, //52
-  ERROR, //53
-  ERROR, //54
-  ERROR, //55
-  ERROR, //56
-  ERROR, //57
-  COLON, //58 ':'
-  SEMICOLON, //59 ';'
-  ERROR, //60
-  ERROR, //61
-  ERROR, //62
-  ERROR, //63
+  Token::kError, //0
+  Token::kError, //1
+  Token::kError, //2
+  Token::kError, //3
+  Token::kError, //4
+  Token::kError, //5
+  Token::kError, //6
+  Token::kError, //7
+  Token::kError, //8
+  Token::kError, //9
+  Token::kError, //10
+  Token::kError, //11
+  Token::kError, //12
+  Token::kError, //13
+  Token::kError, //14
+  Token::kError, //15
+  Token::kError, //16
+  Token::kError, //17
+  Token::kError, //18
+  Token::kError, //19
+  Token::kError, //20
+  Token::kError, //21
+  Token::kError, //22
+  Token::kError, //23
+  Token::kError, //24
+  Token::kError, //25
+  Token::kError, //26
+  Token::kError, //27
+  Token::kError, //28
+  Token::kError, //29
+  Token::kError, //30
+  Token::kError, //31
+  Token::kError, //32
+  Token::kError, //33
+  Token::kError, //34
+  Token::kHash, //35 '#'
+  Token::kError, //36
+  Token::kError, //37
+  Token::kError, //38
+  Token::kError, //39
+  Token::kLParen, //40 '('
+  Token::kRParen, //41 ')'
+  Token::kError, //42 
+  Token::kError, //43
+  Token::kComma, //44 ','
+  Token::kError, //45
+  Token::kDot, //46 '.'
+  Token::kError, //47
+  Token::kError, //48
+  Token::kError, //49
+  Token::kError, //50
+  Token::kError, //51
+  Token::kError, //52
+  Token::kError, //53
+  Token::kError, //54
+  Token::kError, //55
+  Token::kError, //56
+  Token::kError, //57
+  Token::kColon, //58 ':'
+  Token::kSemicolon, //59 ';'
+  Token::kError, //60
+  Token::kError, //61
+  Token::kError, //62
+  Token::kError, //63
   // 64-127
-  ERROR, //0
-  ERROR, //1
-  ERROR, //2
-  ERROR, //3
-  ERROR, //4
-  ERROR, //5
-  ERROR, //6
-  ERROR, //7
-  ERROR, //8
-  ERROR, //9
-  ERROR, //10
-  ERROR, //11
-  ERROR, //12
-  ERROR, //13
-  ERROR, //14
-  ERROR, //15
-  ERROR, //16
-  ERROR, //17
-  ERROR, //18
-  ERROR, //19
-  ERROR, //20
-  ERROR, //21
-  ERROR, //22
-  ERROR, //23
-  ERROR, //24
-  ERROR, //25
-  ERROR, //26
-  LBRAC, //27 '['
-  ERROR, //28
-  RBRAC, //29 ']'
-  ERROR, //30
-  ERROR, //31
-  ERROR, //32
-  ERROR, //33
-  ERROR, //34
-  ERROR, //35
-  ERROR, //36
-  ERROR, //37
-  ERROR, //38
-  ERROR, //39
-  ERROR, //40
-  ERROR, //41
-  ERROR, //42
-  ERROR, //43
-  ERROR, //44
-  ERROR, //45
-  ERROR, //46
-  ERROR, //47
-  ERROR, //48
-  ERROR, //49
-  ERROR, //50
-  ERROR, //51
-  ERROR, //52
-  ERROR, //53
-  ERROR, //54
-  ERROR, //55
-  ERROR, //56
-  ERROR, //57
-  ERROR, //58
-  LBRACE, //59 '{'
-  ERROR, //60
-  RBRACE, //61 '}'
-  ERROR, //62
-  ERROR //63
+  Token::kError, //0
+  Token::kError, //1
+  Token::kError, //2
+  Token::kError, //3
+  Token::kError, //4
+  Token::kError, //5
+  Token::kError, //6
+  Token::kError, //7
+  Token::kError, //8
+  Token::kError, //9
+  Token::kError, //10
+  Token::kError, //11
+  Token::kError, //12
+  Token::kError, //13
+  Token::kError, //14
+  Token::kError, //15
+  Token::kError, //16
+  Token::kError, //17
+  Token::kError, //18
+  Token::kError, //19
+  Token::kError, //20
+  Token::kError, //21
+  Token::kError, //22
+  Token::kError, //23
+  Token::kError, //24
+  Token::kError, //25
+  Token::kError, //26
+  Token::kLBrac, //27 '['
+  Token::kError, //28
+  Token::kRBrac, //29 ']'
+  Token::kError, //30
+  Token::kError, //31
+  Token::kError, //32
+  Token::kError, //33
+  Token::kError, //34
+  Token::kError, //35
+  Token::kError, //36
+  Token::kError, //37
+  Token::kError, //38
+  Token::kError, //39
+  Token::kError, //40
+  Token::kError, //41
+  Token::kError, //42
+  Token::kError, //43
+  Token::kError, //44
+  Token::kError, //45
+  Token::kError, //46
+  Token::kError, //47
+  Token::kError, //48
+  Token::kError, //49
+  Token::kError, //50
+  Token::kError, //51
+  Token::kError, //52
+  Token::kError, //53
+  Token::kError, //54
+  Token::kError, //55
+  Token::kError, //56
+  Token::kError, //57
+  Token::kError, //58
+  Token::kLBrace, //59 '{'
+  Token::kError, //60
+  Token::kRBrace, //61 '}'
+  Token::kError, //62
+  Token::kError//63
 };
 
 static_assert(
@@ -227,66 +227,70 @@ static_assert('#' == 35, "'#' must equal 35.");
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
 
 const char* toString(const Token& token) {
-  #define TOKEN_TO_STRING_CASE(T, S) case T: return S
+#define TOKEN_TO_STRING_CASE(T) case Token::##T: return ""#T
   switch(token) {
-    TOKEN_TO_STRING_CASE(_EOF, "EOF");
-    TOKEN_TO_STRING_CASE(ERROR, "ERROR");
-    TOKEN_TO_STRING_CASE(NEWLINE, "NEWLINE");
-    TOKEN_TO_STRING_CASE(WHITESPACE, "WHITESPACE");
-    TOKEN_TO_STRING_CASE(IDENTIFIER, "IDENTIFIER");
-    TOKEN_TO_STRING_CASE(NUMBER_LITERAL, "NUMBER_LITERAL");
-    TOKEN_TO_STRING_CASE(STRING_LITERAL, "STRING_LITERAL");
-    TOKEN_TO_STRING_CASE(COMMENT_MULTI, "COMMENT_MULTI");
-    TOKEN_TO_STRING_CASE(COMMENT_SINGLE, "COMMENT_SINGLE");
-    TOKEN_TO_STRING_CASE(SEMICOLON, "SEMICOLON");
-    TOKEN_TO_STRING_CASE(COMMA, "COMMA");
-    TOKEN_TO_STRING_CASE(LPAREN, "LPAREN");
-    TOKEN_TO_STRING_CASE(RPAREN, "RPAREN");
-    TOKEN_TO_STRING_CASE(LBRAC, "LBRAC");
-    TOKEN_TO_STRING_CASE(RBRAC, "RBRAC");
-    TOKEN_TO_STRING_CASE(LBRACE, "LBRACE");
-    TOKEN_TO_STRING_CASE(RBRACE, "RBRACE");
-    TOKEN_TO_STRING_CASE(DOT, "DOT");
-    TOKEN_TO_STRING_CASE(COLON, "COLON");
-    TOKEN_TO_STRING_CASE(ASSIGN, "ASSIGN");
-    TOKEN_TO_STRING_CASE(HASH, "HASH");
-    TOKEN_TO_STRING_CASE(THIS, "THIS");
-    TOKEN_TO_STRING_CASE(VAL, "VAL");
-    TOKEN_TO_STRING_CASE(VAR, "VAR");
-    TOKEN_TO_STRING_CASE(DEF, "DEF");
-    TOKEN_TO_STRING_CASE(FOR, "FOR");
-    TOKEN_TO_STRING_CASE(WHILE, "WHILE");
-    TOKEN_TO_STRING_CASE(YIELD, "YIELD");
-    TOKEN_TO_STRING_CASE(TRUE_, "TRUE");
-    TOKEN_TO_STRING_CASE(FALSE_, "FALSE");
-    TOKEN_TO_STRING_CASE(YES_, "YES");
-    TOKEN_TO_STRING_CASE(NO_, "NO");
-    TOKEN_TO_STRING_CASE(IF, "IF");
-    TOKEN_TO_STRING_CASE(NEW, "NEW");
-    TOKEN_TO_STRING_CASE(ON, "ON");
-    TOKEN_TO_STRING_CASE(CLASS, "CLASS");
-    TOKEN_TO_STRING_CASE(TRAIT, "TRAIT");
-    TOKEN_TO_STRING_CASE(VIRTUAL, "VIRTUAL");
-    TOKEN_TO_STRING_CASE(PUBLIC, "PUBLIC");
-    TOKEN_TO_STRING_CASE(PRIVATE, "PRIVATE");
-    TOKEN_TO_STRING_CASE(PROTECTED, "PROTECTED");
-    TOKEN_TO_STRING_CASE(INTERNAL, "INTERNAL");
-    TOKEN_TO_STRING_CASE(NATIVE, "NATIVE");
-    TOKEN_TO_STRING_CASE(FORCE, "FORCE");
-    TOKEN_TO_STRING_CASE(MODULE, "MODULE");
-    TOKEN_TO_STRING_CASE(REQUIRE, "REQUIRE");
-    default: return "UNKNOWN";
+    TOKEN_TO_STRING_CASE(kEof);
+    TOKEN_TO_STRING_CASE(kError);
+    TOKEN_TO_STRING_CASE(kNewLine);
+    TOKEN_TO_STRING_CASE(kWhitespace);
+    TOKEN_TO_STRING_CASE(kIdentifier);
+    TOKEN_TO_STRING_CASE(kNumberLiteral);
+    TOKEN_TO_STRING_CASE(kStringLiteral);
+    TOKEN_TO_STRING_CASE(kCommentSingle);
+    TOKEN_TO_STRING_CASE(kCommentMulti);
+    TOKEN_TO_STRING_CASE(kSemicolon);
+    TOKEN_TO_STRING_CASE(kComma);
+    TOKEN_TO_STRING_CASE(kLParen);
+    TOKEN_TO_STRING_CASE(kRParen);
+    TOKEN_TO_STRING_CASE(kLBrac);
+    TOKEN_TO_STRING_CASE(kRBrac);
+    TOKEN_TO_STRING_CASE(kLBrace);
+    TOKEN_TO_STRING_CASE(kRBrace);
+    TOKEN_TO_STRING_CASE(kDot);
+    TOKEN_TO_STRING_CASE(kColon);
+    TOKEN_TO_STRING_CASE(kAssign);
+    TOKEN_TO_STRING_CASE(kLArrow);
+    TOKEN_TO_STRING_CASE(kRArrow);
+    TOKEN_TO_STRING_CASE(kHash);
+    TOKEN_TO_STRING_CASE(kThis);
+    TOKEN_TO_STRING_CASE(kVal);
+    TOKEN_TO_STRING_CASE(kVar);
+    TOKEN_TO_STRING_CASE(kDef);
+    TOKEN_TO_STRING_CASE(kFor);
+    TOKEN_TO_STRING_CASE(kWhile);
+    TOKEN_TO_STRING_CASE(kYield);
+    TOKEN_TO_STRING_CASE(kTrue);
+    TOKEN_TO_STRING_CASE(kFalse);
+    TOKEN_TO_STRING_CASE(kYes);
+    TOKEN_TO_STRING_CASE(kNo);
+    TOKEN_TO_STRING_CASE(kIf);
+    TOKEN_TO_STRING_CASE(kNew);
+    TOKEN_TO_STRING_CASE(kOn);
+    TOKEN_TO_STRING_CASE(kClass);
+    TOKEN_TO_STRING_CASE(kTrait);
+    TOKEN_TO_STRING_CASE(kVirtual);
+    TOKEN_TO_STRING_CASE(kPublic);
+    TOKEN_TO_STRING_CASE(kPrivate);
+    TOKEN_TO_STRING_CASE(kProtected);
+    TOKEN_TO_STRING_CASE(kInternal);
+    TOKEN_TO_STRING_CASE(kNative);
+    TOKEN_TO_STRING_CASE(kForce);
+    TOKEN_TO_STRING_CASE(kModule);
+    TOKEN_TO_STRING_CASE(kRequire);
+    TOKEN_TO_STRING_CASE(kPure);
+    TOKEN_TO_STRING_CASE(kImmutable);
+    default: return "<<unknown>>";
   }
   #undef TOKEN_TO_STRING_CASE
 }
 
 bool hasValue(const Token& token) {
   switch(token) {
-    case IDENTIFIER:
-    case NUMBER_LITERAL:
-    case STRING_LITERAL:
-    case COMMENT_MULTI:
-    case COMMENT_SINGLE:
+    case Token::kIdentifier:
+    case Token::kNumberLiteral:
+    case Token::kStringLiteral:
+    case Token::kCommentMulti:
+    case Token::kCommentSingle:
       return YES;
     default:
       return NO;
@@ -301,10 +305,10 @@ Lexer::Lexer(CharStream* charStream)
       m_currentChar('\0'),
       m_advanceWithLastChar(false) {}
 
-tok::Token Lexer::resulting(
+Token Lexer::resulting(
     std::function<bool(const char)> condition, //NOLINT
     std::function<bool(const char)> sideEffect, //NOLINT
-    tok::Token result) {
+    Token result) {
   while(canAdvance()) {
     const auto nextChar = advance();
 
@@ -313,7 +317,7 @@ tok::Token Lexer::resulting(
       break;
     } else {
       if(!sideEffect(nextChar)) {
-        return tok::ERROR;
+        return Token::kError;
       }
     }
   }
@@ -321,7 +325,7 @@ tok::Token Lexer::resulting(
   return result;
 }
 
-tok::Token Lexer::nextToken() {
+Token Lexer::nextToken() {
   while(canAdvance()) {
     auto currentChar = advance();
 
@@ -333,7 +337,7 @@ tok::Token Lexer::nextToken() {
       return resulting(
         [&](const char c) { return isWhitespace(c); },
         [&](const char) { return YES; },
-        tok::WHITESPACE
+        Token::kWhitespace
       );
     } else if(isNewLine(currentChar)) {
       // When a new line character is encountered we will simply
@@ -356,7 +360,7 @@ tok::Token Lexer::nextToken() {
 
           return YES;
         },
-        tok::NEWLINE
+        Token::kNewLine
       );
     } else if(isNumberStart(currentChar)) {
       return continueWithNumberStart(currentChar);
@@ -370,7 +374,7 @@ tok::Token Lexer::nextToken() {
         return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
       } else {
         rewind();
-        return tok::ASSIGN;
+        return Token::kAssign;
       }
     } else if('-' == currentChar) {
       if(advance() == '>') {
@@ -378,7 +382,7 @@ tok::Token Lexer::nextToken() {
         // becomes really confusing when looking at code like "x -> x ->> y" so 
         // the call is to disallow other operators that start with -> since this
         // should be a rare case anyways.
-        return tok::RARROW;
+        return Token::kRArrow;
       } else {
         rewind();
         return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);
@@ -398,12 +402,12 @@ tok::Token Lexer::nextToken() {
       if(charCode >= 0x00 && charCode <= 0x80) {
         return tok::SingleCharacterTokens[charCode];
       } else {
-        return tok::ERROR;
+        return Token::kError;
       }
     }
   }
 
-  return tok::_EOF;
+  return Token::kEof;
 }
 
 char* Lexer::value() {
@@ -517,7 +521,7 @@ bool Lexer::isOperator(const char c) {
 
 //
 
-tok::Token Lexer::continueWithNumberStart(const char currentChar) {
+Token Lexer::continueWithNumberStart(const char currentChar) {
   beginBuffer(currentChar);
 
   // We allow only 0xffffff not 0XFFFFFF, not 0xFFFFFF
@@ -582,14 +586,14 @@ tok::Token Lexer::continueWithNumberStart(const char currentChar) {
             // have something of the form "1e-" instead
             // of "1e-1".
             rewind();
-            return tok::ERROR;
+            return Token::kError;
           }
         } else if(isDigit(nextCharAfterE)) { 
           CONTINUE_BUFFER(nextCharAfterE);
         } else {
           // We have a literal of the form "1e" instead of "1e1".
           rewind();
-          return tok::ERROR;
+          return Token::kError;
         }
       } else if(dotAllowed && nextChar == '.') {
         dotAllowed = false;
@@ -611,16 +615,16 @@ tok::Token Lexer::continueWithNumberStart(const char currentChar) {
   //
   // }
 
-  return tok::NUMBER_LITERAL;
+  return Token::kNumberLiteral;
 }
 
-tok::Token Lexer::continueWithIdentifierStart(
+Token Lexer::continueWithIdentifierStart(
     const char currentChar,
     bool operatorMode) {
   enum {
-    IDENTIFIER_OR_OPERATOR,
-    OPERATOR_ONLY,
-    IDENTIFIER_ONLY
+    kIdentifierOrOperator,
+    kOperatorOnly,
+    kIdentifierOnly
   } state;
 
   beginBuffer(currentChar);
@@ -628,34 +632,34 @@ tok::Token Lexer::continueWithIdentifierStart(
   bool containsOperator = operatorMode;
 
   if(operatorMode) {
-    state = OPERATOR_ONLY;
+    state = kOperatorOnly;
   } else if(currentChar == '_') {
-    state = IDENTIFIER_OR_OPERATOR;
+    state = kIdentifierOrOperator;
   } else {
-    state = IDENTIFIER_ONLY;
+    state = kIdentifierOnly;
   }
 
   while(canAdvance()) {
     const auto nextChar = advance();
 
-    if(state == IDENTIFIER_OR_OPERATOR) {
+    if(state == kIdentifierOrOperator) {
       if(isIdentifierPart(nextChar)) {
-        state = nextChar == '_' ? IDENTIFIER_OR_OPERATOR : IDENTIFIER_ONLY;
+        state = nextChar == '_' ? kIdentifierOrOperator : kIdentifierOnly;
       } else if(isOperator(nextChar)) {
-        state = OPERATOR_ONLY;
+        state = kOperatorOnly;
         containsOperator = YES;
       } else {
         rewind();
         break;
       }
-    } else if(state == OPERATOR_ONLY) {
+    } else if(state == kOperatorOnly) {
       if(!isOperator(nextChar)) {
         rewind();
         break;
       }
-    } else if(state == IDENTIFIER_ONLY) {
+    } else if(state == kIdentifierOnly) {
       if(isIdentifierPart(nextChar)) {
-        state = nextChar == '_' ? IDENTIFIER_OR_OPERATOR : IDENTIFIER_ONLY;
+        state = nextChar == '_' ? kIdentifierOrOperator : kIdentifierOnly;
       } else {
         rewind();
         break;
@@ -676,15 +680,15 @@ tok::Token Lexer::continueWithIdentifierStart(
     }
   }
 
-  return tok::IDENTIFIER;
+  return Token::kIdentifier;
 }
 
-tok::Token Lexer::continueWithBacktick() {
+Token Lexer::continueWithBacktick() {
   const auto currentChar = advance();
 
   if(currentChar == '`') {
     // No empty name is allowed.
-    return tok::ERROR;
+    return Token::kError;
   }
 
   beginBuffer(currentChar);
@@ -695,7 +699,7 @@ tok::Token Lexer::continueWithBacktick() {
     if(nextChar == '`') {
       // Reached the closing backtick so we have a valid
       // identifier that is not empty.
-      return tok::IDENTIFIER;
+      return Token::kIdentifier;
     } else {
       // Found an arbitrary character we need to add to the buffer.
       CONTINUE_BUFFER(nextChar);
@@ -703,16 +707,16 @@ tok::Token Lexer::continueWithBacktick() {
   }
 
   // We reach this code only in case of a premature EOF.
-  return tok::ERROR;
+  return Token::kError;
 }
 
-tok::Token Lexer::continueWithString() {
+Token Lexer::continueWithString() {
   // We already have one " character.
   
   if(!canAdvance()) {
     // If we are at the EOF we have an open string
     // literal lotering around.
-    return tok::ERROR;
+    return Token::kError;
   }
 
   const auto currentChar = advance();
@@ -722,7 +726,7 @@ tok::Token Lexer::continueWithString() {
 
     if(!canAdvance()) {
       // If we reach the EOF at this point we have an empty string.
-      return tok::STRING_LITERAL;
+      return Token::kStringLiteral;
     }
 
     const auto possibleQuote = advance();
@@ -730,12 +734,12 @@ tok::Token Lexer::continueWithString() {
     if('"' == possibleQuote) {
       // We have three " characters. Go for a verbatim string literal.
       //TODO(joa): implement verbatim string literal
-      return tok::ERROR;
+      return Token::kError;
     } else {
       // Empty string literal.
       rewind();
       resetBuffer();
-      return tok::STRING_LITERAL;
+      return Token::kStringLiteral;
     }
   } else {
     beginBuffer(currentChar);
@@ -750,7 +754,7 @@ tok::Token Lexer::continueWithString() {
           CONTINUE_BUFFER(nextChar);
           isEscaped = NO;
         } else {
-          return tok::STRING_LITERAL;
+          return Token::kStringLiteral;
         }
       } else if('\\' == nextChar) {
         if(isEscaped) {
@@ -773,7 +777,7 @@ tok::Token Lexer::continueWithString() {
               if(value > 7) {
                 // A value greater than 7 is not valid in
                 // octal notation
-                return tok::ERROR;
+                return Token::kError;
               }
 
               code = (code << 3) + value;
@@ -787,7 +791,7 @@ tok::Token Lexer::continueWithString() {
                 }
               } else {
                 // String literal is not closed, got EOF
-                return tok::ERROR;
+                return Token::kError;
               }
             } while(++i < 3);
 
@@ -807,7 +811,7 @@ tok::Token Lexer::continueWithString() {
                 break;
               default:
                 // Illegal escape sequence.
-                return tok::ERROR;
+                return Token::kError;
             }
           }
 
@@ -819,11 +823,11 @@ tok::Token Lexer::continueWithString() {
     }
 
     // Reached premature EOF while in a string literal.
-    return tok::ERROR;
+    return Token::kError;
   }
 }
 
-tok::Token Lexer::continueWithSlash(const char currentChar) {
+Token Lexer::continueWithSlash(const char currentChar) {
   beginBuffer(currentChar);
 
   const auto nextChar = advance(); 
@@ -841,7 +845,7 @@ tok::Token Lexer::continueWithSlash(const char currentChar) {
       CONTINUE_BUFFER(singleLineChar);
     }
 
-    return tok::COMMENT_SINGLE;
+    return Token::kCommentSingle;
   } else if(nextChar == '*') {
     CONTINUE_BUFFER(nextChar);
 
@@ -874,10 +878,10 @@ tok::Token Lexer::continueWithSlash(const char currentChar) {
       // We can ignore this if we do not want to be
       // too pedantic.
 
-      return tok::ERROR;
+      return Token::kError;
     }
 
-    return tok::COMMENT_MULTI;
+    return Token::kCommentMulti;
   } else {
     rewind();
     return continueWithIdentifierStart(currentChar, /*operatorMode=*/YES);

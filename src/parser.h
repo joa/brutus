@@ -69,15 +69,15 @@ namespace brutus {
         Lexer* const m_lexer;
         NameTable* const m_names;
         Arena* const m_arena;
-        tok::Token m_currentToken;
+        Token m_currentToken;
 
         void advance();
-        bool isIgnored(const tok::Token& token);
-        bool peek(const tok::Token& token);
-        bool poll(const tok::Token& token);
-        void pollAll(const tok::Token& token);
+        bool isIgnored(const Token& token);
+        bool peek(const Token& token);
+        bool poll(const Token& token);
+        void pollAll(const Token& token);
         ast::Node* consume(
-          const tok::Token& token,
+          const Token& token,
           std::function<ast::Node*()> f); //NOLINT
         template<class T> T* alloc();
         template<class T> T* allocWithValue();

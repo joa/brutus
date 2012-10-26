@@ -13,7 +13,7 @@ const auto numIterations = 100000000;
 const auto numTrials = 10000;
 
 void perf_test(std::function<int()> f) {
-  brutus::internal::Stopwatch stopwatch;    
+  brutus::Stopwatch stopwatch;    
 
   for(auto trail = 0; trail < numTrials; ++trail) {
     stopwatch.start();
@@ -45,6 +45,10 @@ int main(int argc, char** argv) {
     int size;
 #endif
     withTokenFile([&](FILE* fp) {
+#ifndef PERF_TEST
+      brutus::Stopwatch stopwatch;
+      stopwatch.start();
+#endif
       auto arena = new brutus::internal::Arena(
         /*initialCapacity = */512 * brutus::consts::KiloByte,
         /*blockSize = */brutus::consts::PageSize,
@@ -58,9 +62,11 @@ int main(int argc, char** argv) {
       auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
       
 #ifndef PERF_TEST
+      stopwatch.stop();
       printer->print(ast);
       std::cout << std::endl;
       std::cout << "Names: " << names->size() << std::endl;
+      stopwatch.log();
 #else
       size = names->size();
 #endif

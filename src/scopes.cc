@@ -83,7 +83,7 @@ bool Scope::put(Name* name, Symbol* symbol) {
   return true;
 }
 
-void Scope::putOrOverload(Name* name, Symbol* symbol) {
+Symbol* Scope::putOrOverload(Name* name, Symbol* symbol) {
   const int hashCode = name->m_hashCode;
   const int keyIndex = indexOf(hashCode, m_tableSize);
 
@@ -93,22 +93,23 @@ void Scope::putOrOverload(Name* name, Symbol* symbol) {
   while(next != nullptr) {
     if(next->m_name == name) {
       if(next->kind() == SymbolKind::kOverload) {
-        //OverloadSymbol* overload = nullptr;
-        //overload->add(symbol);
+        OverloadSymbol* overload = static_cast<OverloadSymbol*>(next);
+        overload->add(symbol);
+        return overload;
       } else {
-        //TODO(joa): create overload
-        Symbol* overload = nullptr;
+        OverloadSymbol* overload = new (m_arena) OverloadSymbol();
+        overload->init(name, symbol->parent(), symbol->ast());
 
-        //overload->add(next);
-        //overload->add(symbol);
-        
         overload->m_next = next->m_next;
-
         if(prev != nullptr) {
           prev->m_next = overload;
         }
+
+        overload->add(next);
+        overload->add(symbol);
+
+        return overload;
       }
-      return;
     }
 
     prev = next;
@@ -121,6 +122,8 @@ void Scope::putOrOverload(Name* name, Symbol* symbol) {
   if(m_size++ >= m_threshold) {
     resize(2 * m_tableSize);
   }
+
+  return symbol;
 }
 
 

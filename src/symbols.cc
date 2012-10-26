@@ -52,6 +52,13 @@ SymbolKind OverloadSymbol::kind() const {
 
 void OverloadSymbol::init(Name* name, Symbol* parent, ast::Node* ast) {
   Symbol::init(name, parent, ast);
+
+  auto symbol = m_first;
+
+  while(symbol != nullptr) {
+    symbol->init(name, parent, ast);
+    symbol = symbol->m_next;
+  }
 }
 
 void OverloadSymbol::add(Symbol* symbol) {

@@ -4,15 +4,21 @@
 #include "brutus.h"
 #include "arena.h"
 #include "stopwatch.h"
+#include "ast.h"
 
 namespace brutus {
   namespace internal {
     class Phase {
       public:
-        explicit Phase(Arena* m_arena);
+        explicit Phase(Arena* arena);
         virtual const char* name() = 0;
-        Stopwatch stopwatch();
+        virtual void apply(ast::Node* node) = 0; //TODO(joa): compilation unit!
+        Stopwatch* stopwatch();
+        void log();
+
       private:
+        Arena* m_arena;
+        Stopwatch m_stopwatch;
         DISALLOW_COPY_AND_ASSIGN(Phase);
     };
   }

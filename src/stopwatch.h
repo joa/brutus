@@ -6,18 +6,25 @@
 #include "brutus.h"
 
 namespace brutus {
-  typedef std::chrono::time_point<std::chrono::high_resolution_clock> TimePoint;
-  typedef std::chrono::duration<unsigned long long, std::chrono::high_resolution_clock::period> Duration;
-
   class Stopwatch {
     public:
-      explicit Stopwatch() : m_start(now()), m_total(0) {}
+      typedef unsigned long long Rep;
+      typedef std::chrono::high_resolution_clock Clock;
+      typedef std::chrono::duration<Rep , Clock::period> Duration;
+      typedef std::chrono::time_point<Clock> TimePoint;
+
+      explicit Stopwatch() {}
       void start();
       void stop();
-      void pause(); // same as stop
-      void resume(); // same as start
+      void pause(); 
+      void resume();
       void log() const;
       void stopAndLog();
+      void time(std::function<void()> f);
+      template<typename T> T time(std::function<T()> f);
+      Duration total();
+      Rep totalMS();
+      Rep totalNS();
 
     private:
       static TimePoint now();

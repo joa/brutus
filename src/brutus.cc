@@ -8,7 +8,7 @@
 #include "stopwatch.h"
 #include "streams.h"
 
-//#define PERF_TEST
+#define PERF_TEST
 const auto numIterations = 100000000;
 const auto numTrials = 10000;
 
@@ -16,9 +16,9 @@ void perf_test(std::function<int()> f) {
   brutus::Stopwatch stopwatch;    
 
   for(auto trail = 0; trail < numTrials; ++trail) {
-    stopwatch.start();
-    std::cout << "Result: " << f() << std::endl;   
-    stopwatch.stopAndLog();
+    stopwatch.time([&]() {
+      std::cout << "Result: " << f() << std::endl;   
+    });
   }
 }
 

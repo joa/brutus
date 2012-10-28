@@ -7,6 +7,7 @@
 #include "parser.h"
 #include "stopwatch.h"
 #include "streams.h"
+#include "phases.h"
 
 #define PERF_TEST
 const auto numIterations = 100000000;
@@ -59,6 +60,9 @@ int main(int argc, char** argv) {
       auto lexer = new brutus::internal::Lexer(stream); 
       auto parser = new brutus::internal::Parser(lexer, names, arena);
       auto ast = parser->parseProgram();
+      auto symbolTable = new (arena) brutus::internal::syms::Scope(arena);
+      auto p0 = new brutus::internal::SymbolsPhase(symbolTable, arena);
+      p0->apply(ast);
       auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
       
 #ifndef PERF_TEST

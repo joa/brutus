@@ -83,10 +83,20 @@ namespace brutus {
       template<SymbolKind K>
       class DeclarativeSymbol : public Symbol {
         public:
-          DeclarativeSymbol();
-          void init(Name* name, Symbol* parent, ast::Node* ast, Scope* scope);
-          Scope* declarations() const;
-          SYMBOL_OVERRIDES();
+          DeclarativeSymbol() : m_declarations(nullptr) {}
+          
+          void init(Name* name, Symbol* parent, ast::Node* ast, Scope* scope) {
+            Symbol::init(name, parent, ast);
+            m_declarations = scope;
+          }
+          
+          Scope* declarations() const {
+            return m_declarations;
+          }
+
+          SymbolKind kind() const override final {
+            return K;
+          }
 
         private:
           Scope* m_declarations;

@@ -3,28 +3,6 @@
 namespace brutus {
 namespace internal {
 namespace syms {
-template<SymbolKind K>
-DeclarativeSymbol<K>::DeclarativeSymbol()
-  : m_declarations(nullptr) {}
-
-template<SymbolKind K>
-SymbolKind DeclarativeSymbol<K>::kind() const {
-  return K;
-}
-
-template<SymbolKind K>
-void DeclarativeSymbol<K>::init(Name* name, Symbol* parent, ast::Node* ast, Scope* scope) {
-  Symbol::init(name, parent, ast);
-  m_declarations = scope;
-}
-
-template<SymbolKind K>
-Scope* DeclarativeSymbol<K>::declarations() const {
-  return m_declarations;
-}
-
-//
-
 ErrorSymbol::ErrorSymbol() 
     : m_reason(ErrorReason::kUnknown) {}
 

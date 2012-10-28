@@ -30,11 +30,14 @@ namespace brutus {
             return arena->alloc(size);
           }
 
+          ALWAYS_INLINE ScopeKind kind() {
+            return m_kind;
+          }
+
           Scope(int initialCapacity, float loadFactor, Arena* arena);
           Scope(Arena* arena);
-          virtual ~Scope() {}
-          virtual ScopeKind kind() const = 0;
-
+          ~Scope() {}
+          
           // true if it has been added, false otherwise
           bool put(Name* name, Symbol* symbol);
           Symbol* putOrOverload(Name* name, Symbol* symbol);

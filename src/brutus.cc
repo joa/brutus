@@ -51,12 +51,11 @@ int main(int argc, char** argv) {
     brutus::Stopwatch stopwatch;
     
     auto compiler = new brutus::Compiler();
-
     compiler->addSource(fp);
     
-    stopwatch.start();
-    compiler->compile();
-    stopwatch.stopAndLog();
+    stopwatch.time([&]() {
+      compiler->compile();
+    });
 
     delete compiler;
   });

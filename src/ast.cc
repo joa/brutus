@@ -36,8 +36,9 @@ unsigned int Error::column() const {
 
 //
 
-Identifier::Identifier() : 
-  m_name(nullptr) {}
+Identifier::Identifier()
+    : m_name(nullptr),
+      m_symbol(nullptr) {}
 
 void Identifier::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -53,6 +54,14 @@ void Identifier::init(Name* name) {
 
 Name* Identifier::name() const {
   return m_name;
+}
+
+syms::Symbol* Identifier::symbol() const {
+  return m_symbol;
+}
+
+void Identifier::symbol(syms::Symbol* value) {
+  m_symbol = value;
 }
 
 //
@@ -111,7 +120,7 @@ NodeKind This::kind() const {
 
 //
 
-Block::Block() {}
+Block::Block() : m_scope(nullptr) {}
 
 void Block::accept(ASTVisitor* visitor) {
   visitor->visit(this);
@@ -125,6 +134,13 @@ NodeList* Block::expressions() {
   return &m_expressions;
 }
 
+syms::Scope* Block::scope() const {
+  return m_scope;
+}
+
+void Block::scope(syms::Scope* value) {
+  m_scope = value;
+}
 //
 
 True::True() {}

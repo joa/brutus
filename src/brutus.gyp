@@ -8,10 +8,13 @@
       'defines': [],
       'include_dirs': [],
       'sources': [
+        'alloc.cc',
         'arena.cc',
         'ast.cc',
         'brutus.cc',
+        'compiler.cc',
         'lexer.cc',
+        'list.cc',
         'name.cc',
         'parser.cc',
         'scopes.cc',

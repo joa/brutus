@@ -8,6 +8,8 @@
 #include "stopwatch.h"
 #include "streams.h"
 #include "phases.h"
+#include "symbols.h"
+#include "compiler.h"
 
 #define PERF_TEST
 const auto numIterations = 100000000;
@@ -40,50 +42,26 @@ int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
 
+
 #if 1
 #ifdef PERF_TEST
-  perf_test([&]() -> int {
-    int size;
+  perf_test([&]() {
 #endif
-    withTokenFile([&](FILE* fp) {
-#ifndef PERF_TEST
-      brutus::Stopwatch stopwatch;
-      stopwatch.start();
-#endif
-      auto arena = new brutus::internal::Arena(
-        /*initialCapacity = */512 * brutus::consts::KiloByte,
-        /*blockSize = */brutus::consts::PageSize,
-        /*alignment = */brutus::consts::Alignment);
-      arena->init();
-      auto stream = new brutus::internal::FileCharStream(fp);
-      auto names = new brutus::internal::NameTable(arena);
-      auto lexer = new brutus::internal::Lexer(stream); 
-      auto parser = new brutus::internal::Parser(lexer, names, arena);
-      auto ast = parser->parseProgram();
-      auto symbolTable = new (arena) brutus::internal::syms::Scope(arena);
-      auto p0 = new brutus::internal::SymbolsPhase(symbolTable, arena);
-      p0->apply(ast);
-      auto printer = new brutus::internal::ast::ASTPrinter(std::cout);
-      
-#ifndef PERF_TEST
-      stopwatch.stop();
-      printer->print(ast);
-      std::cout << std::endl;
-      std::cout << "Names: " << names->size() << std::endl;
-      stopwatch.log();
-#else
-      size = names->size();
-#endif
+  withTokenFile([&](FILE* fp) {
+    brutus::Stopwatch stopwatch;
+    
+    auto compiler = new brutus::Compiler();
 
-      delete printer;
-      delete parser;
-      delete lexer;
-      delete names;
-      delete stream;
-      delete arena;
-    });
+    compiler->addSource(fp);
+    
+    stopwatch.start();
+    compiler->compile();
+    stopwatch.stopAndLog();
+
+    delete compiler;
+  });
 #ifdef PERF_TEST
-    return size;
+  return 123;
   });
 #endif
 #endif

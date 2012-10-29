@@ -298,12 +298,18 @@ bool hasValue(const Token& token) {
 }
 } //namespace tok
 
-Lexer::Lexer(CharStream* charStream)
-    : m_stream(charStream),
-      m_line(0),
-      m_column(0),
-      m_currentChar('\0'),
-      m_advanceWithLastChar(false) {}
+Lexer::Lexer() {
+  init(nullptr);
+}
+
+void Lexer::init(CharStream* charStream)  {
+  m_stream = charStream;
+  m_line = 0;
+  m_column = 0;
+  m_currentChar = '\0';
+  m_advanceWithLastChar = false;
+  resetBuffer();
+}
 
 Token Lexer::resulting(
     std::function<bool(const char)> condition, //NOLINT

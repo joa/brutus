@@ -12,6 +12,11 @@
 
 namespace brutus {
   namespace internal {
+    namespace syms {
+      class Symbol;
+      class Scope;
+    }
+
     namespace ast {
       enum class NodeKind {
         kArgument,
@@ -87,9 +92,19 @@ namespace brutus {
 
       class Declaration : public Node {
         public:
-          explicit Declaration() {}
+          explicit Declaration() : m_symbol(nullptr) {}
+
+          syms::Symbol* symbol() const {
+            return m_symbol;
+          }
+
+          void symbol(syms::Symbol* value) {
+            m_symbol = value;
+          }
 
         private:
+          syms::Symbol* m_symbol;
+
           DISALLOW_COPY_AND_ASSIGN(Declaration);
       };
 
@@ -158,10 +173,13 @@ namespace brutus {
           explicit Identifier();
           void init(Name* name);
           Name* name() const;
+          syms::Symbol* symbol() const;
+          void symbol(syms::Symbol* value);
           NODE_OVERRIDES();
 
         private:
           Name* m_name;
+          syms::Symbol* m_symbol;
 
           DISALLOW_COPY_AND_ASSIGN(Identifier);
       };
@@ -206,10 +224,13 @@ namespace brutus {
         public:
           explicit Block();
           NodeList* expressions();
+          syms::Scope* scope() const;
+          void scope(syms::Scope* value);
           NODE_OVERRIDES();
 
         private:
           NodeList m_expressions;
+          syms::Scope* m_scope;
 
           DISALLOW_COPY_AND_ASSIGN(Block);
       };

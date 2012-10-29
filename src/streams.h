@@ -4,19 +4,19 @@
 #include "brutus.h"
 
 namespace brutus {
+  class CharStream {
+    public:
+      explicit CharStream() {}
+      virtual ~CharStream() {}
+      virtual bool hasNext() = 0;
+      virtual char next() = 0;
+      virtual void foreach(std::function<void(char)> f) = 0; //NOLINT
+
+    private:
+      DISALLOW_COPY_AND_ASSIGN(CharStream);
+  }; // class CharStream
+
   namespace internal {
-    class CharStream {
-      public:
-        explicit CharStream() {}
-        virtual ~CharStream() {}
-        virtual bool hasNext() = 0;
-        virtual char next() = 0;
-        virtual void foreach(std::function<void(char)> f) = 0; //NOLINT
-
-      private:
-        DISALLOW_COPY_AND_ASSIGN(CharStream);
-    }; // class CharStream
-
     class FileCharStream : public CharStream {
       public:
         explicit FileCharStream(FILE* file) : 

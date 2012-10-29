@@ -7,18 +7,22 @@
 #include "ast.h"
 #include "scopes.h"
 #include "symbols.h"
+#include "lexer.h"
+#include "parser.h"
 
 #define PHASE_OVERRIDES() \
   virtual const char* name() override final; \
-  virtual void apply(ast::Node* node) override final
+  virtual void apply(CompilationUnit* unit) override final
 
 namespace brutus {
+  class CompilationUnit;
+
   namespace internal {
     class Phase {
       public:
         explicit Phase(Arena* arena);
         virtual const char* name() = 0;
-        virtual void apply(ast::Node* node) = 0; //TODO(joa): compilation unit!
+        virtual void apply(CompilationUnit* unit) = 0;
         Stopwatch* stopwatch();
         void log();
 
@@ -28,6 +32,18 @@ namespace brutus {
       private:
         Stopwatch m_stopwatch;
         DISALLOW_COPY_AND_ASSIGN(Phase);
+    };
+
+    class ParsePhase : public Phase {
+      public:
+        explicit ParsePhase(Lexer* lexer, Parser* parser, Arena* arena);
+        PHASE_OVERRIDES();
+
+      private:
+        Lexer* m_lexer;
+        Parser* m_parser;
+
+        DISALLOW_COPY_AND_ASSIGN(ParsePhase);
     };
 
     class SymbolsPhase : public Phase {
@@ -44,8 +60,22 @@ namespace brutus {
         void buildModuleSymbols(ast::Module* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildVariableSymbol(ast::Variable* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildBlockScope(ast::Block* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
+        void buildProgramScope(ast::Program* node, syms::Scope* symbolTable);
 
         DISALLOW_COPY_AND_ASSIGN(SymbolsPhase);
+    };
+
+    class LinkPhase : public Phase {
+      public:
+        explicit LinkPhase(syms::Scope* symbolTable, Arena* arena);
+        PHASE_OVERRIDES();
+
+      private:
+        syms::Scope* m_symbolTable;
+        
+        void link(ast::Node* node, syms::Scope* scope);
+
+        DISALLOW_COPY_AND_ASSIGN(LinkPhase);
     };
   }
 }

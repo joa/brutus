@@ -89,7 +89,7 @@ ast::Node* Parser::parseModule() {
      name = parseIdentifier(); //TODO(joa): parseActorName()
   } else {
     auto emptyName = alloc<ast::Identifier>();
-    emptyName->init(m_names->get("", 0, /*copyValue=*/false));
+    emptyName->init(m_names->empty());
 
     name = emptyName;
   }

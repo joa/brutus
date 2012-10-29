@@ -54,6 +54,10 @@ namespace brutus {
         explicit NameTable(Arena* arena);
         Name* get(const char* value, int length, bool copyValue);
 
+        inline Name* empty() {
+          return this->get("", 1, /*copyValue=*/false);
+        }
+
         inline int size() { 
           return m_size;
         }

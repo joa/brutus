@@ -74,7 +74,8 @@ namespace brutus {
     
     class Lexer {
       public:
-        explicit Lexer(CharStream* charStream);
+        explicit Lexer();
+        void init(CharStream* charStream);
         Token nextToken();
         char* value();
         size_t valueLength();
@@ -84,7 +85,7 @@ namespace brutus {
       private:
         static const size_t BUFFER_SIZE = 0x1000;
 
-        CharStream* const m_stream;
+        CharStream* m_stream;
         unsigned int m_line, m_column;
         char m_currentChar;
         bool m_advanceWithLastChar;

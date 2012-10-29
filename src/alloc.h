@@ -8,6 +8,8 @@
 
 namespace brutus {
   namespace internal {
+    class Arena;
+
     template<typename T>
     ALWAYS_INLINE static T* NewArray(const size_t& size) {
       auto result = new T[size];
@@ -64,6 +66,65 @@ namespace brutus {
       private:
         DISALLOW_CTOR(Malloc);
         DISALLOW_COPY_AND_ASSIGN(Malloc);
+    };
+
+    class Allocator {
+      public:
+        Allocator() {}
+        virtual ~Allocator() {}
+
+        virtual void* alloc(int size) = 0;
+        virtual void free(void* ptr) = 0;
+        virtual bool freeSupported() const = 0;
+
+        template<typename T>
+        ALWAYS_INLINE T* newArray(const size_t& length) {
+          return reinterpret_cast<T*>(alloc(sizeof(T) * length));
+        }
+
+        template<class T>
+        ALWAYS_INLINE T* create() {
+          auto ptr = alloc(sizeof(T));
+          auto inst = (::new (ptr) T());
+
+          return inst;
+        }
+
+      private:
+        DISALLOW_COPY_AND_ASSIGN(Allocator);
+    };
+
+    class ArenaAllocator : public Allocator {
+      public:
+        ArenaAllocator(Arena* arena) : m_arena(arena) {}
+
+        void* alloc(int size) override final;
+        void free(void* ptr) override final;
+        
+        bool freeSupported() const override final {
+          return NO;
+        }
+      private:
+        Arena* m_arena;
+    };
+
+    class HeapAllocator : public Allocator {
+      public:
+        HeapAllocator() {}
+
+        void* alloc(int size) override final {
+          return Malloc::New(size);
+        }
+
+        void free(void* ptr) override final {
+          Malloc::Delete(ptr);
+        }
+
+        bool freeSupported() const override final {
+          return YES;
+        }
+      private:
+        DISALLOW_COPY_AND_ASSIGN(HeapAllocator);
     };
   } //namespace internal
 } //namespace brutus

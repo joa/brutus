@@ -21,7 +21,7 @@ namespace brutus {
       };
 
     public:
-      List() : List(internal::HeapAllocator) {}
+      List() : List(internal::HeapAllocator::instance()) {}
       List(internal::Allocator* allocator)
           : m_first(nullptr),
             m_last(nullptr),

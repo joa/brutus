@@ -110,7 +110,10 @@ namespace brutus {
 
     class HeapAllocator : public Allocator {
       public:
-        HeapAllocator() {}
+        static HeapAllocator& instance() {
+          static HeapAllocator value;
+          return value;
+        }
 
         void* alloc(int size) override final {
           return Malloc::New(size);
@@ -123,7 +126,10 @@ namespace brutus {
         bool freeSupported() const override final {
           return YES;
         }
+
       private:
+        HeapAllocator() {}
+
         DISALLOW_COPY_AND_ASSIGN(HeapAllocator);
     };
   } //namespace internal

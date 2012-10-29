@@ -7,12 +7,11 @@ void Stopwatch::start() {
 }
 
 void Stopwatch::resume() {
-  start();
+  m_start = now(); 
 }
 
 void Stopwatch::pause() {
-  auto delta = now() - m_start;
-  m_total += delta;
+  stop();
 }
 
 void Stopwatch::stop() {

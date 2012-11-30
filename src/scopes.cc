@@ -37,6 +37,14 @@ void Scope::initTable() {
   ArrayFill(m_table, 0, m_tableSize);
 }
 
+bool Scope::contains(Name* name) {
+  return get(name) != nullptr;
+}
+
+bool Scope::contains(Symbol* symbol) {
+  return contains(symbol->name());
+}
+
 Symbol* Scope::get(Name* name) {
   const int hashCode = name->m_hashCode;
   auto scope = this;
@@ -81,6 +89,10 @@ bool Scope::put(Name* name, Symbol* symbol) {
   }
 
   return true;
+}
+
+bool Scope::put(Symbol* symbol) {
+  return put(symbol->name(), symbol);
 }
 
 Symbol* Scope::putOrOverload(Name* name, Symbol* symbol) {

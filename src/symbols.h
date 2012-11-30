@@ -12,6 +12,10 @@
 
 namespace brutus {
   namespace internal {
+    namespace types {
+      class Type;
+    }
+
     namespace syms {
       enum class SymbolKind {        
         kClass,
@@ -46,6 +50,14 @@ namespace brutus {
             return m_ast;
           }
 
+          ALWAYS_INLINE types::Type* type() const {
+            return m_type;
+          }
+
+          ALWAYS_INLINE void type(types::Type* value) {
+            m_type = value;
+          }
+
           explicit Symbol() 
               : m_name(nullptr), 
                 m_parent(nullptr), 
@@ -56,16 +68,17 @@ namespace brutus {
           virtual SymbolKind kind() const = 0;
 
         protected:
-          ALWAYS_INLINE void init(Name* name, Symbol* parent, ast::Node* ast) {
+          ALWAYS_INLINE void init(Name* name, Symbol* parent, ast::Node* ast, types::Type* type) {
             m_name = name;
             m_parent = parent;
             m_ast = ast;
+            m_type = type;
           }
 
           Name* m_name;
           Symbol* m_parent;
           ast::Node* m_ast;
-          //type?
+          types::Type* m_type;
           //used?
           //flags?
          
@@ -83,15 +96,15 @@ namespace brutus {
       template<SymbolKind K>
       class DeclarativeSymbol : public Symbol {
         public:
-          DeclarativeSymbol() : m_declarations(nullptr) {}
+          DeclarativeSymbol() : m_scope(nullptr) {}
           
-          void init(Name* name, Symbol* parent, ast::Node* ast, Scope* scope) {
-            Symbol::init(name, parent, ast);
-            m_declarations = scope;
+          void init(Name* name, Symbol* parent, ast::Node* ast, Scope* scope, types::Type* type) {
+            Symbol::init(name, parent, ast, type);
+            m_scope = scope;
           }
           
-          Scope* declarations() const {
-            return m_declarations;
+          Scope* scope() const {
+            return m_scope;
           }
 
           SymbolKind kind() const override final {
@@ -99,7 +112,7 @@ namespace brutus {
           }
 
         private:
-          Scope* m_declarations;
+          Scope* m_scope;
 
           DISALLOW_COPY_AND_ASSIGN(DeclarativeSymbol);
       }; //class DeclarativeSymbol

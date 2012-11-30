@@ -40,6 +40,9 @@ namespace brutus {
           
           // true if it has been added, false otherwise
           bool put(Name* name, Symbol* symbol);
+          
+          bool put(Symbol* symbol);
+
           Symbol* putOrOverload(Name* name, Symbol* symbol);
             
           // null if not present
@@ -47,6 +50,8 @@ namespace brutus {
 
           // true if present, false otherwise
           bool contains(Name* name);
+
+          bool contains(Symbol* symbol);
 
           void init(Scope* parent, ScopeKind kind);
 

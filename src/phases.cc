@@ -1,5 +1,6 @@
 #include "phases.h"
 #include "compiler.h"
+#include "types.h"
 
 namespace brutus {
 namespace internal {
@@ -38,8 +39,8 @@ void ParsePhase::apply(CompilationUnit* unit) {
         m_lexer->init(stream);
         unit->ast(m_parser->parseProgram());
 
-        //auto printer = new brutus::internal::ast::ASTPrinter(std::cout);     
-        //printer->print(unit->ast());
+        auto printer = new brutus::internal::ast::ASTPrinter(std::cout);     
+        printer->print(unit->ast());
 
         delete stream;
       }
@@ -90,6 +91,10 @@ void SymbolsPhase::buildSymbols(ast::Node* node, syms::Scope* parentScope, syms:
       buildModuleSymbols(static_cast<ast::Module*>(node), parentScope, parentSymbol);
       break;
 
+    case ast::NodeKind::kParameter:
+      buildParameterSymbol(static_cast<ast::Parameter*>(node), parentScope, parentSymbol);
+      break;
+
     case ast::NodeKind::kProgram:
       buildProgramScope(static_cast<ast::Program*>(node), parentScope);
       break;
@@ -116,12 +121,14 @@ ALWAYS_INLINE static Name* nameOf(ast::Node* node) {
   
   return static_cast<ast::Identifier*>(node)->name();
 }
+
 void SymbolsPhase::buildClassSymbols(ast::Class* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
   auto scope = newScope(m_arena, parentScope, syms::ScopeKind::kClass);
   auto symbol =  new (m_arena) syms::ClassSymbol();
+  auto type = new (m_arena) types::ClassType(symbol, scope, 0, nullptr, 0, nullptr);
   auto name = nameOf(node->name());
 
-  symbol->init(name, parentSymbol, node, scope);
+  symbol->init(name, parentSymbol, node, scope, type);
   node->symbol(symbol);
   parentScope->put(name, symbol);
 
@@ -133,11 +140,28 @@ void SymbolsPhase::buildClassSymbols(ast::Class* node, syms::Scope* parentScope,
 void SymbolsPhase::buildFunctionSymbols(ast::Function* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
   auto scope = newScope(m_arena, parentScope, syms::ScopeKind::kFunction);
   auto symbol =  new (m_arena) syms::FunctionSymbol();
+  auto type = new (m_arena) types::FunctionType(
+      symbol, scope, 0, nullptr,
+      node->parameters()->size(),
+      node->parameters()->mapToArray<syms::Symbol*>(
+        [&](ast::Node* node) -> syms::Symbol* {
+          switch(node->kind()) {
+            case ast::NodeKind::kIdentifier:
+              return static_cast<ast::Identifier*>(node)->symbol();
+            default:
+              return nullptr; //TODO(joa): fixme
+          }
+        }, m_arena)
+      , nullptr);
   auto name = nameOf(node->name());
 
-  symbol->init(name, parentSymbol, node, scope);
+  symbol->init(name, parentSymbol, node, scope, type);
   node->symbol(symbol);
   parentScope->putOrOverload(name, symbol);
+
+  node->parameters()->foreach([&](ast::Node* parameter) {
+    buildSymbols(parameter, scope, symbol);
+  });
 
   if(!node->isAbstract()) {
     buildSymbols(node->expr(), scope, symbol);
@@ -149,7 +173,7 @@ void SymbolsPhase::buildModuleSymbols(ast::Module* node, syms::Scope* parentScop
   auto symbol =  new (m_arena) syms::ModuleSymbol();
   auto name = nameOf(node->name());
 
-  symbol->init(name, parentSymbol, node, scope);
+  symbol->init(name, parentSymbol, node, scope, nullptr); //TODO(joa): module type?
   node->symbol(symbol);
   parentScope->put(name, symbol);
 
@@ -159,6 +183,15 @@ void SymbolsPhase::buildModuleSymbols(ast::Module* node, syms::Scope* parentScop
 }
 
 void SymbolsPhase::buildVariableSymbol(ast::Variable* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
+  auto symbol =  new (m_arena) syms::VariableSymbol();
+  auto name = nameOf(node->name());
+
+  symbol->init(name, parentSymbol, node);
+  node->symbol(symbol);
+  parentScope->put(name, symbol);
+}
+
+void SymbolsPhase::buildParameterSymbol(ast::Parameter* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
   auto symbol =  new (m_arena) syms::VariableSymbol();
   auto name = nameOf(node->name());
 
@@ -194,10 +227,10 @@ const char* LinkPhase::name() {
 }
 
 void LinkPhase::apply(CompilationUnit* unit) {
-  link(unit->ast(), m_symbolTable);
+  link(unit->ast(), m_symbolTable, /*parentType=*/nullptr);
 }
 
-void LinkPhase::link(ast::Node* node, syms::Scope* scope) {
+void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* parentType) {
 #define K(x) ast::NodeKind::k##x
 
 #ifdef DEBUG
@@ -208,29 +241,112 @@ void LinkPhase::link(ast::Node* node, syms::Scope* scope) {
 #endif
 
   switch(node->kind()) {
-    case K(Argument):
+    case K(Argument): {
+        auto argument = static_cast<ast::Argument*>(node);
+
+        if(argument->hasName()) {
+          link(argument->name(), parentScope, parentType);
+        }
+
+        link(argument->value(), parentScope, parentType);
+
+        //TODO(joa): set resulting sym for arg
+      }
+      break;
     case K(Assign):
-    case K(Block):
+      break;
+    case K(Block): {
+        auto block = static_cast<ast::Block*>(node);
+        auto scope = block->scope();
+
+        block->expressions()->foreach([&](ast::Node* expression) {
+          link(expression, scope, parentType);
+        });
+      }
+      break;
     case K(Call):
-    case K(Class):
+      break;
+    case K(Class): {
+        auto klass = static_cast<ast::Class*>(node);
+        auto symbol = static_cast<syms::ClassSymbol*>(klass->symbol());
+        auto scope = symbol->scope();
+        auto type = symbol->type();
+
+        //TODO(joa): resolve bases of class type already?
+
+        klass->members()->foreach([&](ast::Node* member) {
+          link(member, scope, type);
+        });
+      }
+      break;
     case K(Error):
     case K(False):
-    case K(Function):
-    case K(Identifier):
+      break;
+    case K(Function): {
+        auto function = static_cast<ast::Function*>(node);
+        auto symbol = static_cast<syms::FunctionSymbol*>(function->symbol());
+        auto scope = symbol->scope();
+        auto type = symbol->type();
+
+        if(!function->isAbstract()) {
+          link(function->expr(), scope, type);
+        }
+      }
+      break;
+    case K(Identifier): {
+        auto ident = static_cast<ast::Identifier*>(node);
+        auto symbol = parentScope->get(ident->name());
+
+        if(nullptr == symbol) {
+          //TODO(joa): err symbol
+        } else {
+          ident->symbol(symbol);
+        }
+      }
+      break;
     case K(If):
     case K(IfCase):
-    case K(Module):
+      break;
+    case K(Module): {
+        auto module = static_cast<ast::Module*>(node);
+        auto symbol = static_cast<syms::ModuleSymbol*>(module->symbol());
+        auto scope = symbol->scope();
+        auto type = symbol->type();
+        module->declarations()->foreach([&](ast::Node* declaration) {
+          link(declaration, scope, type);
+        });
+      }
+      break;
     case K(ModuleDependency):
     case K(Number):
-    case K(Parameter):
-    case K(Program):
-    case K(Select):
+      break;
+    case K(Parameter): 
+      // Parameter symbol has been built in SymbolsPhase
+      break;
+    case K(Program): {
+        auto program = static_cast<ast::Program*>(node);
+        program->modules()->foreach([&](ast::Node* module) {
+          link(module, parentScope, parentType);
+        });
+      }
+      break;
+    case K(Select): {
+        auto select = static_cast<ast::Select*>(node);
+        link(select->object(), parentScope, parentType);
+        link(select->qualifier(), parentScope, parentType);
+        //TODO(joa): set sym of select
+      }
+      break;
     case K(String):
     case K(This):
     case K(True):
     case K(TypeParameter):
-    case K(Variable):
       break;
+    case K(Variable):
+      // Variable symbol has been built in SymbolsPhase
+      break;
+    default:
+      std::cerr << "Internal error." << std::endl;
   }
 }
 

@@ -11,7 +11,7 @@ SymbolKind ErrorSymbol::kind() const {
 }
 
 void ErrorSymbol::init(Name* name, Symbol* parent, ast::Node* ast, ErrorReason reason) {
-  Symbol::init(name, parent, ast);
+  Symbol::init(name, parent, ast, nullptr);//TODO(joa): ERROR TYPE
   m_reason = reason;
 }
 
@@ -29,12 +29,12 @@ SymbolKind OverloadSymbol::kind() const {
 }
 
 void OverloadSymbol::init(Name* name, Symbol* parent, ast::Node* ast) {
-  Symbol::init(name, parent, ast);
+  Symbol::init(name, parent, ast, nullptr);//TODO(joa): OVERLOAD TYPE
 
   auto symbol = m_first;
 
   while(symbol != nullptr) {
-    symbol->init(name, parent, ast);
+    symbol->init(name, parent, ast, symbol->type());
     symbol = symbol->m_next;
   }
 }
@@ -53,7 +53,7 @@ SymbolKind VariableSymbol::kind() const {
 }
 
 void VariableSymbol::init(Name* name, Symbol* parent, ast::Node* ast) {
-  Symbol::init(name, parent, ast);
+  Symbol::init(name, parent, ast, nullptr);
 }
 } //namespace syms
 } //namespace internal

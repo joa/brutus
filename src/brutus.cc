@@ -11,7 +11,7 @@
 #include "symbols.h"
 #include "compiler.h"
 
-#define PERF_TEST
+//#define PERF_TEST
 const auto numIterations = 100000000;
 const auto numTrials = 10000;
 

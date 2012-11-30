@@ -1,0 +1,48 @@
+module brutus {
+  immutable class Y
+
+  class X {
+    pure def foo(bar: X) {
+      bar.baz() == 1
+    }
+
+    def bar()
+
+    def baz(a: Int, b: Int): (Int, Int) = {
+      val `a + b` = a + b
+      val c = `a + b` - 1
+      (`a + b`, c)
+    }
+
+    def bang(x: Int): Int
+
+    def testIf() {
+      if 1 > 2 -> yes
+
+      val x = force {
+        if {
+          1 > 2 -> yes
+          2 > 3 -> no
+          _ -> "ney"
+        }
+      }
+    }
+  }
+
+  /*
+  hello
+  /* world
+  */
+  */
+  val `hello world` = "this is\ta test"
+
+  var a = 1
+  var b = 2
+
+  b is a
+
+  // entry point
+  def main(args: String) {
+    console.println("yey")
+  }
+}

@@ -51,15 +51,25 @@ namespace brutus {
             return arena->alloc(size);
           }
 
-          explicit Node() {}
+          explicit Node() : m_symbol(nullptr) {}
           virtual ~Node() {}
           
           virtual void accept(ASTVisitor* visitor) = 0;
           virtual NodeKind kind() const = 0;
+          
+          syms::Symbol* symbol() const {
+            return m_symbol;
+          }
+
+          void symbol(syms::Symbol* value) {
+            m_symbol = value;
+          }
 
         private:
-          void* operator new(size_t size);
+          syms::Symbol* m_symbol;
 
+          void* operator new(size_t size);
+          
           DISALLOW_COPY_AND_ASSIGN(Node);
       };
 
@@ -73,6 +83,24 @@ namespace brutus {
           bool nonEmpty() const;
           void foreach(std::function<void(Node*)> f); //NOLINT
           bool forall(std::function<bool(Node*)> f); //NOLINT
+
+          template<typename T>
+          T* mapToArray(std::function<T(Node*)> f, Arena* arena) {
+            const auto n = m_nodesIndex;
+            T* result = arena->newArray<T>(n);
+
+            auto p = m_nodes;
+            auto q = result;
+
+            for(int i = 0; i < n; ++i) {
+              auto node = *p++;
+
+              *q = (nullptr != node) ? f(node) : nullptr;
+              *q++;
+            }
+
+            return result;
+          }
 
         private:
           Node** m_nodes;
@@ -92,19 +120,9 @@ namespace brutus {
 
       class Declaration : public Node {
         public:
-          explicit Declaration() : m_symbol(nullptr) {}
-
-          syms::Symbol* symbol() const {
-            return m_symbol;
-          }
-
-          void symbol(syms::Symbol* value) {
-            m_symbol = value;
-          }
+          explicit Declaration() {}
 
         private:
-          syms::Symbol* m_symbol;
-
           DISALLOW_COPY_AND_ASSIGN(Declaration);
       };
 

@@ -59,6 +59,7 @@ namespace brutus {
         void buildFunctionSymbols(ast::Function* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildModuleSymbols(ast::Module* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildVariableSymbol(ast::Variable* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
+        void buildParameterSymbol(ast::Parameter* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildBlockScope(ast::Block* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildProgramScope(ast::Program* node, syms::Scope* symbolTable);
 
@@ -73,7 +74,7 @@ namespace brutus {
       private:
         syms::Scope* m_symbolTable;
         
-        void link(ast::Node* node, syms::Scope* scope);
+        void link(ast::Node* node, syms::Scope* scope, types::Type* parentType);
 
         DISALLOW_COPY_AND_ASSIGN(LinkPhase);
     };

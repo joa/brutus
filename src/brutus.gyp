@@ -20,7 +20,8 @@
         'scopes.cc',
         'stopwatch.cc',
         'streams.cc',
-        'symbols.cc'
+        'symbols.cc',
+        'types.cc'
       ],
       'conditions': [
         ['OS=="linux"', {

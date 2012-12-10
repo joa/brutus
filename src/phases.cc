@@ -75,6 +75,14 @@ void SymbolsPhase::buildSymbols(ast::Node* node, syms::Scope* parentScope, syms:
 #endif
 
   switch(node->kind()) {
+    case ast::NodeKind::kAssign:
+    case ast::NodeKind::kArgument: {
+        auto symbol = new (m_arena) syms::EmptySymbol();
+        symbol->init(parentSymbol, node);
+        node->symbol(symbol);
+      }
+      break;
+    
     case ast::NodeKind::kBlock:
       buildBlockScope(static_cast<ast::Block*>(node), parentScope, parentSymbol);
       break;
@@ -106,6 +114,7 @@ void SymbolsPhase::buildSymbols(ast::Node* node, syms::Scope* parentScope, syms:
     case ast::NodeKind::kIf:
       buildIfSymbol(static_cast<ast::If*>(node), parentScope, parentSymbol);
       break;
+
     case ast::NodeKind::kIfCase:
       buildIfCaseSymbol(static_cast<ast::IfCase*>(node), parentScope, parentSymbol);
       break;
@@ -282,16 +291,20 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
   switch(node->kind()) {
     case K(Argument): {
         auto argument = static_cast<ast::Argument*>(node);
-
-        if(argument->hasName()) {
-          //TODO(joa): link to parameter sym
-        }
-
         link(argument->value(), parentScope, parentType);
-        argument->symbol(argument->value()->symbol());
+
+        // The empty symbol has already been assigned. If
+        // this argument has a name it is linked to its
+        // parameter. However the linkage happens in the
+        // code that solves a call.
       }
       break;
-    case K(Assign):
+    case K(Assign): {
+        auto assign = static_cast<ast::Assign*>(node);
+        link(assign->target(), parentScope, parentType);
+        link(assign->value(), parentScope, parentType);
+        // The empty symbol has already been assigned.
+      }
       break;
     case K(Block): {
         auto block = static_cast<ast::Block*>(node);
@@ -305,7 +318,36 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         // assigned in the symbols phase.
       }
       break;
-    case K(Call):
+    case K(Call): {
+        auto call = static_cast<ast::Call*>(node);
+        
+        link(call->callee(), parentScope, parentType);
+
+        auto calleeSymbol = call->callee()->symbol();
+        auto calleeType = calleeSymbol->type();
+        auto calleeScope = calleeType->scope();
+
+        call->arguments()->foreach([&](ast::Node* argument) {
+          link(argument, parentScope, parentType);
+
+          if(argument->kind() == ast::NodeKind::kArgument) {
+            ast::Argument* arg = static_cast<ast::Argument*>(argument);
+            
+            if(arg->hasName()) {
+              auto parameterSymbol = calleeScope->get(nameOf(arg->name()));
+
+              if(nullptr == parameterSymbol) {
+                arg->symbol(
+                  errorSymbol(parentType->symbol(), arg, syms::ErrorReason::kNoSuchName));
+              } else {
+                arg->symbol(parameterSymbol);
+              }
+            }
+          }
+        });
+
+        call->symbol(call->callee()->symbol());
+      }
       break;
     case K(Class): {
         auto klass = static_cast<ast::Class*>(node);
@@ -323,6 +365,7 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
     case K(Error):
       break;
     case K(False):
+      //TODO(joa): Link to Boolean Symbol
       break;
     case K(Function): {
         auto function = static_cast<ast::Function*>(node);
@@ -336,8 +379,22 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
       }
       break;
     case K(Identifier): {
+        // Perform the following steps. If one succeeds it is no
+        // no longer necessary to perform the consecutive actions.
+        //
+        //   1) Try to find ident in current scope (includes members of class up to module)
+        //   2) Try to find ident in scope of any base class
+        //   3) Try to find ident in any module dependency
+        //   4) Result in error
+        //
+        
         auto ident = static_cast<ast::Identifier*>(node);
         auto symbol = parentScope->get(ident->name());
+
+        if(nullptr == symbol) {
+          // Could not find name in current scope. Maybe we
+          // should try to find it
+        }
 
         if(nullptr == symbol) {
           ident->symbol(
@@ -352,7 +409,6 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         iff->cases()->foreach([&](ast::Node* ifCase) {
           link(ifCase, parentScope, parentType);
         });
-        //TODO(joa): lub? type?
 
         // EmptySymbol has already been built in 
         // the symbols phase.
@@ -362,8 +418,6 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         auto ifCase = static_cast<ast::IfCase*>(node);
         link(ifCase->condition(), parentScope, parentType);
         link(ifCase->expr(), parentScope, parentType);
-        
-        //TODO(joa): type?
 
         // EmptySymbol has already been built in 
         // the symbols phase.
@@ -383,6 +437,7 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
     case K(ModuleDependency):
       break;
     case K(Number):
+      //TODO(joa): Link to appropriate numeric symbol
       break;
     case K(Parameter): 
       // Parameter symbol has been built in SymbolsPhase
@@ -398,10 +453,23 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         auto select = static_cast<ast::Select*>(node);
         link(select->object(), parentScope, parentType);
         link(select->qualifier(), parentScope, parentType);
-        //TODO(joa): set sym of select
+
+        auto objectSymbol = select->object()->symbol();
+        auto objectType = objectSymbol->type();
+        auto objectScope = objectType->scope();
+
+        auto symbol = objectScope->get(nameOf(select->qualifier()));
+
+        if(nullptr == symbol) {
+          select->symbol(
+            errorSymbol(nullptr, select, syms::ErrorReason::kNoSuchName));
+        } else {
+          select->symbol(symbol);
+        }
       }
       break;
     case K(String):
+      //TODO(joa): Link to String Symbol
       break;
     case K(This): {
         auto thiz = static_cast<ast::This*>(node);
@@ -425,6 +493,7 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
       }
       break;
     case K(True):
+      //TODO(joa): Link to Boolean Symbol
       break;
     case K(TypeParameter):
       break;

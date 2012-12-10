@@ -102,6 +102,13 @@ void SymbolsPhase::buildSymbols(ast::Node* node, syms::Scope* parentScope, syms:
     case ast::NodeKind::kVariable:
       buildVariableSymbol(static_cast<ast::Variable*>(node), parentScope, parentSymbol);
       break;
+
+    case ast::NodeKind::kIf:
+      buildIfSymbol(static_cast<ast::If*>(node), parentScope, parentSymbol);
+      break;
+    case ast::NodeKind::kIfCase:
+      buildIfCaseSymbol(static_cast<ast::IfCase*>(node), parentScope, parentSymbol);
+      break;
   }
 }
 
@@ -141,7 +148,7 @@ void SymbolsPhase::buildFunctionSymbols(ast::Function* node, syms::Scope* parent
   auto scope = newScope(m_arena, parentScope, syms::ScopeKind::kFunction);
   auto symbol =  new (m_arena) syms::FunctionSymbol();
   auto type = new (m_arena) types::FunctionType(
-      symbol, scope, 0, nullptr,
+      symbol, scope, 0, nullptr, parentSymbol->type(),
       node->parameters()->size(),
       node->parameters()->mapToArray<syms::Symbol*>(
         [&](ast::Node* node) -> syms::Symbol* {
@@ -202,11 +209,14 @@ void SymbolsPhase::buildParameterSymbol(ast::Parameter* node, syms::Scope* paren
 
 void SymbolsPhase::buildBlockScope(ast::Block* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
   auto scope = newScope(m_arena, parentScope, syms::ScopeKind::kBlock);
+  auto symbol = new (m_arena) syms::EmptySymbol();
 
+  symbol->init(parentSymbol, node);
   node->scope(scope);
+  node->symbol(symbol);
 
   node->expressions()->foreach([&](ast::Node* expression) {
-    buildSymbols(expression, parentScope, parentSymbol);
+    buildSymbols(expression, parentScope, symbol);
   });
 }
 
@@ -214,6 +224,27 @@ void SymbolsPhase::buildProgramScope(ast::Program* node, syms::Scope* symbolTabl
   node->modules()->foreach([&](ast::Node* module) {
     buildSymbols(module, symbolTable, /*parentSymbol=*/nullptr);
   });
+}
+
+
+void SymbolsPhase::buildIfSymbol(ast::If* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
+  auto symbol = new (m_arena) syms::EmptySymbol();
+  
+  symbol->init(parentSymbol, node);
+  node->symbol(symbol);
+
+  node->cases()->foreach([&](ast::Node* ifCase) {
+    buildSymbols(ifCase, parentScope, symbol);
+  });
+}
+
+void SymbolsPhase::buildIfCaseSymbol(ast::IfCase* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
+  auto symbol = new (m_arena) syms::EmptySymbol();
+
+  symbol->init(parentSymbol, node);
+  node->symbol(symbol);
+
+  buildSymbols(node->expr(), parentScope, symbol);
 }
 
 //
@@ -228,6 +259,14 @@ const char* LinkPhase::name() {
 
 void LinkPhase::apply(CompilationUnit* unit) {
   link(unit->ast(), m_symbolTable, /*parentType=*/nullptr);
+}
+
+syms::Symbol* LinkPhase::errorSymbol(syms::Symbol* parent, ast::Node* node, syms::ErrorReason reason) {
+  auto result = new (m_arena) syms::ErrorSymbol();
+  
+  result->init(nullptr, parent, node, reason);
+
+  return result;
 }
 
 void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* parentType) {
@@ -245,12 +284,11 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         auto argument = static_cast<ast::Argument*>(node);
 
         if(argument->hasName()) {
-          link(argument->name(), parentScope, parentType);
+          //TODO(joa): link to parameter sym
         }
 
         link(argument->value(), parentScope, parentType);
-
-        //TODO(joa): set resulting sym for arg
+        argument->symbol(argument->value()->symbol());
       }
       break;
     case K(Assign):
@@ -262,6 +300,9 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         block->expressions()->foreach([&](ast::Node* expression) {
           link(expression, scope, parentType);
         });
+
+        // The block symbol (which is empty) has already been
+        // assigned in the symbols phase.
       }
       break;
     case K(Call):
@@ -280,6 +321,7 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
       }
       break;
     case K(Error):
+      break;
     case K(False):
       break;
     case K(Function): {
@@ -298,26 +340,48 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         auto symbol = parentScope->get(ident->name());
 
         if(nullptr == symbol) {
-          //TODO(joa): err symbol
+          ident->symbol(
+            errorSymbol(parentType->symbol(), ident, syms::ErrorReason::kNoSuchName));
         } else {
           ident->symbol(symbol);
         }
       }
       break;
-    case K(If):
-    case K(IfCase):
+    case K(If): {
+        auto iff = static_cast<ast::If*>(node);
+        iff->cases()->foreach([&](ast::Node* ifCase) {
+          link(ifCase, parentScope, parentType);
+        });
+        //TODO(joa): lub? type?
+
+        // EmptySymbol has already been built in 
+        // the symbols phase.
+      }
+      break;
+    case K(IfCase): {
+        auto ifCase = static_cast<ast::IfCase*>(node);
+        link(ifCase->condition(), parentScope, parentType);
+        link(ifCase->expr(), parentScope, parentType);
+        
+        //TODO(joa): type?
+
+        // EmptySymbol has already been built in 
+        // the symbols phase.
+      }
       break;
     case K(Module): {
         auto module = static_cast<ast::Module*>(node);
         auto symbol = static_cast<syms::ModuleSymbol*>(module->symbol());
         auto scope = symbol->scope();
         auto type = symbol->type();
+
         module->declarations()->foreach([&](ast::Node* declaration) {
           link(declaration, scope, type);
         });
       }
       break;
     case K(ModuleDependency):
+      break;
     case K(Number):
       break;
     case K(Parameter): 
@@ -338,8 +402,30 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
       }
       break;
     case K(String):
-    case K(This):
+      break;
+    case K(This): {
+        auto thiz = static_cast<ast::This*>(node);
+        auto type = parentType;
+          
+        while(type != nullptr && type->kind() != types::TypeKind::kClass) {
+          if(type->kind() == types::TypeKind::kFunction) {
+            auto functionType = static_cast<types::FunctionType*>(type);
+            type = functionType->owner();
+          } else {
+            std::cerr << "Unknown type." << std::endl;
+          }
+        }
+       
+        if(nullptr == type) {
+          //TODO(joa): error symbol
+        } else {
+          auto classType = static_cast<types::ClassType*>(type);
+          thiz->symbol(classType->symbol());
+        }
+      }
+      break;
     case K(True):
+      break;
     case K(TypeParameter):
       break;
     case K(Variable):

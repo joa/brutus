@@ -1141,6 +1141,10 @@ Node** NodeList::nodes() const {
   return m_nodes;
 }
 
+Node* NodeList::last() const {
+  return nonEmpty() ? m_nodes[m_nodesIndex] : nullptr;
+}
+
 bool NodeList::nonEmpty() const {
   return m_nodesIndex > 0;
 }

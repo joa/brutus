@@ -99,16 +99,22 @@ namespace brutus {
             syms::Scope* scope,
             int numTypeParameters,
             Type** typeParameters,
+            Type* owner,
             int numParameters,
             syms::Symbol** parameters,
             Type* returnType)
               : Type(symbol, scope, 0, nullptr, numTypeParameters, typeParameters),
+                m_owner(owner),
                 m_numParameters(numParameters),
                 m_parameters(parameters),
                 m_returnType(returnType) {}
 
           TypeKind kind() const override final {
             return TypeKind::kFunction;
+          }
+
+          Type* owner() const {
+            return m_owner;
           }
 
           int numParameters() const {
@@ -124,6 +130,7 @@ namespace brutus {
           }
 
         private:
+          Type* m_owner;
           int m_numParameters;
           syms::Symbol** m_parameters;
           Type* m_returnType;

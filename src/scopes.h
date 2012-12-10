@@ -34,6 +34,10 @@ namespace brutus {
             return m_kind;
           }
 
+          ALWAYS_INLINE Scope* parent() {
+            return m_parent;
+          }
+
           Scope(int initialCapacity, float loadFactor, Arena* arena);
           Scope(Arena* arena);
           ~Scope() {}

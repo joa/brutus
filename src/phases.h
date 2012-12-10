@@ -62,6 +62,8 @@ namespace brutus {
         void buildParameterSymbol(ast::Parameter* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildBlockScope(ast::Block* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildProgramScope(ast::Program* node, syms::Scope* symbolTable);
+        void buildIfSymbol(ast::If* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
+        void buildIfCaseSymbol(ast::IfCase* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
 
         DISALLOW_COPY_AND_ASSIGN(SymbolsPhase);
     };
@@ -75,6 +77,7 @@ namespace brutus {
         syms::Scope* m_symbolTable;
         
         void link(ast::Node* node, syms::Scope* scope, types::Type* parentType);
+        syms::Symbol* errorSymbol(syms::Symbol* parent, ast::Node* node, syms::ErrorReason reason);
 
         DISALLOW_COPY_AND_ASSIGN(LinkPhase);
     };

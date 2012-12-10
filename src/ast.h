@@ -17,6 +17,10 @@ namespace brutus {
       class Scope;
     }
 
+    namespace types {
+      class Type;
+    }
+
     namespace ast {
       enum class NodeKind {
         kArgument,
@@ -65,8 +69,17 @@ namespace brutus {
             m_symbol = value;
           }
 
+          types::Type* type() const {
+            return m_type;
+          }
+
+          void type(types::Type* value) {
+            m_type = value;
+          }
+
         private:
           syms::Symbol* m_symbol;
+          types::Type* m_type;
 
           void* operator new(size_t size);
           
@@ -80,6 +93,7 @@ namespace brutus {
           int size() const;
           Node* get(const int& index);
           Node** nodes() const;
+          Node* last() const;
           bool nonEmpty() const;
           void foreach(std::function<void(Node*)> f); //NOLINT
           bool forall(std::function<bool(Node*)> f); //NOLINT

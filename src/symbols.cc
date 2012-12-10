@@ -55,6 +55,18 @@ SymbolKind VariableSymbol::kind() const {
 void VariableSymbol::init(Name* name, Symbol* parent, ast::Node* ast) {
   Symbol::init(name, parent, ast, nullptr);
 }
+
+//
+
+EmptySymbol::EmptySymbol() {}
+
+SymbolKind EmptySymbol::kind() const {
+  return SymbolKind::kEmpty;
+}
+
+void EmptySymbol::init(Symbol* parent, ast::Node* ast) {
+  Symbol::init(nullptr, parent, ast, nullptr);
+}
 } //namespace syms
 } //namespace internal
 } //namespace brutus

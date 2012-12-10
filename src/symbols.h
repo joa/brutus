@@ -23,11 +23,13 @@ namespace brutus {
         kFunction,
         kModule,
         kOverload,
-        kVariable
+        kVariable,
+        kEmpty
       }; //enum SymbolKind
 
       enum class ErrorReason {
-        kUnknown
+        kUnknown,
+        kNoSuchName
       };
       
       class OverloadSymbol;
@@ -163,6 +165,16 @@ namespace brutus {
         private:
           DISALLOW_COPY_AND_ASSIGN(VariableSymbol);
       }; //class VariableSymbol
+
+      class EmptySymbol : public Symbol {
+        public:
+          EmptySymbol();
+          void init(Symbol* parent, ast::Node* ast);
+          SYMBOL_OVERRIDES();
+
+        private:
+          DISALLOW_COPY_AND_ASSIGN(EmptySymbol);
+      }; //class EmptySymbol
     } //namespace syms
   } //namespace internal
 } //namespace brutus

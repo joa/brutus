@@ -206,6 +206,7 @@ namespace brutus {
 #ifdef DEBUG
         if(nullptr == m_alloc) {
           std::cerr << "Error: Allocator is already null.";
+          return;
         }
 #endif
 

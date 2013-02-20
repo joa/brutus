@@ -21,6 +21,7 @@ namespace brutus {
     class Phase {
       public:
         explicit Phase(Arena* arena);
+        virtual ~Phase() {}
         virtual const char* name() = 0;
         virtual void apply(CompilationUnit* unit) = 0;
         Stopwatch* stopwatch();

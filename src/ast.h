@@ -109,8 +109,7 @@ namespace brutus {
             for(int i = 0; i < n; ++i) {
               auto node = *p++;
 
-              *q = (nullptr != node) ? f(node) : nullptr;
-              *q++;
+              *(q++) = (nullptr != node) ? f(node) : nullptr;
             }
 
             return result;

@@ -12,7 +12,6 @@
 #include "compiler.h"
 
 //#define PERF_TEST
-const auto numIterations = 100000000;
 const auto numTrials = 10000;
 
 void perf_test(std::function<int()> f) {
@@ -89,6 +88,5 @@ int main(int argc, char** argv) {
   });
 #endif
 
-  system("PAUSE");
-  return 0;
+  return system("PAUSE");
 }

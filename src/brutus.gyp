@@ -17,6 +17,7 @@
         'list.cc',
         'name.cc',
         'parser.cc',
+        'phases.cc',
         'scopes.cc',
         'stopwatch.cc',
         'streams.cc',

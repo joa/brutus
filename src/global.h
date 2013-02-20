@@ -44,9 +44,9 @@
 #define NO false
 
 #ifdef __GNUC__
-  #define ALWAYS_INLINE __attribute__((always_inline))
+  #define ALWAYS_INLINE inline __attribute__((always_inline))
 #else
-  #define ALWAYS_INLINE __forceinline
+  #define ALWAYS_INLINE inline __forceinline
 #endif
 
 #ifdef __GNUC__

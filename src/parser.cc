@@ -165,13 +165,18 @@ ast::Node* Parser::parseModuleVersion() {
     isBracket = NO;
   } else {
     auto number = parseNumberLiteral();
+
     //TODO(joa): NumberLiteral
+    UNUSED(number);
+
     return error("TODO NumberLiteral");
   }
 
   if(poll(Token::kComma)) {
     // ?,
     auto x = parseNumberLiteral();
+
+    UNUSED(x);
 
     if(poll(Token::kRBrac)) {
       //?,x]
@@ -186,6 +191,8 @@ ast::Node* Parser::parseModuleVersion() {
     // ?x
     auto x = parseNumberLiteral();
 
+    UNUSED(x);
+
     if(poll(Token::kComma)) {
       //[x,
       if(poll(Token::kRBrac)) {
@@ -197,6 +204,8 @@ ast::Node* Parser::parseModuleVersion() {
       } else {
         //[x,y
         auto y = parseNumberLiteral();
+
+        UNUSED(y);
 
         if(poll(Token::kRBrac)) {
           //[x,y]
@@ -965,6 +974,8 @@ ast::Node* Parser::parseVariable(unsigned int flags) {
 //
 ast::Node* Parser::parseType() {
   auto mustBeImmutable = poll(Token::kImmutable);
+
+  UNUSED(mustBeImmutable);
 
   //TODO(joa): wrap in type, add attrib
   if(poll(Token::kLParen)) {

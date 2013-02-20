@@ -229,7 +229,7 @@ static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
 const char* toString(const Token& token) {
 #define TOKEN_TO_STRING_CASE(T) case Token::##T: return ""#T
   switch(token) {
-    TOKEN_TO_STRING_CASE(kEof);
+    /*TOKEN_TO_STRING_CASE(kEof);
     TOKEN_TO_STRING_CASE(kError);
     TOKEN_TO_STRING_CASE(kNewLine);
     TOKEN_TO_STRING_CASE(kWhitespace);
@@ -278,7 +278,7 @@ const char* toString(const Token& token) {
     TOKEN_TO_STRING_CASE(kModule);
     TOKEN_TO_STRING_CASE(kRequire);
     TOKEN_TO_STRING_CASE(kPure);
-    TOKEN_TO_STRING_CASE(kImmutable);
+    TOKEN_TO_STRING_CASE(kImmutable);*///TODO(joa): fixme
     default: return "<<unknown>>";
   }
   #undef TOKEN_TO_STRING_CASE

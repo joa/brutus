@@ -118,6 +118,10 @@ void SymbolsPhase::buildSymbols(ast::Node* node, syms::Scope* parentScope, syms:
     case ast::NodeKind::kIfCase:
       buildIfCaseSymbol(static_cast<ast::IfCase*>(node), parentScope, parentSymbol);
       break;
+
+    default:
+      std::cerr << "Internal error.";
+      break;
   }
 }
 

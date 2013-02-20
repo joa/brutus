@@ -577,7 +577,7 @@ NodeKind ModuleDependency::kind() const {
 
 void ModuleDependency::init(Node* name, Node* version) {
   m_name = name;
-  m_version = m_version;
+  m_version = version;
 }
 
 Node* ModuleDependency::name() const {

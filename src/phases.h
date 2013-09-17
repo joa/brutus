@@ -16,11 +16,12 @@
 
 namespace brutus {
   class CompilationUnit;
+  class Context;
 
   namespace internal {
     class Phase {
       public:
-        explicit Phase(Arena* arena);
+        explicit Phase(Context* context);
         virtual ~Phase() {}
         virtual const char* name() = 0;
         virtual void apply(CompilationUnit* unit) = 0;
@@ -28,7 +29,7 @@ namespace brutus {
         void log();
 
       protected:
-        Arena* m_arena;
+        Context* m_context;
 
       private:
         Stopwatch m_stopwatch;
@@ -37,7 +38,8 @@ namespace brutus {
 
     class ParsePhase : public Phase {
       public:
-        explicit ParsePhase(Lexer* lexer, Parser* parser, Arena* arena);
+        explicit ParsePhase(Context* context);
+        ~ParsePhase();
         PHASE_OVERRIDES();
 
       private:
@@ -49,12 +51,10 @@ namespace brutus {
 
     class SymbolsPhase : public Phase {
       public:
-        explicit SymbolsPhase(syms::Scope* symbolTable, Arena* arena);
+        explicit SymbolsPhase(Context* context);
         PHASE_OVERRIDES();
 
       private:
-        syms::Scope* m_symbolTable;
-        
         void buildSymbols(ast::Node* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildClassSymbols(ast::Class* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
         void buildFunctionSymbols(ast::Function* node, syms::Scope* parentScope, syms::Symbol* parentSymbol);
@@ -71,12 +71,10 @@ namespace brutus {
 
     class LinkPhase : public Phase {
       public:
-        explicit LinkPhase(syms::Scope* symbolTable, Arena* arena);
+        explicit LinkPhase(Context* context);
         PHASE_OVERRIDES();
 
       private:
-        syms::Scope* m_symbolTable;
-        
         void link(ast::Node* node, syms::Scope* scope, types::Type* parentType);
         syms::Symbol* errorSymbol(syms::Symbol* parent, ast::Node* node, syms::ErrorReason reason);
 

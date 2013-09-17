@@ -16,7 +16,7 @@ Scope::Scope(int initialCapacity, float loadFactor, Arena* arena)
   m_tableSize = capacity;
 }
 
-Scope::Scope(Arena* arena) 
+Scope::Scope(Arena* arena)
     : m_arena(arena),
       m_size(0),
       m_parent(nullptr),
@@ -48,11 +48,11 @@ bool Scope::contains(Symbol* symbol) {
 Symbol* Scope::get(Name* name) {
   const int hashCode = name->m_hashCode;
   auto scope = this;
-  
+
   do {
     const int keyIndex = indexOf(hashCode, scope->m_tableSize);
     Symbol* entry = scope->m_table[keyIndex];
-  
+
     while(entry != nullptr) {
       if(entry->m_name == name) {
         return entry;
@@ -101,7 +101,7 @@ Symbol* Scope::putOrOverload(Name* name, Symbol* symbol) {
 
   Symbol* prev = nullptr;
   Symbol* next = m_table[keyIndex];
-  
+
   while(next != nullptr) {
     if(next->m_name == name) {
       if(next->kind() == SymbolKind::kOverload) {
@@ -177,6 +177,65 @@ void Scope::transfer(Symbol** src, int srcSize, Symbol** dst, int dstSize) {
   ArrayFill(src, 0, srcSize);
 }
 
+Symbol* SymbolTable::get(Name* name) {
+  // #1 lookup module of name
+  // #2 lookup name in module
+
+  //TODO(joa): cache this lookup
+
+  Scope* currentScope = m_scope;
+  const char* chars = name->value();
+  int32_t length = name->length();
+  int32_t lastIndex = 0;
+
+  //TODO(joa): this is sloppy, what if name begins with '.'?
+
+  for(int32_t i = 0; i < length; ++i) {
+    if(*(chars + i) == '.') {
+      int32_t moduleNameLength = i - lastIndex;
+
+      if(moduleNameLength > 0) {
+        auto symbol =
+          static_cast<ModuleSymbol*>(
+            currentScope->get(
+              m_names->get(
+                chars + lastIndex,
+                moduleNameLength,
+                /*copyValue=*/false)));
+
+        if(nullptr == symbol) {
+#ifdef DEBUG
+          std::cout << "Could not find module: \"";
+
+          for(int32_t j = 0; j < moduleNameLength; ++j) {
+            std::cout << *(chars + lastIndex + j);
+          }
+          std::cout << "\"" << std::endl;
+#endif
+          return nullptr;
+        }
+
+        currentScope = symbol->scope();
+        lastIndex = i + 1;
+      }
+    }
+  }
+
+  auto result =
+    currentScope->get(m_names->get(chars + lastIndex, length - lastIndex, false));
+
+#ifdef DEBUG
+  if(nullptr == result) {
+    std::cout << "Could not find \"";
+    for(int32_t j = 0; j < length - lastIndex; ++j) {
+      std::cout << *(chars + lastIndex + j);
+    }
+    std::cout << "\"" << std::endl;
+  }
+#endif
+
+  return result;
+}
 } //namespace syms
 } //namespace internal
 } //namespace brutus

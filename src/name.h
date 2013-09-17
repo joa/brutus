@@ -7,9 +7,9 @@
 #include "arena.h"
 
 namespace brutus {
-  namespace internal {  
+  namespace internal {
     class NameTable;
-    
+
     namespace syms { class Scope; }
 
     class Name : public ArenaMember {
@@ -43,7 +43,7 @@ namespace brutus {
 
         DISALLOW_COPY_AND_ASSIGN(Name);
     }; //class Name
-    
+
     class NameTable {
       public:
         static const float DefaultLoadFactor;
@@ -58,7 +58,13 @@ namespace brutus {
           return this->get("", 1, /*copyValue=*/false);
         }
 
-        inline int size() { 
+        #define PREDEFINED_NAME(x) \
+          return this->get(x, sizeof(x) - 1, /*copyValue=*/false)
+
+        inline Name* brutus_Int() { PREDEFINED_NAME("brutus.Int"); }
+        inline Name* brutus_String() { PREDEFINED_NAME("brutus.String"); }
+
+        inline int size() {
           return m_size;
         }
       private:

@@ -20,11 +20,11 @@ namespace internal {
 // Block
 //  : '{' Expression (NEWLINE Expression)* '}'
 //  | Expression
-//  
+//
 // The Block production rule is read as following:
 //
 // There are two cases. The first is LBRACE followed by the Expression rule.
-// Then there are 0 ore more repitions of a newline token followed by an 
+// Then there are 0 ore more repitions of a newline token followed by an
 // Expression. This is followed by a final RBRACE token.
 //
 // The second case is just a single Expression.
@@ -68,7 +68,7 @@ ast::Node* Parser::parseProgram() {
 
 //
 // Module
-//  : 'module' ActorName '{' NEWLINE (ModuleDeclaration NEWLINE)* '}' 
+//  : 'module' ActorName '{' NEWLINE (ModuleDeclaration NEWLINE)* '}'
 //  ;
 //
 
@@ -108,7 +108,7 @@ ast::Node* Parser::parseModule() {
       dependencies->add(parseModuleDependency(), m_arena);
     } else {
       ast::Node* declaration = parseDeclaration();
-    
+
       if(nullptr == declaration) {
         declarations->add(parseExpression(), m_arena);
       } else {
@@ -228,12 +228,12 @@ ast::Node* Parser::parseModuleVersion() {
 }
 
 //
-// Block 
+// Block
 //  : '{' NEWLINE (Block NEWLINE)+ '}'
 //  | Expression
 //  | Declaration
 //  ;
-// 
+//
 ast::Node* Parser::parseBlock() {
   if(poll(Token::kLBrace)) {
     EXPECT(Token::kNewLine);
@@ -249,11 +249,11 @@ ast::Node* Parser::parseBlock() {
     return block;
   } else {
     ast::Node* declaration = parseDeclaration();
-    
+
     if(nullptr == declaration) {
       return parseExpression();
     }
-    
+
     return declaration;
   }
 }
@@ -330,7 +330,7 @@ ast::Node* Parser::parseDeclaration() {
       return error("Expected 'def', 'var', 'val' or 'class'.");
     }
   } else if(poll(Token::kImmutable)) {
-    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_IMMUTABLE; 
+    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_IMMUTABLE;
 
     if(poll(Token::kVirtual)) {
       flags |= Parser::ACC_VIRTUAL;
@@ -346,7 +346,7 @@ ast::Node* Parser::parseDeclaration() {
       return error("Expected 'class'.");
     }
   } else if(poll(Token::kPure)) {
-    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_PURE; 
+    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_PURE;
 
     if(poll(Token::kVirtual)) {
       flags |= Parser::ACC_VIRTUAL;
@@ -363,7 +363,7 @@ ast::Node* Parser::parseDeclaration() {
     }
   } else if(poll(Token::kVirtual)) {
     // "virtual class" is the same as "public virtual class"
-    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_VIRTUAL; 
+    unsigned int flags = Parser::ACC_PUBLIC | Parser::ACC_VIRTUAL;
 
     if(poll(Token::kNative)) {
       flags |= Parser::ACC_NATIVE;
@@ -384,9 +384,9 @@ ast::Node* Parser::parseDeclaration() {
 }
 
 bool Parser::peekVisibility() {
-  return peek(Token::kPublic) 
-      || peek(Token::kPrivate) 
-      || peek(Token::kProtected) 
+  return peek(Token::kPublic)
+      || peek(Token::kPrivate)
+      || peek(Token::kProtected)
       || peek(Token::kInternal);
 }
 
@@ -400,8 +400,8 @@ bool Parser::peekVisibility() {
 
 //
 // Class
-//  : Visibility? 'virtual'? 'native'? 'class' Identifier TypeParameter? 
-//      Constructor Extends? '{' NEWLINE (Definition NEWLINE)* '}' 
+//  : Visibility? 'virtual'? 'native'? 'class' Identifier TypeParameter?
+//      Constructor Extends? '{' NEWLINE (Definition NEWLINE)* '}'
 //
 ast::Node* Parser::parseClass(unsigned int flags) {
   if(0 == flags) {
@@ -415,7 +415,7 @@ ast::Node* Parser::parseClass(unsigned int flags) {
 
   if(peek(Token::kLBrac)) {
     auto error = parseTypeParameterList(result->typeParameters());
-    
+
     if(nullptr != error) {
       return error;
     }
@@ -435,7 +435,7 @@ ast::Node* Parser::parseClass(unsigned int flags) {
     EXPECT(Token::kNewLine);
 
     auto members = result->members();
-    
+
     while(!poll(Token::kRBrace)) {
       pollAll(Token::kNewLine);
       members->add(parseDeclaration(), m_arena);
@@ -471,34 +471,34 @@ ast::Node* Parser::parseClass(unsigned int flags) {
 //
 ast::Node* Parser::parseFunction(unsigned int flags) {
   EXPECT(Token::kDef);
-  
+
   auto name = parseIdentifier();
   auto result = alloc<ast::Function>();
 
   if(peek(Token::kLBrac)) {
     auto error = parseTypeParameterList(result->typeParameters());
-    
+
     if(nullptr != error) {
       return error;
     }
   }
-  
+
   EXPECT(Token::kLParen);
-  
+
   if(!peek(Token::kRParen)) {
     if(!parseParameterList(result->parameters())) {
       return error("Function exceeds max arity.");
     }
   }
-  
+
   EXPECT(Token::kRParen);
-  
+
   ast::Node* block = nullptr;
   ast::Node* type = nullptr;
 
   if(poll(Token::kColon)) {
     type = parseType();
-    
+
     if(poll(Token::kAssign)) {
       block = parseBlock();
     } else if(peek(Token::kNewLine)) {
@@ -545,7 +545,7 @@ ast::Node* Parser::parseParameter() {
   auto result = alloc<ast::Parameter>();
 
   result->init(name, type);
-  
+
   return result;
 }
 
@@ -576,15 +576,15 @@ ast::Node* Parser::parseExpression(bool allowInfixCall) {
 
   if(poll(Token::kLParen)) {
     expression = parseExpression();
-    
+
     if(peek(Token::kComma)) {
       int arity = 1;
 
       do {
         EXPECT(Token::kComma);
-        
+
         parseExpression();
-        
+
         ++arity;
 
         if(arity > consts::MaxTupleArity) {
@@ -618,7 +618,7 @@ ast::Node* Parser::parsePrimaryExpression() {
     return parseIdentifier();
   } else if(peek(Token::kNumberLiteral)) {
     return parseNumberLiteral();
-  } else if(peek(Token::kTrue) || peek(Token::kYes) || 
+  } else if(peek(Token::kTrue) || peek(Token::kYes) ||
             peek(Token::kFalse) || peek(Token::kNo)) {
     return parseBooleanLiteral();
   } else if(peek(Token::kStringLiteral)) {
@@ -655,7 +655,7 @@ ast::Node* Parser::continueWithExpression(
         //auto ref = parseRef(expression);
         //expression = ref;
         expression = error("TODO: implement #-select");
-      } else if(peek(Token::kLParen) || 
+      } else if(peek(Token::kLParen) ||
           (allowInfixCall && peek(Token::kIdentifier))) {
         auto call = parseCall(expression);
         expression = call;
@@ -680,7 +680,7 @@ ast::Node* Parser::parseSelect(ast::Node* object) {
 
   auto qualifier = parseIdentifier();
   auto result = alloc<ast::Select>();
-  
+
   result->init(object, qualifier);
 
   return result;
@@ -714,7 +714,7 @@ ast::Node* Parser::parseCall(ast::Node* callee) {
     if(!peek(Token::kRParen)) {
       parseArgumentList(result->arguments());
     }
-    
+
     EXPECT(Token::kRParen);
 
     result->init(callee);
@@ -795,7 +795,7 @@ ast::Node* Parser::parseSingleArgument() {
 
 //
 // AnonymousFunctionExpression
-//  : '{' NEWLINE* AnonymousFunctionParameterList 
+//  : '{' NEWLINE* AnonymousFunctionParameterList
 //    (':' Type?) ->' Block NEWLINE* '}'
 //
 ast::Node* Parser::parseAnonymousFunctionExpression() {
@@ -891,7 +891,7 @@ ast::Node* Parser::parseStringLiteral() {
 //  | if IfCase
 ast::Node* Parser::parseIfExpression() {
   auto result = alloc<ast::If>();
-  
+
   EXPECT(Token::kIf);
   if(poll(Token::kLBrace)) {
     EXPECT(Token::kNewLine);
@@ -959,7 +959,7 @@ ast::Node* Parser::parseVariable(unsigned int flags) {
   }
 
   auto result = alloc<ast::Variable>();
-  
+
   result->init(modifiable, name, type, init, isForced);
 
   return result;
@@ -1021,7 +1021,7 @@ ast::Node* Parser::parseType() {
 //
 ast::Node* Parser::parseTypeParameterList(ast::NodeList* list) {
   EXPECT(Token::kLBrac);
-  
+
   do {
     list->add(parseTypeParameter(), m_arena);
   } while(poll(Token::kComma));

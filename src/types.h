@@ -22,13 +22,11 @@ namespace brutus {
 
           explicit Type(
             syms::Symbol* symbol,
-            syms::Scope* scope,
             int numBaseTypes,
             Type** baseTypes,
             int numTypeParameters,
-            Type** typeParameters) 
-              : m_symbol(symbol), 
-                m_scope(scope),
+            Type** typeParameters)
+              : m_symbol(symbol),
                 m_numBaseTypes(numBaseTypes),
                 m_baseTypes(baseTypes),
                 m_numTypeParameters(numTypeParameters),
@@ -38,10 +36,6 @@ namespace brutus {
 
           syms::Symbol* symbol() const {
             return m_symbol;
-          }
-
-          syms::Scope* scope() const {
-            return m_scope;
           }
 
           int numBaseTypes() const {
@@ -64,7 +58,6 @@ namespace brutus {
           void* operator new(size_t size);
 
           syms::Symbol* m_symbol;
-          syms::Scope* m_scope;
           int m_numBaseTypes;
           Type** m_baseTypes;
           int m_numTypeParameters;
@@ -72,17 +65,16 @@ namespace brutus {
 
           DISALLOW_COPY_AND_ASSIGN(Type);
       };
-      
+
       class ClassType : public Type {
         public:
           ClassType(
             syms::Symbol* symbol,
-            syms::Scope* scope,
             int numBaseTypes,
             Type** baseTypes,
             int numTypeParameters,
-            Type** typeParameters) 
-              : Type(symbol, scope, numBaseTypes, baseTypes, numTypeParameters, typeParameters) {}
+            Type** typeParameters)
+              : Type(symbol, numBaseTypes, baseTypes, numTypeParameters, typeParameters) {}
 
           TypeKind kind() const override final {
             return TypeKind::kClass;
@@ -96,7 +88,6 @@ namespace brutus {
         public:
           FunctionType(
             syms::Symbol* symbol,
-            syms::Scope* scope,
             int numTypeParameters,
             Type** typeParameters,
             Type* owner,

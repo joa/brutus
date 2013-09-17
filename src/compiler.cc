@@ -9,15 +9,12 @@ Compiler::Compiler() {
   m_arena->init();
   m_arenaAlloc = new internal::ArenaAllocator(m_arena);
   m_names = new internal::NameTable(m_arena);
-  m_symbolTable = new (m_arena) internal::syms::Scope(m_arena);
-  m_symbolTable->init(nullptr, internal::syms::ScopeKind::kModule);
+  m_symbolTable = new (m_arena) internal::syms::SymbolTable(m_names, m_arena);
   m_phases = new List<internal::Phase*>(m_arenaAlloc);
   m_units = new List<CompilationUnit*>(m_arenaAlloc);
-  m_lexer = new internal::Lexer(); 
-  m_parser = new internal::Parser(m_lexer, m_names, m_arena);
-  m_phases->addLast(new internal::ParsePhase(m_lexer, m_parser, m_arena));
-  m_phases->addLast(new internal::SymbolsPhase(m_symbolTable, m_arena));
-  m_phases->addLast(new internal::LinkPhase(m_symbolTable, m_arena));
+  m_phases->addLast(new internal::ParsePhase(this));
+  m_phases->addLast(new internal::SymbolsPhase(this));
+  m_phases->addLast(new internal::LinkPhase(this));
   m_phase = 0;
 }
 
@@ -30,8 +27,6 @@ Compiler::~Compiler() {
     delete phase;
   });
 
-  delete m_parser;
-  delete m_lexer;
   delete m_units;
   delete m_phases;
   delete m_names;
@@ -56,7 +51,7 @@ void Compiler::compile() {
     m_units->foreach([&](CompilationUnit* unit) {
       phase->apply(unit);
     });
-    
+
     phase->stopwatch()->pause();
     phase->log(); //TODO(joa): of course not here
     ++m_phase;

@@ -120,7 +120,7 @@ static const Token SingleCharacterTokens[] = {
   Token::kError, //39
   Token::kLParen, //40 '('
   Token::kRParen, //41 ')'
-  Token::kError, //42 
+  Token::kError, //42
   Token::kError, //43
   Token::kComma, //44 ','
   Token::kError, //45
@@ -227,58 +227,58 @@ static_assert('#' == 35, "'#' must equal 35.");
 static const size_t NUM_KEYWORDS = NumberOfElements(KeywordChars);
 
 const char* toString(const Token& token) {
-#define TOKEN_TO_STRING_CASE(T) case Token::##T: return ""#T
+#define TOKEN_TO_STRING_CASE(x) case Token::k##x: return ""#x
   switch(token) {
-    /*TOKEN_TO_STRING_CASE(kEof);
-    TOKEN_TO_STRING_CASE(kError);
-    TOKEN_TO_STRING_CASE(kNewLine);
-    TOKEN_TO_STRING_CASE(kWhitespace);
-    TOKEN_TO_STRING_CASE(kIdentifier);
-    TOKEN_TO_STRING_CASE(kNumberLiteral);
-    TOKEN_TO_STRING_CASE(kStringLiteral);
-    TOKEN_TO_STRING_CASE(kCommentSingle);
-    TOKEN_TO_STRING_CASE(kCommentMulti);
-    TOKEN_TO_STRING_CASE(kSemicolon);
-    TOKEN_TO_STRING_CASE(kComma);
-    TOKEN_TO_STRING_CASE(kLParen);
-    TOKEN_TO_STRING_CASE(kRParen);
-    TOKEN_TO_STRING_CASE(kLBrac);
-    TOKEN_TO_STRING_CASE(kRBrac);
-    TOKEN_TO_STRING_CASE(kLBrace);
-    TOKEN_TO_STRING_CASE(kRBrace);
-    TOKEN_TO_STRING_CASE(kDot);
-    TOKEN_TO_STRING_CASE(kColon);
-    TOKEN_TO_STRING_CASE(kAssign);
-    TOKEN_TO_STRING_CASE(kLArrow);
-    TOKEN_TO_STRING_CASE(kRArrow);
-    TOKEN_TO_STRING_CASE(kHash);
-    TOKEN_TO_STRING_CASE(kThis);
-    TOKEN_TO_STRING_CASE(kVal);
-    TOKEN_TO_STRING_CASE(kVar);
-    TOKEN_TO_STRING_CASE(kDef);
-    TOKEN_TO_STRING_CASE(kFor);
-    TOKEN_TO_STRING_CASE(kWhile);
-    TOKEN_TO_STRING_CASE(kYield);
-    TOKEN_TO_STRING_CASE(kTrue);
-    TOKEN_TO_STRING_CASE(kFalse);
-    TOKEN_TO_STRING_CASE(kYes);
-    TOKEN_TO_STRING_CASE(kNo);
-    TOKEN_TO_STRING_CASE(kIf);
-    TOKEN_TO_STRING_CASE(kNew);
-    TOKEN_TO_STRING_CASE(kOn);
-    TOKEN_TO_STRING_CASE(kClass);
-    TOKEN_TO_STRING_CASE(kTrait);
-    TOKEN_TO_STRING_CASE(kVirtual);
-    TOKEN_TO_STRING_CASE(kPublic);
-    TOKEN_TO_STRING_CASE(kPrivate);
-    TOKEN_TO_STRING_CASE(kProtected);
-    TOKEN_TO_STRING_CASE(kInternal);
-    TOKEN_TO_STRING_CASE(kNative);
-    TOKEN_TO_STRING_CASE(kForce);
-    TOKEN_TO_STRING_CASE(kModule);
-    TOKEN_TO_STRING_CASE(kRequire);
-    TOKEN_TO_STRING_CASE(kPure);
-    TOKEN_TO_STRING_CASE(kImmutable);*///TODO(joa): fixme
+    TOKEN_TO_STRING_CASE(Eof);
+    TOKEN_TO_STRING_CASE(Error);
+    TOKEN_TO_STRING_CASE(NewLine);
+    TOKEN_TO_STRING_CASE(Whitespace);
+    TOKEN_TO_STRING_CASE(Identifier);
+    TOKEN_TO_STRING_CASE(NumberLiteral);
+    TOKEN_TO_STRING_CASE(StringLiteral);
+    TOKEN_TO_STRING_CASE(CommentSingle);
+    TOKEN_TO_STRING_CASE(CommentMulti);
+    TOKEN_TO_STRING_CASE(Semicolon);
+    TOKEN_TO_STRING_CASE(Comma);
+    TOKEN_TO_STRING_CASE(LParen);
+    TOKEN_TO_STRING_CASE(RParen);
+    TOKEN_TO_STRING_CASE(LBrac);
+    TOKEN_TO_STRING_CASE(RBrac);
+    TOKEN_TO_STRING_CASE(LBrace);
+    TOKEN_TO_STRING_CASE(RBrace);
+    TOKEN_TO_STRING_CASE(Dot);
+    TOKEN_TO_STRING_CASE(Colon);
+    TOKEN_TO_STRING_CASE(Assign);
+    TOKEN_TO_STRING_CASE(LArrow);
+    TOKEN_TO_STRING_CASE(RArrow);
+    TOKEN_TO_STRING_CASE(Hash);
+    TOKEN_TO_STRING_CASE(This);
+    TOKEN_TO_STRING_CASE(Val);
+    TOKEN_TO_STRING_CASE(Var);
+    TOKEN_TO_STRING_CASE(Def);
+    TOKEN_TO_STRING_CASE(For);
+    TOKEN_TO_STRING_CASE(While);
+    TOKEN_TO_STRING_CASE(Yield);
+    TOKEN_TO_STRING_CASE(True);
+    TOKEN_TO_STRING_CASE(False);
+    TOKEN_TO_STRING_CASE(Yes);
+    TOKEN_TO_STRING_CASE(No);
+    TOKEN_TO_STRING_CASE(If);
+    TOKEN_TO_STRING_CASE(New);
+    TOKEN_TO_STRING_CASE(On);
+    TOKEN_TO_STRING_CASE(Class);
+    TOKEN_TO_STRING_CASE(Trait);
+    TOKEN_TO_STRING_CASE(Virtual);
+    TOKEN_TO_STRING_CASE(Public);
+    TOKEN_TO_STRING_CASE(Private);
+    TOKEN_TO_STRING_CASE(Protected);
+    TOKEN_TO_STRING_CASE(Internal);
+    TOKEN_TO_STRING_CASE(Native);
+    TOKEN_TO_STRING_CASE(Force);
+    TOKEN_TO_STRING_CASE(Module);
+    TOKEN_TO_STRING_CASE(Require);
+    TOKEN_TO_STRING_CASE(Pure);
+    TOKEN_TO_STRING_CASE(Immutable);
     default: return "<<unknown>>";
   }
   #undef TOKEN_TO_STRING_CASE
@@ -357,7 +357,7 @@ Token Lexer::nextToken() {
       // position information.
       ++m_line;
       m_column = 0;
-      
+
       return resulting(
         [&](const char c) { return isNewLine(c); },
         [&](const char) -> bool {
@@ -384,8 +384,8 @@ Token Lexer::nextToken() {
       }
     } else if('-' == currentChar) {
       if(advance() == '>') {
-        // One could decide to allow operators like ->> but then again this 
-        // becomes really confusing when looking at code like "x -> x ->> y" so 
+        // One could decide to allow operators like ->> but then again this
+        // becomes really confusing when looking at code like "x -> x ->> y" so
         // the call is to disallow other operators that start with -> since this
         // should be a rare case anyways.
         return Token::kRArrow;
@@ -421,7 +421,7 @@ char* Lexer::value() {
 }
 
 size_t Lexer::valueLength() {
-  return m_bufferIndex + 1;
+  return m_bufferIndex;
 }
 
 unsigned int Lexer::posLine() {
@@ -448,7 +448,7 @@ char Lexer::advance() {
   }
 
   ++m_column;
-  
+
   return m_currentChar;
 }
 
@@ -468,7 +468,7 @@ bool Lexer::isWhitespace(const char c) {
   // source code so only space characters are treated
   // as whitespace.
   //
-  // For completeness we should also check for the unicode 
+  // For completeness we should also check for the unicode
   // characters however they wont be matched here anyways.
   //
   // Instead we will have to do this once unicode
@@ -535,9 +535,9 @@ Token Lexer::continueWithNumberStart(const char currentChar) {
 
   if(secondChar == 'x') {
     // Parse hexadecimal literal
-    
+
     CONTINUE_BUFFER(secondChar);
-    
+
     while(canAdvance()) {
       const auto hexChar = advance();
 
@@ -553,7 +553,7 @@ Token Lexer::continueWithNumberStart(const char currentChar) {
 
     bool eAllowed = secondChar != 'e';
     bool dotAllowed = eAllowed && secondChar != '.';
-    
+
     // Parse a digit of one of the following forms:
     //
     // 12 ...
@@ -568,7 +568,7 @@ Token Lexer::continueWithNumberStart(const char currentChar) {
       } else if(eAllowed && nextChar == 'e') {
         eAllowed = NO;
         dotAllowed = NO;
-        
+
         CONTINUE_BUFFER(nextChar);
 
         const auto nextCharAfterE = advance();
@@ -594,7 +594,7 @@ Token Lexer::continueWithNumberStart(const char currentChar) {
             rewind();
             return Token::kError;
           }
-        } else if(isDigit(nextCharAfterE)) { 
+        } else if(isDigit(nextCharAfterE)) {
           CONTINUE_BUFFER(nextCharAfterE);
         } else {
           // We have a literal of the form "1e" instead of "1e1".
@@ -614,7 +614,7 @@ Token Lexer::continueWithNumberStart(const char currentChar) {
     rewind();
   }
 
-  // We can also do something like this to 
+  // We can also do something like this to
   // check for a long value.
   //
   // if(advance() == 'L') {
@@ -677,7 +677,7 @@ Token Lexer::continueWithIdentifierStart(
 
   //TODO(joa): optimize keyword lookup
   if(!containsOperator) {
-    // No keyword contains an operator so we can skip the 
+    // No keyword contains an operator so we can skip the
     // check if the identifier contains an operator.
     for(size_t i = 0; i < tok::NUM_KEYWORDS; ++i) {
       if(0 == std::strcmp(tok::KeywordChars[i], m_buffer)) {
@@ -718,7 +718,7 @@ Token Lexer::continueWithBacktick() {
 
 Token Lexer::continueWithString() {
   // We already have one " character.
-  
+
   if(!canAdvance()) {
     // If we are at the EOF we have an open string
     // literal lotering around.
@@ -726,7 +726,7 @@ Token Lexer::continueWithString() {
   }
 
   const auto currentChar = advance();
-  
+
   if('"' == currentChar) {
     // We have two " characters.
 
@@ -836,7 +836,7 @@ Token Lexer::continueWithString() {
 Token Lexer::continueWithSlash(const char currentChar) {
   beginBuffer(currentChar);
 
-  const auto nextChar = advance(); 
+  const auto nextChar = advance();
 
   if(nextChar == '/') {
     CONTINUE_BUFFER(nextChar);
@@ -856,7 +856,7 @@ Token Lexer::continueWithSlash(const char currentChar) {
     CONTINUE_BUFFER(nextChar);
 
     int openComments = 1;
-    
+
     while(openComments > 0 && canAdvance()) {
       const auto commentChar = advance();
 
@@ -902,7 +902,7 @@ void Lexer::resetBuffer() {
 
 void Lexer::beginBuffer(const char c) {
   resetBuffer();
-  
+
   m_buffer[0] = c;
   m_bufferIndex = 1;
 }

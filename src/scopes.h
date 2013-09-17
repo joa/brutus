@@ -14,10 +14,11 @@ namespace brutus {
 
       enum class ScopeKind {
         kUnknown,
-        kBlock,
-        kClass,
-        kFunction,
-        kModule
+        kBlock,      // block scopes {}
+        kFunction,   // function scopy (incl anonymous)
+        kClass,      // class scope
+        kModule,     // module scope
+        kGlobal      // global scope (compiler sym table)
       };
 
       class Scope : public ArenaMember {
@@ -41,14 +42,14 @@ namespace brutus {
           Scope(int initialCapacity, float loadFactor, Arena* arena);
           Scope(Arena* arena);
           ~Scope() {}
-          
+
           // true if it has been added, false otherwise
           bool put(Name* name, Symbol* symbol);
-          
+
           bool put(Symbol* symbol);
 
           Symbol* putOrOverload(Name* name, Symbol* symbol);
-            
+
           // null if not present
           Symbol* get(Name* name);
 
@@ -92,6 +93,37 @@ namespace brutus {
 
           DISALLOW_COPY_AND_ASSIGN(Scope);
       }; //class Scope
+
+      class SymbolTable : public ArenaMember {
+        public:
+          void* operator new(size_t size, Arena* arena) {
+            return arena->alloc(size);
+          }
+
+          SymbolTable(NameTable* names, Arena* arena)
+              : m_scope(new (arena) Scope(arena)),
+                m_names(names),
+                m_arena(arena) {
+            m_scope->init(nullptr, internal::syms::ScopeKind::kGlobal);
+          }
+
+          ~SymbolTable() {}
+
+          Symbol* get(Name* name);
+
+          ALWAYS_INLINE Scope* global() const {
+            return m_scope;
+          }
+
+        private:
+          void* operator new(size_t size);
+
+          Scope* const m_scope;
+          NameTable* const m_names;
+          Arena* const m_arena;
+
+          DISALLOW_COPY_AND_ASSIGN(SymbolTable);
+      }; // class SymbolTable
     } //namespace sym
   } //namespace internal
 } //namespace brutus

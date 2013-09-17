@@ -15,11 +15,11 @@
 const auto numTrials = 10000;
 
 void perf_test(std::function<int()> f) {
-  brutus::Stopwatch stopwatch;    
+  brutus::Stopwatch stopwatch;
 
   for(auto trail = 0; trail < numTrials; ++trail) {
     stopwatch.time([&]() {
-      std::cout << "Result: " << f() << std::endl;   
+      std::cout << "Result: " << f() << std::endl;
     });
   }
 }
@@ -48,10 +48,10 @@ int main(int argc, char** argv) {
 #endif
   withTokenFile([&](FILE* fp) {
     brutus::Stopwatch stopwatch;
-    
+
     auto compiler = new brutus::Compiler();
     compiler->addSource(fp);
-    
+
     stopwatch.time([&]() {
       compiler->compile();
     });
@@ -88,5 +88,5 @@ int main(int argc, char** argv) {
   });
 #endif
 
-  return system("PAUSE");
+  return 0;
 }

@@ -2,7 +2,7 @@
 #define BRUTUS_ALLOC_H_
 
 #include <cstdlib> //for std::free and std::malloc
-#include <cstring> //for std::memcpy
+#include <cstring> //for std::memcpy and std::memmove
 
 #include "brutus.h"
 

@@ -36,7 +36,8 @@ void* Arena::alloc(int size) {
 
   if(alignedSize > blockSize) {
     //TODO(joa): could allocate an extra block of aligned size, add to 
-    // used and return its offset
+    // used and return its offset, or perform allocation via
+    // two contiguous blocks (how to be sure they are continguous?)
     std::cerr << "Cannot allocate " << size << " bytes at once.";
     return nullptr;
   }
@@ -97,6 +98,8 @@ void Arena::grow(int size) {
   // However there might be an already existing block that
   // still has 256 bytes spare for instance so we would need
   // to allocate only two blocks.
+
+  //TODO(joa): how to be sure blocks are continguous?
 
   auto blockSize = aligned(m_blockSize);
   auto available = blockSize - m_position;

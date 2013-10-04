@@ -13,6 +13,7 @@
 
 namespace brutus {
   enum class SourceKind {
+    kError,
     kFile
   }; //enum SourceKind
 
@@ -22,15 +23,34 @@ namespace brutus {
       virtual ~Source() {}
       virtual SourceKind kind() const = 0;
       virtual CharStream* newStream() const = 0;
+      virtual bool isError() const { return NO; }
 
     private:
       DISALLOW_COPY_AND_ASSIGN(Source);
   }; //class Source
 
+  class ErrorSource : public Source {
+    //TODO(joa): currently unused, see if neccessary to keep around
+    public:
+      explicit ErrorSource() {}
+      ~ErrorSource() {}
+
+      SourceKind kind() const override final {
+        return SourceKind::kError;
+      }
+
+      bool isError() const override final {
+        return YES;
+      }
+
+    private:
+      DISALLOW_COPY_AND_ASSIGN(ErrorSource);
+  };
+
   class FileSource : public Source {
     public:
-      FileSource(FILE* fp) : m_fp(fp) {}
-
+      explicit FileSource(FILE* fp) : m_fp(fp) {}
+      
       SourceKind kind() const override final {
         return SourceKind::kFile;
       }
@@ -108,6 +128,7 @@ namespace brutus {
       ~Compiler();
 
       void addSource(FILE* fp);
+      void addSource(Source* source);
       void compile();
 
       internal::Arena* arena() override final {

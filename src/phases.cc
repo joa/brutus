@@ -201,6 +201,14 @@ void SymbolsPhase::buildFunctionSymbols(ast::Function* node, syms::Scope* parent
     buildSymbols(parameter, scope, symbol);
   });
 
+  // The parameter symbols are known, patch the type.
+
+  type->m_parameters =
+    node->parameters()->mapToArray<syms::Symbol*>(
+          [&](ast::Node* node) -> syms::Symbol* {
+            return node->symbol();
+          }, m_arena);
+
   if(!node->isAbstract()) {
     buildSymbols(node->expr(), scope, symbol);
   }
@@ -415,6 +423,8 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         if(nullptr == symbol) {
           // Could not find name in current scope. Maybe we
           // should try to find it
+
+          //TODO(joa): implement me
         }
 
         if(nullptr == symbol) {
@@ -485,6 +495,7 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         auto select = static_cast<ast::Select*>(node);
 
         link(select->object(), parentScope, parentType);
+        link(select->qualifier(), parentScope, parentType);
 
         auto objectSymbol = select->object()->symbol();
         auto objectType = objectSymbol->type();
@@ -527,7 +538,8 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
         }
 
         if(nullptr == type) {
-          //TODO(joa): error symbol
+          thiz->symbol(
+            errorSymbol(nullptr, thiz, syms::ErrorReason::kNoSuchName));
         } else {
           auto classType = static_cast<types::ClassType*>(type);
           thiz->symbol(classType->symbol());

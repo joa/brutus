@@ -8,6 +8,8 @@
 
 namespace brutus {
   namespace internal {
+    class SymbolsPhase;
+
     namespace types {
       enum class TypeKind {
         kClass,
@@ -127,6 +129,8 @@ namespace brutus {
           Type* m_returnType;
 
           DISALLOW_COPY_AND_ASSIGN(FunctionType);
+
+          friend class brutus::internal::SymbolsPhase;
       };
     }
   }

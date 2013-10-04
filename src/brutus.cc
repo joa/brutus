@@ -24,17 +24,22 @@ void perf_test(std::function<int()> f) {
   }
 }
 
-void withTokenFile(std::function<void(FILE*)> f) {
-  auto fp = fopen("tokens.txt", "r");
+void withFile(const char* path, std::function<void(FILE*)> f) {
+  auto fp = fopen(path, "r");
 
   if(!fp) {
-    std::cout << "Could not read tokens.txt file." << std::endl;
+    std::cout << "Could not read \"" << path << "\"." << std::endl;
     return;
   }
 
   f(fp);
 
   fclose(fp);
+
+}
+
+void withTokenFile(std::function<void(FILE*)> f) {
+  withFile("tokens.txt", f);
 }
 
 int main(int argc, char** argv) {
@@ -46,18 +51,21 @@ int main(int argc, char** argv) {
 #ifdef PERF_TEST
   perf_test([&]() {
 #endif
-  withTokenFile([&](FILE* fp) {
-    brutus::Stopwatch stopwatch;
+    withFile("lang.b", [&](FILE* lang) {
+      withTokenFile([&](FILE* tokens) {
+        brutus::Stopwatch stopwatch;
+    
+        auto compiler = new brutus::Compiler();
+        compiler->addSource(lang);
+        compiler->addSource(tokens);
+    
+        stopwatch.time([&]() {
+          compiler->compile();
+        });
 
-    auto compiler = new brutus::Compiler();
-    compiler->addSource(fp);
-
-    stopwatch.time([&]() {
-      compiler->compile();
+        delete compiler;
+      });    
     });
-
-    delete compiler;
-  });
 #ifdef PERF_TEST
   return 123;
   });
@@ -65,14 +73,16 @@ int main(int argc, char** argv) {
 #endif
 
 #if 0
-  withTokenFile([&](FILE* fp) {
+  withFile("lang.b", [&](FILE* fp) {
     auto stream = new brutus::internal::FileCharStream(fp);
-    auto lexer = new brutus::internal::Lexer(stream);
+    auto lexer = new brutus::internal::Lexer();
+    
+    lexer->init(stream);
 
-    brutus::internal::tok::Token t;
+    brutus::internal::Token t;
     auto numT = 0;
 
-    while((t = lexer->nextToken()) != brutus::internal::tok::_EOF) {
+    while((t = lexer->nextToken()) != brutus::internal::Token::kEof) {
       ++numT;
       std::cout << '(' << lexer->posLine() << ':' << lexer->posColumn() << ')' << ' ' << brutus::internal::tok::toString(t) << std::endl;
 

@@ -163,7 +163,7 @@ ALWAYS_INLINE static Name* nameOf(ast::Node* node) {
 void SymbolsPhase::buildClassSymbols(ast::Class* node, syms::Scope* parentScope, syms::Symbol* parentSymbol) {
   auto scope = newScope(m_context->arena(), parentScope, syms::ScopeKind::kClass);
   auto symbol = new (m_context->arena()) syms::ClassSymbol();
-  auto type = new (m_context->arena()) types::ClassType(symbol, scope, 0, nullptr, 0, nullptr);
+  auto type = new (m_context->arena()) types::ClassType(symbol, 0, nullptr, 0, nullptr);
   auto name = nameOf(node->name());
 
   symbol->init(name, parentSymbol, node, scope, type);
@@ -179,7 +179,7 @@ void SymbolsPhase::buildFunctionSymbols(ast::Function* node, syms::Scope* parent
   auto scope = newScope(m_context->arena(), parentScope, syms::ScopeKind::kFunction);
   auto symbol = new (m_context->arena()) syms::FunctionSymbol();
   auto type = new (m_context->arena()) types::FunctionType(
-      symbol, scope, 0, nullptr, parentSymbol->type(),
+      symbol, 0, nullptr, parentSymbol->type(),
       node->parameters()->size(),
       node->parameters()->mapToArray<syms::Symbol*>(
         [&](ast::Node* node) -> syms::Symbol* {
@@ -207,7 +207,7 @@ void SymbolsPhase::buildFunctionSymbols(ast::Function* node, syms::Scope* parent
     node->parameters()->mapToArray<syms::Symbol*>(
           [&](ast::Node* node) -> syms::Symbol* {
             return node->symbol();
-          }, m_arena);
+          }, m_context->arena());
 
   if(!node->isAbstract()) {
     buildSymbols(node->expr(), scope, symbol);
@@ -354,7 +354,7 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
 
         auto calleeSymbol = call->callee()->symbol();
         auto calleeType = calleeSymbol->type();
-        auto calleeScope = calleeType->scope();
+        auto calleeScope = calleeSymbol->scope();
 
         call->arguments()->foreach([&](ast::Node* argument) {
           link(argument, parentScope, parentType);
@@ -499,7 +499,7 @@ void LinkPhase::link(ast::Node* node, syms::Scope* parentScope, types::Type* par
 
         auto objectSymbol = select->object()->symbol();
         auto objectType = objectSymbol->type();
-        auto objectScope = objectType->scope();
+        auto objectScope = objectSymbol->scope();
         auto symbol = objectScope->get(nameOf(select->qualifier()));
 
         if(nullptr == symbol) {

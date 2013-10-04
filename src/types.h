@@ -96,7 +96,7 @@ namespace brutus {
             int numParameters,
             syms::Symbol** parameters,
             Type* returnType)
-              : Type(symbol, scope, 0, nullptr, numTypeParameters, typeParameters),
+              : Type(symbol, 0, nullptr, numTypeParameters, typeParameters),
                 m_owner(owner),
                 m_numParameters(numParameters),
                 m_parameters(parameters),

@@ -60,6 +60,10 @@ namespace brutus {
             m_type = value;
           }
 
+          virtual Scope* scope() const {
+            return nullptr;//TODO(joa): empty scope
+          }
+
           explicit Symbol() 
               : m_name(nullptr), 
                 m_parent(nullptr), 
@@ -105,7 +109,7 @@ namespace brutus {
             m_scope = scope;
           }
           
-          Scope* scope() const {
+          Scope* scope() const override final {
             return m_scope;
           }
 

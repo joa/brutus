@@ -36,5 +36,8 @@ build/ipch/*
 src/Debug/*
 src/Release/*
 
-# Currently used during development
+# Prototyping
 tokens.txt
+proto/*.iml
+proto/out
+proto/.idea

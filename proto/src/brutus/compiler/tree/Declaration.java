@@ -3,6 +3,7 @@ package brutus.compiler.tree;
 import brutus.compiler.name.Name;
 import brutus.compiler.symbol.Symbol;
 import brutus.compiler.type.Type;
+import brutus.compiler.util.Preconditions;
 
 /**
  *
@@ -23,7 +24,7 @@ public abstract class Declaration extends Tree {
 
   @Override
   public Symbol symbol() {
-    return symbol;
+    return Preconditions.checkNotNull(symbol);
   }
 
   @Override

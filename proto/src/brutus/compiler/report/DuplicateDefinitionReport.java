@@ -19,4 +19,9 @@ public final class DuplicateDefinitionReport extends Report {
   public int level() {
     return ReportLevel.kError;
   }
+
+  @Override
+  public String toString() {
+    return "Type Error. "+duplicateSymbol.name().toString()+" has already been defined.";
+  }
 }

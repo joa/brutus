@@ -2,6 +2,7 @@ package brutus.compiler.tree;
 
 import brutus.compiler.symbol.Symbol;
 import brutus.compiler.type.Type;
+import brutus.compiler.util.Preconditions;
 
 /**
  *
@@ -9,6 +10,9 @@ import brutus.compiler.type.Type;
 public final class Assign extends Expression {
   public final Tree lhs;
   public final Tree rhs;
+
+  //smell: always unit
+  private Type type;
 
   public Assign(final Tree lhs, final Tree rhs) {
     this.lhs = lhs;
@@ -31,7 +35,12 @@ public final class Assign extends Expression {
   }
 
   @Override
+  public void type(final Type value) {
+    this.type = value;
+  }
+
+  @Override
   public Type type() {
-    return rhs.type();
+    return Preconditions.checkNotNull(type);
   }
 }

@@ -17,6 +17,7 @@ public final class LinkPhase extends Phase {
 
   @Override
   public void apply(final CompilationUnit unit) {
-    linker.link(unit.tree, context.symbols.root.scope(), context.symbols.root);
+    linker.linkDeclarations(unit.tree, context.symbols.root.scope(), context.symbols.root);
+    linker.linkExpressions(unit.tree, context.symbols.root.scope(), context.symbols.root);
   }
 }

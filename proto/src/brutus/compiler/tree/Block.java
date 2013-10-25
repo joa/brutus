@@ -3,6 +3,7 @@ package brutus.compiler.tree;
 import brutus.compiler.scope.Scope;
 import brutus.compiler.symbol.Symbol;
 import brutus.compiler.type.Type;
+import brutus.compiler.util.Preconditions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,14 @@ public final class Block extends Expression {
   public Scope scope;
 
   private Type type;
+
+  public boolean isEmpty() {
+    return expressions.isEmpty();
+  }
+
+  public Tree lastExpression() {
+    return expressions.get(expressions.size() - 1);
+  }
 
   @Override
   public void accept(final TreeVisitor visitor) {
@@ -39,6 +48,6 @@ public final class Block extends Expression {
 
   @Override
   public Type type() {
-    return type;
+    return Preconditions.checkNotNull(type);
   }
 }

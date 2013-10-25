@@ -3,6 +3,7 @@ package brutus.compiler.tree;
 import brutus.compiler.name.Name;
 import brutus.compiler.symbol.Symbol;
 import brutus.compiler.type.Type;
+import brutus.compiler.util.Preconditions;
 
 /**
  *
@@ -33,7 +34,7 @@ public final class Identifier extends Expression {
 
   @Override
   public Symbol symbol() {
-    return symbol;
+    return Preconditions.checkNotNull(symbol);
   }
 
   @Override

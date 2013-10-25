@@ -69,11 +69,15 @@ public final class Scanner {
           return kAssign;
         }
       } else if(currentChar == '-') {
-        if(advance() == '>') {
+        final char nextChar = advance();
+        if(nextChar == '>') {
           // One could decide to allow operators like ->> but then again this
           // becomes really confusing when looking at code like "x -> x ->> y" so
           // the call is to disallow other operators that start with ->
           return kRArrow;
+        } else if(isNumberStart(nextChar)) {
+          //TODO(joa): negate
+          return continueWithNumberStart(nextChar);
         } else {
           rewind();
           return continueWithIdentifierStart(currentChar, /*isOperator=*/false);
@@ -286,26 +290,119 @@ public final class Scanner {
           if(canAdvance()) {
             final char secondSuffixChar = advance();
             switch (secondSuffixChar) {
-              case 'b':
+              case '8':
                 return kNumberLiteral; //uint8
-              case 's':
-                return kNumberLiteral; //uint16
-              case 'l':
-                return kNumberLiteral; //uint64
+              case '1':
+                if(canAdvance()) {
+                  if(advance() == '6') {
+                    return kNumberLiteral; //uint16
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              case '3':
+                if(canAdvance()) {
+                  if(advance() == '2') {
+                    return kNumberLiteral; //uint32
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              case '6':
+                if(canAdvance()) {
+                  if(advance() == '4') {
+                    return kNumberLiteral; //uint64
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              default:
+                return kError;
             }
+          } else {
+            return kError;
           }
-          return kNumberLiteral; //uint32
         }
-        case 'f':
-          return kNumberLiteral; //float
-        case 'd':
-          return kNumberLiteral; //double
-        case 'b':
-          return kNumberLiteral; //int8
-        case 's':
-          return kNumberLiteral; //int16
-        case 'l':
-          return kNumberLiteral; //int64
+        case 'i': {
+          if(canAdvance()) {
+            final char secondSuffixChar = advance();
+            switch (secondSuffixChar) {
+              case '8':
+                return kNumberLiteral; //int8
+              case '1':
+                if(canAdvance()) {
+                  if(advance() == '6') {
+                    return kNumberLiteral; //int16
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              case '3':
+                if(canAdvance()) {
+                  if(advance() == '2') {
+                    return kNumberLiteral; //int32
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              case '6':
+                if(canAdvance()) {
+                  if(advance() == '4') {
+                    return kNumberLiteral; //int64
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              default:
+                return kError;
+            }
+          } else {
+            return kError;
+          }
+        }
+        case 'f': {
+          if(canAdvance()) {
+            final char secondSuffixChar = advance();
+            switch (secondSuffixChar) {
+              case '3':
+                if(canAdvance()) {
+                  if(advance() == '2') {
+                    return kNumberLiteral; //float32
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              case '6':
+                if(canAdvance()) {
+                  if(advance() == '4') {
+                    return kNumberLiteral; //float64
+                  } else {
+                    rewind();
+                    return kError;
+                  }
+                }
+                return kError;
+              default:
+                return kError;
+            }
+          } else {
+            return kError;
+          }
+        }
         default:
           rewind();
       }
@@ -314,7 +411,7 @@ public final class Scanner {
     if(integer) {
       return kNumberLiteral; //int32
     } else {
-      return kNumberLiteral; //double
+      return kNumberLiteral; //float64
     }
   }
 

@@ -1093,7 +1093,7 @@ public final class Parser {
       return expected(kIdentifier);
     }
 
-    return init(new Identifier(parseQualifiedName()));
+    return init(new Identifier(parseName()));
   }
 
   private Name parseQualifiedName() {

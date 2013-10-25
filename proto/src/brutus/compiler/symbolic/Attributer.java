@@ -35,7 +35,7 @@ public final class Attributer {
 
       case kBlock: {
         final Block block = (Block)tree;
-        block.scope = new Scope(Scope.kBlock, scope);
+        block.scope = new Scope(Scope.kBlock, scope, context.symbols);
         attribute(block.expressions, block.scope, owner);
         break;
       }
@@ -50,55 +50,63 @@ public final class Attributer {
 
       case kClass: {
         final Class klass = (Class)tree;
-        final ClassSymbol symbol = new ClassSymbol(klass.name, owner, new Scope(Scope.kClass, scope), klass);
-        if(!scope.put(symbol)) {
+        final ClassSymbol symbol = new ClassSymbol(klass.name, owner, scope, context.symbols, klass);
+
+        if(!scope.isError() && !scope.put(symbol)) {
           context.reporter.duplicateDefinition(scope.get(symbol.name()), symbol);
         }
+
         attribute(klass.typeParameters, symbol.scope(), symbol);
         attribute(klass.members, symbol.scope(), symbol);
+        klass.typeParameters.stream().map(Tree::symbol).forEach(symbol.typeParameters()::add);
+        klass.members.stream().map(Tree::symbol).forEach(symbol.members()::add);
         break;
       }
 
       case kFunctionDeclaration: {
         final FunctionDeclaration function = (FunctionDeclaration)tree;
-        final FunctionSymbol symbol = new FunctionSymbol(function.name, owner, new Scope(Scope.kFunction, scope), function);
-        if(!scope.putOrOverload(symbol.name(), symbol)) {
+        final FunctionSymbol symbol = new FunctionSymbol(function.name, owner, new Scope(Scope.kFunction, scope, context.symbols), function);
+
+        if(!scope.isError() && !scope.put(symbol)) {
           context.reporter.duplicateDefinition(scope.get(symbol.name()), symbol);
         }
-        function.type.ifPresent(type -> attribute(type, scope, owner));
+
         attribute(function.typeParameters, symbol.scope(), symbol);
         attribute(function.parameters, symbol.scope(), symbol);
+        function.type.ifPresent(type -> attribute(type, scope, owner));
         function.expression.ifPresent(exp -> attribute(exp, symbol.scope(), symbol));
+
+        function.typeParameters.stream().map(Tree::symbol).forEach(symbol.typeParameters::add);
+        function.parameters.stream().map(Tree::symbol).forEach(symbol.parameters::add);
         break;
       }
 
       case kFunctionExpression: {
         final FunctionExpression function = (FunctionExpression)tree;
-        final FunctionSymbol symbol = new FunctionSymbol(context.names.predef_empty, owner, new Scope(Scope.kFunction, scope), function);
+        final FunctionSymbol symbol = new FunctionSymbol(context.names.predef_empty, owner, new Scope(Scope.kFunction, scope, context.symbols), function);
         function.type.ifPresent(type -> attribute(type, scope, owner));
         attribute(function.typeParameters, symbol.scope(), symbol);
         attribute(function.parameters, symbol.scope(), symbol);
         attribute(function.expression, symbol.scope(), symbol);
+        function.typeParameters.stream().map(Tree::symbol).forEach(symbol.typeParameters::add);
+        function.parameters.stream().map(Tree::symbol).forEach(symbol.parameters::add);
+        function.type.ifPresent(type -> symbol.result = type.symbol());
         break;
       }
 
-      case kIdentifier: {
-        // link ident so order is respected
-        final Identifier identifier = (Identifier)tree;
-        identifier.symbol(scope.get(identifier.value));
+      case kIdentifier:
         break;
-      }
 
       case kIf: {
         final If iff = (If)tree;
-        iff.scope = new Scope(Scope.kBlock, scope);
+        iff.scope = new Scope(Scope.kBlock, scope, context.symbols);
         attribute(iff.cases, iff.scope, owner);
         break;
       }
 
       case kIfCase: {
         final IfCase ifCase = (IfCase)tree;
-        ifCase.scope = new Scope(Scope.kBlock, scope);
+        ifCase.scope = new Scope(Scope.kBlock, scope, context.symbols);
         attribute(ifCase.condition, ifCase.scope, owner);
         break;
       }
@@ -112,10 +120,11 @@ public final class Attributer {
 
       case kModule: {
         final Module module = (Module)tree;
-        final ModuleSymbol symbol = new ModuleSymbol(module.name, owner, new Scope(Scope.kModule, scope), module);
+        final ModuleSymbol symbol = new ModuleSymbol(module.name, owner, new Scope(Scope.kModule, scope, context.symbols), module);
         //dependencies
         scope.put(symbol);
         attribute(module.declarations, symbol.scope(), symbol);
+        module.declarations.stream().map(Tree::symbol).forEach(symbol.members()::add);
         break;
       }
 
@@ -153,7 +162,7 @@ public final class Attributer {
 
       case kTypeParameter: {
         final TypeParameter typeParameter = (TypeParameter)tree;
-        final TypeParameterSymbol symbol = new TypeParameterSymbol(typeParameter.name, owner, typeParameter);
+        final TypeVariableSymbol symbol = new TypeVariableSymbol(typeParameter.name, owner, typeParameter);
         typeParameter.bound.ifPresent(bound -> attribute(bound, scope, owner));
         scope.put(symbol);
         break;

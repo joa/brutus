@@ -14,6 +14,11 @@ public final class Error extends Tree {
     return TreeKind.kError;
   }
 
+  @Override
+  public boolean isError() {
+    return true;
+  }
+
   //TODO(joa): ErrorSymbol
   //TODO(joa): ErrorType
 }

@@ -3,6 +3,7 @@ package brutus.compiler.tree;
 import brutus.compiler.scope.Scope;
 import brutus.compiler.symbol.Symbol;
 import brutus.compiler.type.Type;
+import brutus.compiler.util.Preconditions;
 
 /**
  *
@@ -42,6 +43,6 @@ public final class IfCase extends Expression {
 
   @Override
   public Type type() {
-    return type;
+    return Preconditions.checkNotNull(type);
   }
 }

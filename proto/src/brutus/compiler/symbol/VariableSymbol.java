@@ -17,11 +17,16 @@ public final class VariableSymbol extends Symbol {
 
   @Override
   public int kind() {
-    return kVariable;
+    return SymbolKind.kVariable;
   }
 
   @Override
   public Tree tree() {
     return tree;
+  }
+
+  @Override
+  public Symbol result() {
+    return type().symbol();
   }
 }

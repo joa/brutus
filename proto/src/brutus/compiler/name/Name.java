@@ -41,4 +41,8 @@ public final class Name {
 
     return -1;
   }
+
+  public boolean isQualified() {
+    return contains('.');
+  }
 }

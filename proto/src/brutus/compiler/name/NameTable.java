@@ -22,6 +22,9 @@ public final class NameTable {
   public final Name predef_in;
   public final Name predef_out;
   public final Name predef_brutus_Atom;
+  public final Name predef_brutus_Object;
+  public final Name predef_brutus_Value;
+  public final Name predef_brutus_Unit;
   public final Name predef_brutus_Boolean;
   public final Name predef_brutus_String;
 
@@ -42,6 +45,9 @@ public final class NameTable {
     predef_in = define("in");
     predef_out = define("out");
     predef_brutus_Atom = define("brutus.Atom");
+    predef_brutus_Object = define("brutus.Object");
+    predef_brutus_Value = define("brutus.Value");
+    predef_brutus_Unit = define("brutus.Unit");
     predef_brutus_Boolean = define("brutus.Boolean");
     predef_brutus_String = define("brutus.String");
     predef_numeric = new Name[] {

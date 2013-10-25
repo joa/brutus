@@ -5,6 +5,8 @@ import brutus.compiler.report.Position;
 import brutus.compiler.symbol.Symbol;
 import brutus.compiler.type.Type;
 
+import java.util.function.Function;
+
 /**
  *
  */
@@ -107,5 +109,24 @@ public abstract class Tree {
 
   public final boolean isSealed() {
     return (flags & ACC_SEALED) == ACC_SEALED;
+  }
+
+  public final boolean isOverride() {
+    return (flags & ACC_OVERRIDE) == ACC_OVERRIDE;
+  }
+
+  public boolean isError() {
+    return false;
+  }
+
+  public <T extends Tree> int mapInt(final Function<T, Integer> f) {
+    if(isError()) {
+      return 0;
+    }
+
+    @SuppressWarnings("unchecked")
+    final T casted = (T)this;
+
+    return f.apply(casted);
   }
 }

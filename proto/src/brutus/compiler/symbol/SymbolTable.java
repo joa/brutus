@@ -13,7 +13,7 @@ public final class SymbolTable {
 
   public SymbolTable(final NameTable names) {
     this.names = names;
-    this.root = new RootSymbol(names.predef_empty);
+    this.root = new RootSymbol(names.predef_empty, this);
   }
 
   public Symbol get(final Name name) {
@@ -36,8 +36,15 @@ public final class SymbolTable {
         names.get(chars, offset0, name.count - offset0));
   }
 
-  public Symbol predef_brutus_Atom()    { return get(names.predef_brutus_Atom   ); }
+  public Symbol error()                 { return new ErrorSymbol(names.predef_empty, root); }
+  public Symbol error(final Name name)  { return new ErrorSymbol(name, root); }
+
+  public Symbol predef_brutus_Atom   () { return get(names.predef_brutus_Atom   ); }
+  public Symbol predef_brutus_Object () { return get(names.predef_brutus_Object ); }
+  public Symbol predef_brutus_Unit   () { return get(names.predef_brutus_Unit   ); }
   public Symbol predef_brutus_Boolean() { return get(names.predef_brutus_Boolean); }
-  public Symbol predef_brutus_String()  { return get(names.predef_brutus_String ); }
-  public Symbol predef_brutus_numeric(final int kind) { return get(names.predef_numeric(kind)); }
+  public Symbol predef_brutus_String () { return get(names.predef_brutus_String ); }
+
+  public Symbol predef_brutus_numeric(final int kind)   { return get(names.predef_numeric(kind));   }
+  public Symbol predef_brutus_function(final int arity) { return get(names.predef_function(arity)); }
 }
